@@ -1,0 +1,25 @@
+{
+  "name": "假期存摺",
+  "short_name": "假期存摺",
+  "description": "特休、病假、事假、家庭照顧假、身心照顧假、補休記錄工具",
+  "start_url": "./leave-passbook.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F3EFE4",
+  "theme_color": "#2F5D50",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
