@@ -33,9 +33,33 @@
     background-image:radial-gradient(circle at 1px 1px, rgba(43,42,40,.09) 1px, transparent 0);
     background-size:24px 24px;
     color:var(--ink); font-family:'Noto Sans TC', sans-serif;
-    padding:24px 16px 60px; min-height:100vh;
+    padding:24px 16px calc(76px + env(safe-area-inset-bottom)); min-height:100vh;
   }
   .wrap{max-width:760px;margin:0 auto;}
+  .bottom-nav{
+    position:fixed; left:14px; right:14px; bottom:calc(8px + env(safe-area-inset-bottom)); z-index:50;
+    max-width:520px; margin:0 auto;
+    display:flex; justify-content:space-around; align-items:center;
+    background:rgba(255,253,248,.94); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+    border:1px solid var(--line); border-radius:22px;
+    padding:7px 8px;
+    box-shadow:0 8px 24px rgba(43,42,40,.14), 0 1px 0 rgba(255,255,255,.6) inset;
+  }
+  .nav-item{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; padding:6px 4px; color:var(--ink-soft);
+    font-family:'Noto Sans TC',sans-serif; font-weight:600; font-size:10px;
+    border-radius:16px; transition:color .15s ease;
+  }
+  .nav-item .nav-icon-wrap{
+    width:34px; height:30px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .nav-item .nav-icon{font-size:17px; line-height:1;}
+  .nav-item.active{color:var(--jade);}
+  .nav-item.active .nav-icon-wrap{background:var(--jade-soft);}
+  .nav-item:active .nav-icon-wrap{transform:scale(.9);}
   header{text-align:center;margin-bottom:24px;}
   header .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--ink-soft);text-transform:uppercase;}
   header h1{font-family:'Noto Serif TC',serif;font-weight:900;font-size:30px;margin:6px 0 2px;letter-spacing:.06em;}
@@ -73,6 +97,9 @@
   button.sortbtn{background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;padding:9px 14px;min-height:38px;}
   .year-label{font-family:'IBM Plex Mono',monospace;font-weight:700;min-width:64px;text-align:center;}
   .section-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase;margin:6px 2px 10px;}
+  .leave-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .leave-tab{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:20px;border:1px solid var(--line);cursor:pointer;transition:transform .1s ease;}
+  .leave-tab:active{transform:scale(.96);}
   .manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
   @media(max-width:620px){.manage-grid{grid-template-columns:1fr;}}
 
@@ -174,6 +201,7 @@
 <div class="wrap" id="app">
   <div class="loading" id="loading">載入存摺資料中…</div>
 </div>
+<div id="bottomNavHolder"></div>
 
 <script>
 const STORAGE_KEY = 'leave-passbook-data';
@@ -332,6 +360,10 @@ let expiryTouched = false;
 let kwPendingItems = [];
 let kwUnmatchedLines = [];
 let expandedMonths = {};
+let activeLeaveTab = 'annual';
+function switchLeaveTab(key){ activeLeaveTab = key; searchQuery=''; render(); }
+let activePage = 'home';
+function switchPage(page){ activePage = page; window.scrollTo(0,0); render(); }
 
 function monthLabel(ym){
   const y = parseInt(ym.slice(0,4),10) - 1911;
@@ -903,6 +935,21 @@ function buildLeaveLi(t, r, dMin, dMax){
   </li>`;
 }
 
+function leaveTabBar(){
+  const tabs = LEAVE_TYPES.map(t=>({key:t.key, label:t.label, c:t.c}))
+    .concat([{key:'comp', label:'補休', c:'brick'}]);
+  return `
+    <div class="leave-tabs">
+      ${tabs.map(t=>{
+        const isActive = activeLeaveTab===t.key;
+        const style = isActive
+          ? `background:var(--${t.c});color:#fff;border-color:var(--${t.c});`
+          : `background:#fff;color:var(--ink-soft);border-color:var(--line);`;
+        return `<button type="button" class="leave-tab" style="${style}" onclick="switchLeaveTab('${t.key}')">${t.label}</button>`;
+      }).join('')}
+    </div>`;
+}
+
 function leaveSection(t){
   const all = (state.records[t.key]||[]).filter(r=>r.date.startsWith(String(selectedYear)));
   let rows = all.filter(r=>matchesSearch(r.date, r.note, t.label));
@@ -1070,17 +1117,9 @@ function compSectionHtml(){
 `;
 }
 
-function render(){
-  expiryTouched = false;
+function pageHome(){
   const compBal = compBalanceUpTo(selectedYear);
-
-  document.getElementById('app').innerHTML = `
-    <header>
-      <div class="eyebrow">Leave Passbook</div>
-      <h1>假期存摺</h1>
-      <p class="sub">特休、病假、事假、家庭照顧假、身心照顧假、補休，一本記清楚</p>
-    </header>
-
+  return `
     ${lastDeleted? `<div class="undo-bar"><span>已刪除：${escapeHtml(lastDeleted.label)}</span><button onclick="undoDelete()">復原</button></div>` : ''}
     ${reminderBanner()}
 
@@ -1094,8 +1133,11 @@ function render(){
     </div>
 
     ${dashboardPanel()}
-    ${keywordPanel()}
+  `;
+}
 
+function pageLeaves(){
+  return `
     <div class="toolbar">
       <div class="toolbar-row">
         <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="onSearchInput(this.value)">
@@ -1108,22 +1150,29 @@ function render(){
           <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
         </div>
       </div>
+    </div>
+    ${leaveTabBar()}
+    ${activeLeaveTab==='comp' ? compSectionHtml() : leaveSection(LEAVE_TYPES.find(t=>t.key===activeLeaveTab) || LEAVE_TYPES[0])}
+  `;
+}
+
+function pageTools(){
+  return `
+    ${keywordPanel()}
+    <div class="toolbar">
       <div class="toolbar-row view-toggles">
         <button type="button" class="sortbtn" onclick="toggleCalendar()">${calendarMode?'隱藏行事曆':'📅 行事曆檢視'}</button>
         <button type="button" class="sortbtn" onclick="toggleChart()">${chartMode?'隱藏統計圖':'📊 年度統計圖'}</button>
       </div>
     </div>
-
     ${calendarPanel()}
     ${statsChart()}
+    ${!calendarMode && !chartMode ? '<div class="empty" style="text-align:center;">選擇上面的「行事曆檢視」或「年度統計圖」查看視覺化資料</div>' : ''}
+  `;
+}
 
-    <div class="section-label">各假別紀錄（可用「天」或「小時」登記，1 天 = ${getHoursPerDay()} 小時）</div>
-    ${leaveSection(LEAVE_TYPES[0])}
-    ${compSectionHtml()}
-    ${LEAVE_TYPES.slice(1).map(leaveSection).join('')}
-
-
-    <div class="section-label">資料管理</div>
+function pageData(){
+  return `
     <div class="manage-grid">
       <div class="backup">
         <h2>☁️ 雲端同步（跨裝置）</h2>
@@ -1188,9 +1237,49 @@ function render(){
         <button class="danger-btn" onclick="resetRecords(document.getElementById('allResetScope').value, 'ALL')">整體重置</button>
       </div>
     </div>
+  `;
+}
+
+function bottomNav(){
+  const items = [
+    {key:'home', icon:'🏠', label:'首頁'},
+    {key:'tools', icon:'📅', label:'工具'},
+    {key:'leaves', icon:'📋', label:'假別'},
+    {key:'data', icon:'⚙️', label:'設定'}
+  ];
+  return `
+    <nav class="bottom-nav">
+      ${items.map(it=>`
+        <button type="button" class="nav-item ${activePage===it.key?'active':''}" onclick="switchPage('${it.key}')">
+          <span class="nav-icon-wrap"><span class="nav-icon">${it.icon}</span></span>
+          <span class="nav-label">${it.label}</span>
+        </button>`).join('')}
+    </nav>`;
+}
+
+function render(){
+  expiryTouched = false;
+
+  let pageContent = '';
+  let pageTitle = '假期存摺';
+  if(activePage==='home'){ pageContent = pageHome(); }
+  else if(activePage==='leaves'){ pageContent = pageLeaves(); pageTitle = '假別紀錄'; }
+  else if(activePage==='tools'){ pageContent = pageTools(); pageTitle = '工具'; }
+  else if(activePage==='data'){ pageContent = pageData(); pageTitle = '資料管理'; }
+
+  document.getElementById('app').innerHTML = `
+    <header>
+      <div class="eyebrow">Leave Passbook</div>
+      <h1>${activePage==='home' ? '假期存摺' : pageTitle}</h1>
+      ${activePage==='home' ? '<p class="sub">特休、病假、事假、家庭照顧假、身心照顧假、補休，一本記清楚</p>' : ''}
+    </header>
+
+    ${pageContent}
+
     <div class="status" id="statusMsg" style="text-align:center;"></div>
   `;
   lastAddedId = null;
+  document.getElementById('bottomNavHolder').innerHTML = bottomNav();
 }
 
 function setStatus(msg, ok){
