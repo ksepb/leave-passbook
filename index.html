@@ -89,7 +89,7 @@
   .toolbar{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:18px;}
   .toolbar-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .toolbar-row + .toolbar-row{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
-  .toolbar-row input[type=text]{flex:1;min-width:160px;font-family:'Noto Sans TC',sans-serif;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+  .toolbar-row input[type=text]{flex:1;min-width:160px;font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
   .year-switch{display:flex;align-items:center;gap:6px;}
   .view-toggles{display:flex;gap:8px;}
   .view-toggles button{flex:1;}
@@ -110,7 +110,7 @@
   form.entry{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:flex-end;}
   .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px;}
   .field label{font-size:11px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .field input,.field select{font-family:'Noto Sans TC',sans-serif;font-size:14px;padding:7px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+  .field input,.field select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:7px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
   .field.note{flex:2;min-width:140px;}
   .quickdays{display:flex;gap:6px;}
   .quickdays button{padding:8px 10px;min-height:36px;min-width:34px;font-size:12px;background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;}
@@ -142,7 +142,7 @@
   ul.ledger .ledger-actions{display:flex;gap:8px;margin-left:auto;flex:none;}
   ul.ledger .del{background:#fff;border:1px solid var(--line);border-radius:4px;color:var(--ink-soft);font-size:12px;font-weight:500;cursor:pointer;padding:8px 11px;min-height:36px;line-height:1;display:inline-flex;align-items:center;gap:4px;}
   ul.ledger li.editrow{display:flex;flex-wrap:wrap;align-items:center;background:#fffaf0;border-radius:4px;padding:8px;gap:6px;}
-  li.editrow input,li.editrow select{font-family:'Noto Sans TC',sans-serif;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;}
+  li.editrow input,li.editrow select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;}
   .empty{font-size:14px;color:var(--ink-soft);padding:14px 2px;line-height:1.6;text-align:center;}
 
   @keyframes stampIn{0%{transform:scale(1.5) rotate(-6deg);opacity:0;}60%{transform:scale(.96) rotate(1deg);opacity:1;}100%{transform:scale(1) rotate(0);}}
@@ -188,7 +188,7 @@
   .backup h2{font-family:'Noto Serif TC',serif;font-size:16px;margin:0 0 6px;}
   .backup p{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;line-height:1.6;}
   .backup .row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
-  textarea{width:100%;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--line);border-radius:4px;padding:8px;background:#fdfcf9;color:var(--ink-soft);resize:vertical;}
+  textarea{width:100%;font-family:'IBM Plex Mono',monospace;font-size:16px;border:1px solid var(--line);border-radius:4px;padding:8px;background:#fdfcf9;color:var(--ink-soft);resize:vertical;}
   .status{font-size:12px;margin-top:8px;min-height:16px;}
   .status.ok{color:var(--jade);}
   .status.err{color:var(--brick);}
@@ -361,6 +361,7 @@ let expiryTouched = false;
 let kwPendingItems = [];
 let kwUnmatchedLines = [];
 let expandedMonths = {};
+let isComposing = false;
 let activeLeaveTab = 'annual';
 function switchLeaveTab(key){ activeLeaveTab = key; searchQuery=''; render(); }
 let activePage = 'home';
@@ -1147,7 +1148,7 @@ function pageLeaves(){
   return `
     <div class="toolbar">
       <div class="toolbar-row">
-        <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="onSearchInput(this.value)">
+        <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="if(!isComposing) onSearchInput(this.value)" oncompositionstart="isComposing=true" oncompositionend="isComposing=false; onSearchInput(this.value)">
         <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
       </div>
       <div class="toolbar-row">
