@@ -2,7 +2,7 @@
 // 策略：先嘗試連網取得最新版本，失敗（離線）時才使用快取的版本
 const CACHE_NAME = 'leave-passbook-v1';
 const CACHE_FILES = [
-  './leave-passbook.html',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
@@ -37,6 +37,6 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         return response;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./leave-passbook.html')))
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
   );
 });
