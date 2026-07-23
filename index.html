@@ -30,7 +30,7 @@
   *{box-sizing:border-box;}
   body{
     margin:0; background:var(--paper);
-    background-image:radial-gradient(circle at 1px 1px, rgba(43,42,40,.09) 1px, transparent 0);
+    background-image:radial-gradient(circle at 1px 1px, rgba(43,42,40,.07) 1px, transparent 0);
     background-size:24px 24px;
     color:var(--ink); font-family:'Noto Sans TC', sans-serif;
     padding:24px 16px calc(70px + env(safe-area-inset-bottom)); min-height:100vh;
@@ -62,7 +62,7 @@
   header{text-align:center;margin-bottom:24px;}
   header .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--ink-soft);text-transform:uppercase;}
   header h1{font-family:'Noto Serif TC',serif;font-weight:900;font-size:30px;margin:6px 0 2px;letter-spacing:.06em;}
-  header p.sub{font-size:13px;color:var(--ink-soft);margin:0;}
+  header p.sub{font-size:14px;color:var(--ink-soft);margin:0;}
 
   .undo-bar{background:#3A2F22;color:#fff;padding:10px 14px;border-radius:6px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
   .undo-bar button{background:var(--amber);padding:5px 10px;font-size:12px;}
@@ -110,13 +110,13 @@
   form.entry{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:flex-end;}
   .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px;}
   .field label{font-size:11px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .field input,.field select{font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:7px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+  .field input,.field select{font-family:'Noto Sans TC',sans-serif;font-size:14px;padding:7px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
   .field.note{flex:2;min-width:140px;}
   .quickdays{display:flex;gap:6px;}
   .quickdays button{padding:8px 10px;min-height:36px;min-width:34px;font-size:12px;background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;}
   .days-row{display:flex;gap:6px;align-items:center;}
-  .date-row{display:flex;gap:6px;align-items:center;}
-  .date-row input{flex:1;min-width:0;}
+  .date-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .date-row input{flex:1;min-width:130px;}
   .date-toggle{padding:8px 10px;min-height:36px;min-width:36px;font-size:12px;background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;flex:none;}
   .days-row input[type=number]{width:64px;flex:none;}
   .field-days{flex:1 1 220px;min-width:220px;}
@@ -137,16 +137,18 @@
   ul.ledger .d{font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);font-size:12px;}
   ul.ledger .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:2px 6px;border-radius:3px;text-align:center;}
   ul.ledger .days{font-family:'IBM Plex Mono',monospace;font-weight:700;}
-  ul.ledger .note{color:var(--ink);font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+  ul.ledger .note{color:var(--ink);font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
   ul.ledger .expiry{font-size:10.5px;color:var(--amber);font-family:'IBM Plex Mono',monospace;flex:1;}
   ul.ledger .ledger-actions{display:flex;gap:8px;margin-left:auto;flex:none;}
   ul.ledger .del{background:#fff;border:1px solid var(--line);border-radius:4px;color:var(--ink-soft);font-size:12px;font-weight:500;cursor:pointer;padding:8px 11px;min-height:36px;line-height:1;display:inline-flex;align-items:center;gap:4px;}
   ul.ledger li.editrow{display:flex;flex-wrap:wrap;align-items:center;background:#fffaf0;border-radius:4px;padding:8px;gap:6px;}
-  li.editrow input,li.editrow select{font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;}
-  .empty{font-size:13px;color:var(--ink-soft);padding:8px 2px;}
+  li.editrow input,li.editrow select{font-family:'Noto Sans TC',sans-serif;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;}
+  .empty{font-size:14px;color:var(--ink-soft);padding:14px 2px;line-height:1.6;text-align:center;}
 
   @keyframes stampIn{0%{transform:scale(1.5) rotate(-6deg);opacity:0;}60%{transform:scale(.96) rotate(1deg);opacity:1;}100%{transform:scale(1) rotate(0);}}
   li.stamp-in{animation:stampIn .32s ease-out;}
+  @keyframes fadeOutRemove{to{opacity:0;transform:scale(.92) translateX(10px);}}
+  ul.ledger li.removing{animation:fadeOutRemove .2s ease-in forwards;pointer-events:none;}
 
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .cal-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;}
@@ -938,7 +940,7 @@ function buildLeaveLi(t, r, dMin, dMax){
     <div class="ledger-bottom">
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditRecord('${t.key}','${r.id}')">✎ 編輯</button>
-        <button class="del" title="刪除" onclick="removeRecord('${t.key}','${r.id}')">✕ 刪除</button>
+        <button class="del" title="刪除" onclick="removeRecord(event.currentTarget,'${t.key}','${r.id}')">✕ 刪除</button>
       </div>
     </div>
   </li>`;
@@ -963,7 +965,7 @@ function leaveSection(t){
   const all = (state.records[t.key]||[]).filter(r=>r.date.startsWith(String(selectedYear)));
   let rows = all.filter(r=>matchesSearch(r.date, r.note, t.label));
   rows.sort((a,b)=> sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
-  const emptyMsg = all.length===0 ? `${selectedYear} 年尚無${t.label}紀錄` : '查無符合搜尋的紀錄';
+  const emptyMsg = all.length===0 ? `${selectedYear} 年尚無${t.label}紀錄，可以在上方表單登記第一筆 👆` : '查無符合搜尋的紀錄';
   const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = defaultDateFor(selectedYear);
   const forceExpand = (groupRows)=> editing && editing.kind==='record' && editing.key===t.key && groupRows.some(r=>r.id===editing.id);
   const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r),0))} 天`;
@@ -980,7 +982,7 @@ function leaveSection(t){
         <div class="hint">${t.hint}</div>
       </div>
       <form class="entry" onsubmit="addRecord('${t.key}', event)">
-        <div class="field"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" required><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div></div>
+        <div class="field"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" required><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div></div>
         <div class="field field-days">
           <label>數量</label>
           <div class="days-row">
@@ -1049,7 +1051,7 @@ function buildCompLi(r, dMin, dMax){
       ${r.expiry? `<div class="expiry">⏳ 補休到期日：${toROC(r.expiry)}</div>`:'<div></div>'}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
-        <button class="del" title="刪除" onclick="removeComp('${r.id}')">✕ 刪除</button>
+        <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
       </div>
     </div>
   </li>`;
@@ -1059,7 +1061,7 @@ function compSectionHtml(){
   const allComp = state.compRecords.filter(r=>r.date.startsWith(String(selectedYear)));
   let compRows = allComp.filter(r=>matchesSearch(r.date, r.note, '補休', r.type==='earn'?'獲得':'使用'));
   compRows.sort((a,b)=> sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
-  const compEmptyMsg = allComp.length===0 ? `${selectedYear} 年尚無補休紀錄` : '查無符合搜尋的紀錄';
+  const compEmptyMsg = allComp.length===0 ? `${selectedYear} 年尚無補休紀錄，可以在上方表單登記第一筆 👆` : '查無符合搜尋的紀錄';
   const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = defaultDateFor(selectedYear);
   const forceExpand = (groupRows)=> editing && editing.kind==='comp' && groupRows.some(r=>r.id===editing.id);
   const totalFn = (groupRows)=>{
@@ -1083,7 +1085,7 @@ function compSectionHtml(){
             <option value="use">使用補休</option>
           </select>
         </div>
-        <div class="field"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange()" required><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
+        <div class="field"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange()" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange();">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange();">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
         <div class="field field-days">
           <label>數量</label>
           <div class="days-row">
@@ -1296,6 +1298,19 @@ function setStatus(msg, ok){
 }
 
 function setDays(id,val){ const el=document.getElementById(id); if(el) el.value = val; }
+function setDateQuick(id, offsetDays){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.value = offsetDays===0 ? TODAY : shiftDate(TODAY, offsetDays);
+}
+function playRemoveAnimation(btnEl){
+  return new Promise(resolve=>{
+    const li = btnEl ? btnEl.closest('li') : null;
+    if(!li){ resolve(); return; }
+    li.classList.add('removing');
+    setTimeout(resolve, 200);
+  });
+}
 
 function toggleDateInputType(id){
   const el = document.getElementById(id);
@@ -1430,9 +1445,10 @@ function registerUndo(info){
   lastDeleted.timeoutId = setTimeout(()=>{ lastDeleted=null; render(); }, 6000);
 }
 
-async function removeRecord(key, id){
+async function removeRecord(btnEl, key, id){
   if(!window.confirm('確定要刪除這筆紀錄嗎？')) return;
   try{
+    await playRemoveAnimation(btnEl);
     const arr = state.records[key] || [];
     const idx = arr.findIndex(r=>r.id===id);
     if(idx===-1) return;
@@ -1635,9 +1651,10 @@ async function saveEditComp(id){
   }
 }
 
-async function removeComp(id){
+async function removeComp(btnEl, id){
   if(!window.confirm('確定要刪除這筆紀錄嗎？')) return;
   try{
+    await playRemoveAnimation(btnEl);
     const idx = state.compRecords.findIndex(r=>r.id===id);
     if(idx===-1) return;
     const item = state.compRecords[idx];
