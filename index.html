@@ -24,6 +24,7 @@
     --olive:#7C7530; --olive-soft:#EAE7D3;
     --plum:#7A4B6B; --plum-soft:#EDDEE7;
     --rust:#A8592F; --rust-soft:#F1DDCC;
+    --rose:#A8456B; --rose-soft:#F2DDE6;
     --line:#C9C2B0;
     --amber:#B5761A;
   }
@@ -83,8 +84,8 @@
   .stamp-card.warn .num{color:var(--amber);}
   .seal{position:absolute;right:-8px;top:-8px;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-weight:900;font-size:18px;transform:rotate(-12deg);opacity:.8;border:2px solid currentColor;}
   .seal::after{content:'';position:absolute;inset:4px;border:1px solid currentColor;border-radius:50%;opacity:.6;}
-  .c-jade{color:var(--jade);} .c-brick{color:var(--brick);} .c-blue{color:var(--blue);} .c-olive{color:var(--olive);} .c-plum{color:var(--plum);} .c-rust{color:var(--rust);}
-  .c-jade-bg{background:var(--jade);} .c-brick-bg{background:var(--brick);} .c-blue-bg{background:var(--blue);} .c-olive-bg{background:var(--olive);} .c-plum-bg{background:var(--plum);} .c-rust-bg{background:var(--rust);}
+  .c-jade{color:var(--jade);} .c-brick{color:var(--brick);} .c-blue{color:var(--blue);} .c-olive{color:var(--olive);} .c-plum{color:var(--plum);} .c-rust{color:var(--rust);} .c-rose{color:var(--rose);}
+  .c-jade-bg{background:var(--jade);} .c-brick-bg{background:var(--brick);} .c-blue-bg{background:var(--blue);} .c-olive-bg{background:var(--olive);} .c-plum-bg{background:var(--plum);} .c-rust-bg{background:var(--rust);} .c-rose-bg{background:var(--rose);}
 
   .dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
   .dash-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 14px;text-align:center;}
@@ -110,7 +111,7 @@
   section.block{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;margin-bottom:20px;}
   section.block h2{font-family:'Noto Serif TC',serif;font-size:17px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
   section.block h2 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
-  .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);}
+  .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);} .dot-rose{background:var(--rose);}
 
   form.entry{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:flex-end;}
   .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px;}
@@ -132,7 +133,7 @@
   .field-days{flex:1 1 220px;min-width:220px;}
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
-  .btn-jade{background:var(--jade);} .btn-brick{background:var(--brick);} .btn-blue{background:var(--blue);} .btn-olive{background:var(--olive);} .btn-plum{background:var(--plum);} .btn-rust{background:var(--rust);}
+  .btn-jade{background:var(--jade);} .btn-brick{background:var(--brick);} .btn-blue{background:var(--blue);} .btn-olive{background:var(--olive);} .btn-plum{background:var(--plum);} .btn-rust{background:var(--rust);} .btn-rose{background:var(--rose);}
   button.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;}
 
   .total-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
@@ -216,7 +217,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-06';
+const APP_VERSION = 'v2026.07.24-10';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -357,8 +358,9 @@ async function syncToCloud(){
 
 const LEAVE_TYPES = [
   {key:'annual', label:'特休', seal:'休', c:'jade', defaultQuota:0, hint:'依到職年資自行填入'},
-  {key:'sick', label:'病假', seal:'病', c:'blue', defaultQuota:30, hint:'常見上限 30 天／年（半薪），實際依公司規定'},
-  {key:'personal', label:'事假', seal:'事', c:'olive', defaultQuota:14, hint:'常見上限 14 天／年（不給薪），實際依公司規定'},
+  {key:'menstrual', label:'生理假', seal:'生', c:'rose', defaultQuota:12, hint:'每月至多1天；全年前3天不併入病假，超過部分自動併入病假計算（性平法第14條）'},
+  {key:'sick', label:'病假', seal:'病', c:'blue', defaultQuota:30, hint:'常見上限 30 天／年（半薪），實際依公司規定；生理假超過3天的部分會自動併入此處計算；超過總天數的部分依規定可用事假或特休擇一抵銷，需自行決定'},
+  {key:'personal', label:'事假', seal:'事', c:'olive', defaultQuota:14, hint:'常見上限 14 天／年（不給薪），實際依公司規定；家庭照顧假會全額自動併入此處計算'},
   {key:'familyCare', label:'家庭照顧假', seal:'家', c:'plum', defaultQuota:7, hint:'併入事假總天數計算，常見上限 7 天／年'},
   {key:'mentalCare', label:'身心照顧假', seal:'心', c:'rust', defaultQuota:3, hint:'依公司規定，預設 3 天，可自行調整'}
 ];
@@ -368,6 +370,16 @@ const TODAY = NOW.getFullYear()+'-'+String(NOW.getMonth()+1).padStart(2,'0')+'-'
 const CUR_YEAR = NOW.getFullYear();
 const DEFAULT_HOURS_PER_DAY = 8;
 function getHoursPerDay(){ return (state && state.hoursPerDay) ? Number(state.hoursPerDay) : DEFAULT_HOURS_PER_DAY; }
+const DEFAULT_PERSONAL_PAID_DAYS = 7;
+function getPersonalPaidDays(){ return (state && state.personalPaidDays !== undefined && state.personalPaidDays !== null) ? Number(state.personalPaidDays) : DEFAULT_PERSONAL_PAID_DAYS; }
+function personalPaidUsed(year){
+  year = year || selectedYear;
+  return Math.min(usedOf('personal', year), getPersonalPaidDays());
+}
+function personalUnpaidUsed(year){
+  year = year || selectedYear;
+  return Math.max(0, usedOf('personal', year) - getPersonalPaidDays());
+}
 
 let state = { quotaByYear:{}, records:{}, compRecords:[] };
 let lastAddedId = null;
@@ -448,7 +460,7 @@ function addYears(dateStr, n){
 function defaultState(){
   const records={};
   LEAVE_TYPES.forEach(t=>{ records[t.key]=[]; });
-  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY };
+  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS };
 }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -487,6 +499,7 @@ async function loadState(){
         if(flatQuotas){ state.quotaByYear[CUR_YEAR] = Object.assign({}, flatQuotas); }
       }
       if(parsed.hoursPerDay){ state.hoursPerDay = Number(parsed.hoursPerDay); }
+      if(parsed.personalPaidDays !== undefined && parsed.personalPaidDays !== null){ state.personalPaidDays = Number(parsed.personalPaidDays); }
     }
   }catch(e){ /* 無資料，使用預設值 */ }
 }
@@ -514,9 +527,27 @@ function setQuota(key, year, val){
   if(!state.quotaByYear[year]) state.quotaByYear[year] = {};
   state.quotaByYear[year][key] = val;
 }
+const MENSTRUAL_FREE_DAYS = 3;
+function menstrualExcess(year){
+  year = year || selectedYear;
+  const used = (state.records['menstrual']||[]).filter(r=>r.date.startsWith(String(year))).reduce((s,r)=>s+toDays(r),0);
+  return Math.max(0, used - MENSTRUAL_FREE_DAYS);
+}
+function sickRawUsed(key, year){
+  return (state.records[key]||[]).filter(r=>r.date.startsWith(String(year))).reduce((s,r)=>s+toDays(r),0);
+}
+function sickExcess(year){
+  year = year || selectedYear;
+  const used = sickRawUsed('sick', year) + menstrualExcess(year);
+  const quota = getQuota('sick', year);
+  return Math.max(0, used - quota);
+}
 function usedOf(key, year){
   year = year || selectedYear;
-  return (state.records[key]||[]).filter(r=>r.date.startsWith(String(year))).reduce((s,r)=>s+toDays(r),0);
+  let base = (state.records[key]||[]).filter(r=>r.date.startsWith(String(year))).reduce((s,r)=>s+toDays(r),0);
+  if(key === 'sick'){ base += menstrualExcess(year); }
+  if(key === 'personal'){ base += usedOf('familyCare', year); }
+  return base;
 }
 function remainOf(key, year){
   year = year || selectedYear;
@@ -577,11 +608,23 @@ function compBalanceUpTo(year){
 
 function stampCard(t){
   const remain = remainOf(t.key, selectedYear);
+  let noteHtml = '';
+  if(t.key==='sick'){
+    const excess = menstrualExcess(selectedYear);
+    if(excess>0) noteHtml = `<br>⚠️ 已含生理假併入 ${fmt(excess)} 天`;
+    if(remain<0) noteHtml += `<br>⚠️ 超過 ${fmt(-remain)} 天，可用事假或特休擇一抵銷`;
+  }
+  if(t.key==='personal'){
+    const fc = usedOf('familyCare', selectedYear);
+    if(fc>0) noteHtml = `<br>⚠️ 已含家庭照顧假 ${fmt(fc)} 天`;
+    const paid = personalPaidUsed(selectedYear), unpaid = personalUnpaidUsed(selectedYear);
+    if(paid>0 || unpaid>0){ noteHtml += `<br>💰 有薪已用 ${fmt(paid)} 天・無薪已用 ${fmt(unpaid)} 天`; }
+  }
   return `
     <div class="stamp-card ${remain<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetail('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
-      <div class="num c-${t.c}">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天 ≈ ${fmt(remain*getHoursPerDay())} 小時</small></div>
+      <div class="num c-${t.c}">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天 ≈ ${fmt(remain*getHoursPerDay())} 小時${noteHtml}</small></div>
     </div>`;
 }
 
@@ -621,6 +664,7 @@ function dashboardPanel(){
 
 const KEYWORD_LEAVE_MAP = [
   {re:'特休|年假', key:'annual', label:'特休'},
+  {re:'生理假|生理', key:'menstrual', label:'生理假'},
   {re:'病假|病', key:'sick', label:'病假'},
   {re:'事假|事', key:'personal', label:'事假'},
   {re:'家庭照顧假|家照', key:'familyCare', label:'家庭照顧假'},
@@ -1009,6 +1053,10 @@ function leaveSection(t){
         <button class="btn-${t.c}" onclick="updateQuota('${t.key}')">更新總天數</button>
         <div class="hint">${t.hint}</div>
       </div>
+      ${t.key==='sick' && menstrualExcess(selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 生理假併入病假提醒</strong>${selectedYear} 年生理假已使用超過 ${MENSTRUAL_FREE_DAYS} 天，超過的 ${fmt(menstrualExcess(selectedYear))} 天已自動計入病假已使用天數。</div>` : ''}
+      ${t.key==='sick' && remainOf('sick',selectedYear)<0 ? `<div class="reminder-bar"><strong>⚠️ 病假超額提醒</strong>${selectedYear} 年病假已超過總天數 ${fmt(-remainOf('sick',selectedYear))} 天，依規定可用事假或特別休假擇一抵銷，請自行決定後手動在事假或特休登記這幾天（本系統不會自動幫你決定要扣哪一邊）。</div>` : ''}
+      ${t.key==='personal' && usedOf('familyCare',selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 併入事假提醒</strong>${selectedYear} 年家庭照顧假 ${fmt(usedOf('familyCare',selectedYear))} 天已全額自動計入事假已使用天數。</div>` : ''}
+      ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>💰 有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))} 天，其中有薪 ${fmt(personalPaidUsed(selectedYear))} 天、無薪 ${fmt(personalUnpaidUsed(selectedYear))} 天（門檻：每年前 ${fmt(getPersonalPaidDays())} 天有薪，可在「設定」分頁調整）。</div>` : ''}
       <form class="entry" onsubmit="addRecord('${t.key}', event)">
         <div class="field"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" required><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div></div>
         <div class="field field-days">
@@ -1227,6 +1275,17 @@ function pageData(){
         </div>
       </div>
       <div class="backup">
+        <h2>💰 事假有薪天數設定</h2>
+        <p>常見規定是事假每年前 7 天工資照給、超過的部分不給薪。這裡只是幫你算出「有薪／無薪」各用了幾天，方便對帳，不會影響事假的總天數或剩餘天數計算。</p>
+        <div class="total-row" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">
+          <div class="field" style="max-width:140px;">
+            <label>每年有薪天數門檻</label>
+            <input type="number" id="personalPaidDaysInput" value="${getPersonalPaidDays()}" min="0" max="365" step="0.5">
+          </div>
+          <button type="button" class="btn-jade" onclick="updatePersonalPaidDays()">更新設定</button>
+        </div>
+      </div>
+      <div class="backup">
         <h2>☁️ 雲端同步（跨裝置）</h2>
         <p>${currentUser? `已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。` : '登入 Google 帳號後，資料會自動備份到雲端，並可以在其他裝置用同一個帳號同步查看，不用手動匯出匯入。'}</p>
         <div class="row">
@@ -1410,6 +1469,19 @@ async function updateHoursPerDay(){
     await saveState();
     render();
     setStatus(`已更新為 1 天 = ${fmt(v)} 小時`, true);
+  }catch(err){
+    setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
+  }
+}
+
+async function updatePersonalPaidDays(){
+  try{
+    const v = parseFloat(document.getElementById('personalPaidDaysInput').value);
+    if(isNaN(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
+    state.personalPaidDays = v;
+    await saveState();
+    render();
+    setStatus(`已更新為每年前 ${fmt(v)} 天有薪`, true);
   }catch(err){
     setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
   }
