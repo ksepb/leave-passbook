@@ -29,6 +29,7 @@
     --amber:#B5761A;
   }
   *{box-sizing:border-box;}
+  html{touch-action:manipulation;}
   body{
     margin:0; background:var(--paper);
     background-image:radial-gradient(circle at 1px 1px, rgba(43,42,40,.07) 1px, transparent 0);
@@ -219,7 +220,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-13';
+const APP_VERSION = 'v2026.07.24-14';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
