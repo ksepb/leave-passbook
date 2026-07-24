@@ -221,7 +221,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-17';
+const APP_VERSION = 'v2026.07.24-21';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -679,6 +679,14 @@ const KEYWORD_LEAVE_MAP = [
 const KW_AMOUNT_TOKEN = '(半天|全天|整天|[\\d.]+)';
 const KW_UNIT_TOKEN = '(H|h|小時|天)?';
 const KW_NOTE_TOKEN = '[\\(（]?([^\\)）]*)[\\)）]?';
+const CN_NUM_MAP = {'半':0.5,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+const KW_NUM_OR_CN = '([\\d.]+|[一二三四五六七八九十兩半])';
+function numOrCn(tok){
+  if(tok===undefined || tok===null) return NaN;
+  if(CN_NUM_MAP[tok] !== undefined) return CN_NUM_MAP[tok];
+  return parseFloat(tok);
+}
+const KW_YEARS_TOKEN = '(?:\\s*(1年|2年|一年|兩年|二年))?';
 
 function shiftDate(dateStr, deltaDays){
   const d = new Date(dateStr+'T00:00:00');
@@ -716,20 +724,24 @@ function parseAmountToken(numTok, unitTok){
 
 function kwBuildFromRest(rest, defaultCompType, leaveKeywordPattern){
   let mm;
-  // 加X補Y (備註) -> 補休獲得
-  mm = rest.match(new RegExp(`^加\\s*[\\d.]+\\s*補\\s*([\\d.]+)\\s*${KW_NOTE_TOKEN}$`));
+  // 加X補Y (備註) [1年/2年] -> 補休獲得
+  mm = rest.match(new RegExp(`^加\\s*${KW_NUM_OR_CN}\\s*補\\s*${KW_NUM_OR_CN}\\s*${KW_NOTE_TOKEN}${KW_YEARS_TOKEN}$`));
   if(mm){
-    return { kind:'comp', compType:'earn', unit:'day', amount: parseFloat(mm[1]), note:(mm[2]||'').trim() };
+    const amount = numOrCn(mm[2]);
+    if(isNaN(amount)) return null;
+    const years = (mm[4]==='2年'||mm[4]==='兩年'||mm[4]==='二年') ? 2 : (mm[4]==='1年'||mm[4]==='一年') ? 1 : null;
+    return { kind:'comp', compType:'earn', unit:'day', amount, note:(mm[3]||'').trim(), expiryYears: years };
   }
-  // (使用|用|獲得|得)? 補休/補 X(H/天/半天/全天) (備註)
-  mm = rest.match(new RegExp(`^(使用|用|獲得|得)?\\s*(?:補休|補)\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}$`));
+  // (使用|用|獲得|得)? 補休/補 X(H/天/半天/全天) (備註) [1年/2年]
+  mm = rest.match(new RegExp(`^(使用|用|獲得|得)?\\s*(?:補休|補)\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}${KW_YEARS_TOKEN}$`));
   if(mm){
     const parsed = parseAmountToken(mm[2], mm[3]);
     if(!parsed) return null;
     let compType = defaultCompType;
     if(mm[1]==='使用' || mm[1]==='用') compType='use';
     else if(mm[1]==='獲得' || mm[1]==='得') compType='earn';
-    return { kind:'comp', compType, unit:parsed.unit, amount:parsed.amount, note:(mm[4]||'').trim() };
+    const years = (mm[5]==='2年'||mm[5]==='兩年'||mm[5]==='二年') ? 2 : (mm[5]==='1年'||mm[5]==='一年') ? 1 : null;
+    return { kind:'comp', compType, unit:parsed.unit, amount:parsed.amount, note:(mm[4]||'').trim(), expiryYears: years };
   }
   // (請|使用|用)? <假別關鍵字> X(H/天/半天/全天) (備註)
   mm = rest.match(new RegExp(`^(請|使用|用)?\\s*(${leaveKeywordPattern})\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}$`));
@@ -818,6 +830,7 @@ function keywordPanel(){
           } else if(it.kind==='comp'){
             label = `補休（${it.compType==='use'?'使用':'獲得'}）`;
             amountText = `${fmt(it.amount)} ${it.unit==='hour'?'小時':'天'}`;
+            if(it.compType==='earn' && it.date){ amountText += ` ・到期 ${toROC(addYears(it.date, it.expiryYears||2))}`; }
           } else {
             label = it.leaveLabel;
             amountText = `${fmt(it.amount)} ${it.unit==='hour'?'小時':'天'}`;
@@ -852,17 +865,20 @@ function keywordPanel(){
       <p class="hint" style="margin-bottom:14px;">一行一筆，用關鍵字規則自動辨識（不經過 AI，純本機比對）。日期預設為目前瀏覽的 ${selectedYear} 年，也可以寫「今天／明天／昨天」「115/8/1」「2026/8/1」。</p>
       <p class="hint" style="margin-bottom:18px;line-height:2;">
         支援寫法：<br>
-        ・<b>2/16 加1補1 (除夕)</b> → 補休獲得<br>
+        ・<b>2/16 加1補1 (除夕)</b> 或 <b>加一補一</b>（中文數字也可以） → 補休獲得<br>
         ・<b>3/25 補休4H (性別平等)</b> 或加「用／使用／獲得」明確指定 → 補休<br>
         ・<b>7/23 特休1 (回診)</b>、<b>明天 病假半天 (感冒)</b> → 各假別使用（也支援「請」開頭，數字可用「半天／全天」）<br>
-        ・<b>7/23-7/25 特休1天 (返鄉)</b> → 日期區間，自動展開成每天一筆
+        ・<b>7/23-7/25 特休1天 (返鄉)</b> → 日期區間，自動展開成每天一筆<br>
+        ・補休獲得的句子最後可加 <b>1年</b> 或 <b>2年</b> 指定到期年限，例如 <b>加1補1 (除夕) 1年</b>；沒寫預設 2 年
       </p>
-      <div class="field" style="max-width:220px;margin-bottom:16px;">
-        <label>沒寫「用／獲得」的補休，預設當作</label>
-        <select id="kwDefaultCompType">
-          <option value="earn">獲得補休</option>
-          <option value="use">使用補休</option>
-        </select>
+      <div class="form-row">
+        <div class="field" style="max-width:220px;">
+          <label>沒寫「用／獲得」的補休，預設當作</label>
+          <select id="kwDefaultCompType">
+            <option value="earn">獲得補休</option>
+            <option value="use">使用補休</option>
+          </select>
+        </div>
       </div>
       <textarea id="kwInputText" rows="6" placeholder="例如：
 2/16 加1補1 (除夕)
@@ -1192,7 +1208,8 @@ function compSectionHtml(){
         <div class="form-row">
           <div class="field" style="flex:1;min-width:210px;">
             <label>⏳ 到期日（選填，非登記日期）</label>
-            <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,2)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
+            <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,2)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="setExpiryYears(1)">1年後</button><button type="button" class="date-toggle" onclick="setExpiryYears(2)">2年後</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
+            <div class="hint">依規定補休期限至少 1 年，經勞資協商可延長至 2 年，實際依貴單位規定</div>
           </div>
         </div>
         <div class="form-row">
@@ -1423,6 +1440,12 @@ function setDateQuick(id, offsetDays){
   if(!el) return;
   el.value = offsetDays===0 ? TODAY : shiftDate(TODAY, offsetDays);
 }
+function setExpiryYears(years){
+  const dateEl = document.getElementById('compDate');
+  const baseDate = (dateEl && dateEl.value) ? dateEl.value : TODAY;
+  const expiryEl = document.getElementById('compExpiry');
+  if(expiryEl){ expiryEl.value = addYears(baseDate, years); expiryTouched = true; }
+}
 function playRemoveAnimation(btnEl){
   return new Promise(resolve=>{
     const li = btnEl ? btnEl.closest('li') : null;
@@ -1620,6 +1643,17 @@ function kwParseInput(){
   const defaultCompType = document.getElementById('kwDefaultCompType').value;
   if(!text || !text.trim()){ setStatus('請先貼上想登記的內容', false); return; }
   const { items, unmatched } = parseKeywordLines(text, defaultCompType);
+  const unmarkedEarn = items.filter(it=>it.kind==='comp' && it.compType==='earn' && !it.expiryYears);
+  if(unmarkedEarn.length > 0){
+    const use2 = window.confirm(
+      `有 ${unmarkedEarn.length} 筆補休獲得沒有標記到期年限（1年／2年）。\n\n` +
+      `按「確定」→ 這些都套用 2 年後到期\n` +
+      `按「取消」→ 這些都套用 1 年後到期\n\n` +
+      `之後也可以在「假別」分頁該筆紀錄按「編輯」單獨修改到期日。`
+    );
+    const chosenYears = use2 ? 2 : 1;
+    unmarkedEarn.forEach(it=>{ it.expiryYears = chosenYears; });
+  }
   if(items.length===0){ setStatus('沒有辨識出可登記的資料，請確認格式', false); }
   else { setStatus(`辨識出 ${items.length} 筆，請確認後新增`, true); }
   kwPendingItems = items;
@@ -1657,7 +1691,7 @@ async function applyKwItems(){
       const id = uid();
       if(item.kind==='comp'){
         const rec = { id, type:item.compType, date:item.date, unit:item.unit, amount:Number(item.amount), note:item.note||'' };
-        if(rec.type==='earn'){ rec.expiry = addYears(item.date, 2); }
+        if(rec.type==='earn'){ rec.expiry = addYears(item.date, item.expiryYears || 2); }
         state.compRecords.push(rec);
       } else if(item.kind==='leave'){
         if(!state.records[item.leaveKey]) state.records[item.leaveKey]=[];
