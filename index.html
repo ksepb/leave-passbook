@@ -122,14 +122,14 @@
   form.entry{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:flex-end;}
   .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px;}
   .field label{font-size:11px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .field input,.field select{font-family:'IBM Plex Mono',monospace;font-size:16px;padding:8px 12px;min-height:38px;border:1px solid var(--line);border-radius:10px;background:#fdfcf9;color:var(--ink);font-weight:600;transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;box-sizing:border-box;}
+  .field input,.field select{font-family:'IBM Plex Mono',monospace;font-size:16px;padding:8px 12px;min-height:38px;border:1px solid var(--line);border-radius:10px;background-color:#fdfcf9;color:var(--ink);font-weight:600;transition:border-color .15s ease, box-shadow .15s ease, background-color .15s ease;box-sizing:border-box;}
   select{
     -webkit-appearance:none; appearance:none;
     background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTYgOWw2IDYgNi02IiBmaWxsPSJub25lIiBzdHJva2U9IiMyQjJBMjgiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=");
     background-repeat:no-repeat; background-position:right 10px center; background-size:16px;
     padding-right:32px !important;
   }
-  .field input:focus,.field select:focus{background:#fff;}
+  .field input:focus,.field select:focus{background-color:#fff;}
   .field input:focus,.field select:focus{outline:none;border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);}
   .field.note{flex:2;min-width:140px;}
   .form-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;flex:1 1 100%;margin-bottom:2px;}
@@ -202,7 +202,9 @@
   .month-header{width:100%;display:flex;align-items:center;gap:8px;background:var(--paper-deep);border:1px solid var(--line);border-radius:6px;padding:9px 12px;color:var(--ink);text-align:left;}
   .month-header .month-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:13.5px;}
   .month-header .month-meta{font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;margin-left:auto;}
-  .month-header .chevron{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--jade);color:#fff;font-size:14px;font-weight:900;flex:none;}
+  .month-header .chevron{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:13px;font-weight:900;flex:none;}
+  .month-header .chevron-open{background:var(--jade-soft);color:var(--jade);}
+  .month-header .chevron-closed{background:var(--amber-soft, #F3E4C8);color:var(--amber);}
   .month-group .ledger{margin-top:8px;}
   .reset-row{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);flex-wrap:wrap;}
   .history-divider{display:flex;align-items:center;text-align:center;color:var(--ink-soft);font-size:12px;font-weight:600;margin:20px 0 14px;}
@@ -237,7 +239,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-32';
+const APP_VERSION = 'v2026.07.24-33';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -452,7 +454,7 @@ function renderMonthGroups(listKey, rows, emptyMsg, liBuilder, totalFn, forceExp
         <button type="button" class="month-header" onclick="toggleMonthExpand('${stateKey}', ${expanded})">
           <span class="month-title">${monthLabel(ym)}</span>
           <span class="month-meta">${metaText}</span>
-          <span class="chevron">${expanded?'▾':'▸'}</span>
+          <span class="chevron ${expanded?'chevron-open':'chevron-closed'}">${expanded?'▾':'▸'}</span>
         </button>
         ${expanded? `<ul class="ledger">${groupRows.map(liBuilder).join('')}</ul>` : ''}
       </div>`;
