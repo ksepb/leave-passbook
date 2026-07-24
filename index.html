@@ -63,6 +63,10 @@
   header .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--ink-soft);text-transform:uppercase;}
   header h1{font-family:'Noto Serif TC',serif;font-weight:900;font-size:30px;margin:6px 0 2px;letter-spacing:.06em;}
   header p.sub{font-size:14px;color:var(--ink-soft);margin:0;}
+  header p.sub-lead{font-size:13px;color:var(--ink-soft);margin:6px 0 10px;}
+  header p.sub-foot{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0;letter-spacing:.02em;}
+  .home-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 auto;max-width:320px;}
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:20px;font-family:'Noto Sans TC',sans-serif;font-size:12.5px;font-weight:700;border:1px solid rgba(0,0,0,.04);}
 
   .undo-bar{background:#3A2F22;color:#fff;padding:10px 14px;border-radius:6px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
   .undo-bar button{background:var(--amber);padding:5px 10px;font-size:12px;}
@@ -71,10 +75,11 @@
   .reminder-bar strong{display:block;margin-bottom:4px;font-size:13px;}
 
   .stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
-  .stamp-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:4px;padding:16px 14px 14px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.04);}
+  .stamp-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px 16px;overflow:hidden;box-shadow:0 2px 6px rgba(43,42,40,.05);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;}
+  .stamp-card:active{transform:scale(.97);}
   .stamp-card .label{font-size:11px;color:var(--ink-soft);letter-spacing:.03em;}
-  .stamp-card .num{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;line-height:1.15;margin-top:4px;}
-  .stamp-card .num small{font-size:11px;font-weight:500;margin-left:3px;color:var(--ink-soft);display:block;margin-top:2px;}
+  .stamp-card .num{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;line-height:1.15;margin-top:8px;}
+  .stamp-card .num small{font-size:11px;font-weight:500;color:var(--ink-soft);display:block;margin-top:8px;line-height:1.5;}
   .stamp-card.warn .num{color:var(--amber);}
   .seal{position:absolute;right:-8px;top:-8px;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-weight:900;font-size:18px;transform:rotate(-12deg);opacity:.8;border:2px solid currentColor;}
   .seal::after{content:'';position:absolute;inset:4px;border:1px solid currentColor;border-radius:50%;opacity:.6;}
@@ -82,7 +87,7 @@
   .c-jade-bg{background:var(--jade);} .c-brick-bg{background:var(--brick);} .c-blue-bg{background:var(--blue);} .c-olive-bg{background:var(--olive);} .c-plum-bg{background:var(--plum);} .c-rust-bg{background:var(--rust);}
 
   .dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
-  .dash-card{background:#fff;border:1px solid var(--line);border-radius:4px;padding:12px 14px;text-align:center;}
+  .dash-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 14px;text-align:center;}
   .dash-card .label{font-size:11px;color:var(--ink-soft);}
   .dash-card .num{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;margin-top:4px;}
 
@@ -102,7 +107,7 @@
   .manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
   @media(max-width:620px){.manage-grid{grid-template-columns:1fr;}}
 
-  section.block{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:6px;padding:18px 16px 20px;margin-bottom:20px;}
+  section.block{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;margin-bottom:20px;}
   section.block h2{font-family:'Noto Serif TC',serif;font-size:17px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
   section.block h2 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
   .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);}
@@ -110,17 +115,19 @@
   form.entry{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:flex-end;}
   .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px;}
   .field label{font-size:11px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .field input,.field select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:7px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+  .field input,.field select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:9px 12px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);transition:border-color .15s ease, box-shadow .15s ease;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);}
   .field.note{flex:2;min-width:140px;}
+  .form-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;flex:1 1 100%;margin-bottom:2px;}
   .quickdays{display:flex;gap:6px;}
-  .quickdays button{padding:8px 10px;min-height:36px;min-width:34px;font-size:12px;background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;}
+  .quickdays button{padding:8px 10px;min-height:36px;min-width:34px;font-size:12px;background:#fff;color:var(--ink-soft);border:1.5px solid var(--line);border-radius:12px;font-weight:700;}
   .days-row{display:flex;gap:6px;align-items:center;}
   .date-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .date-row input{flex:1;min-width:130px;}
-  .date-toggle{padding:8px 10px;min-height:36px;min-width:36px;font-size:12px;background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;flex:none;}
-  .days-row input[type=number]{width:64px;flex:none;}
+  .date-toggle{padding:8px 10px;min-height:36px;min-width:36px;font-size:12px;background:#fff;color:var(--ink-soft);border:1.5px solid var(--line);border-radius:12px;font-weight:700;flex:none;}
+  .days-row input[type=number]{width:66px;flex:none;border-radius:12px;}
   .field-days{flex:1 1 220px;min-width:220px;}
-  button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:4px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
+  button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
   .btn-jade{background:var(--jade);} .btn-brick{background:var(--brick);} .btn-blue{background:var(--blue);} .btn-olive{background:var(--olive);} .btn-plum{background:var(--plum);} .btn-rust{background:var(--rust);}
   button.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;}
@@ -130,7 +137,7 @@
   .total-row .hint{flex-basis:100%;margin-top:-8px;}
 
   ul.ledger{list-style:none;margin:0;padding:0;}
-  ul.ledger li{display:block;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:14px;margin-bottom:7px;}
+  ul.ledger li{display:block;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:14px;margin-bottom:8px;}
   ul.ledger li:last-child{margin-bottom:0;}
   ul.ledger .ledger-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   ul.ledger .ledger-bottom{display:flex;align-items:center;gap:8px;margin-top:8px;}
@@ -140,9 +147,9 @@
   ul.ledger .note{color:var(--ink);font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
   ul.ledger .expiry{font-size:10.5px;color:var(--amber);font-family:'IBM Plex Mono',monospace;flex:1;}
   ul.ledger .ledger-actions{display:flex;gap:8px;margin-left:auto;flex:none;}
-  ul.ledger .del{background:#fff;border:1px solid var(--line);border-radius:4px;color:var(--ink-soft);font-size:12px;font-weight:500;cursor:pointer;padding:8px 11px;min-height:36px;line-height:1;display:inline-flex;align-items:center;gap:4px;}
+  ul.ledger .del{background:#fff;border:1.5px solid var(--line);border-radius:12px;color:var(--ink-soft);font-size:12px;font-weight:700;cursor:pointer;padding:8px 11px;min-height:36px;line-height:1;display:inline-flex;align-items:center;gap:4px;}
   ul.ledger li.editrow{display:flex;flex-wrap:wrap;align-items:center;background:#fffaf0;border-radius:4px;padding:8px;gap:6px;}
-  li.editrow input,li.editrow select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;}
+  li.editrow input,li.editrow select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:7px 10px;border:1.5px solid var(--line);border-radius:12px;}
   .empty{font-size:14px;color:var(--ink-soft);padding:14px 2px;line-height:1.6;text-align:center;}
 
   @keyframes stampIn{0%{transform:scale(1.5) rotate(-6deg);opacity:0;}60%{transform:scale(.96) rotate(1deg);opacity:1;}100%{transform:scale(1) rotate(0);}}
@@ -171,7 +178,7 @@
   .legend-item{display:flex;align-items:center;gap:4px;}
   .legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
 
-  .backup{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:6px;padding:18px 16px 20px;}
+  .backup{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;}
   .backup.danger-zone{border-color:var(--brick);background:rgba(241,223,218,.5);margin-bottom:20px;}
   .backup.danger-zone h2{color:var(--brick);}
   .month-group{margin-bottom:10px;}
@@ -366,6 +373,7 @@ let activeLeaveTab = 'annual';
 function switchLeaveTab(key){ activeLeaveTab = key; searchQuery=''; render(); }
 let activePage = 'home';
 function switchPage(page){ activePage = page; window.scrollTo(0,0); render(); }
+function viewLeaveDetail(key){ activeLeaveTab = key; switchPage('leaves'); }
 
 function monthLabel(ym){
   const y = parseInt(ym.slice(0,4),10) - 1911;
@@ -554,20 +562,20 @@ function compBalanceUpTo(year){
 function stampCard(t){
   const remain = remainOf(t.key, selectedYear);
   return `
-    <div class="stamp-card ${remain<0?'warn':''}">
+    <div class="stamp-card ${remain<0?'warn':''}" onclick="viewLeaveDetail('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
-      <div class="num">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天</small></div>
+      <div class="num c-${t.c}">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天</small></div>
     </div>`;
 }
 
 function compStampCard(){
   const compBal = compBalanceUpTo(selectedYear);
   return `
-    <div class="stamp-card ${compBal<0?'warn':''}">
+    <div class="stamp-card ${compBal<0?'warn':''}" onclick="viewLeaveDetail('comp')">
       <div class="seal c-brick">補</div>
       <div class="label">補休結餘</div>
-      <div class="num">${fmt(compBal)}天<small>≈ ${fmt(compBal*getHoursPerDay())} 小時（至 ${selectedYear} 年底）</small></div>
+      <div class="num c-brick">${fmt(compBal)}天<small>≈ ${fmt(compBal*getHoursPerDay())} 小時（至 ${selectedYear} 年底）</small></div>
     </div>`;
 }
 
@@ -585,12 +593,12 @@ function dashboardPanel(){
     if(r.date.startsWith(String(y))) yearTotal += toDays(r);
     if(r.date.startsWith(ym)) monthTotal += toDays(r);
   });
-  const totalRemain = LEAVE_TYPES.reduce((s,t)=> s + remainOf(t.key, CUR_YEAR), 0);
+  const totalRemain = remainOf('annual', CUR_YEAR) + compBalanceUpTo(CUR_YEAR);
   return `
     <div class="dashboard">
       <div class="dash-card"><div class="label">本月已請假</div><div class="num">${fmt(monthTotal)}天</div></div>
       <div class="dash-card"><div class="label">今年已請假</div><div class="num">${fmt(yearTotal)}天</div></div>
-      <div class="dash-card"><div class="label">假別剩餘合計</div><div class="num">${fmt(totalRemain)}天</div></div>
+      <div class="dash-card"><div class="label">特休＋補休合計</div><div class="num">${fmt(totalRemain)}天</div><div style="font-size:10px;color:var(--ink-soft);margin-top:4px;">僅計算特休與補休，不含病假/事假等</div></div>
     </div>`;
 }
 
@@ -1073,46 +1081,51 @@ function compSectionHtml(){
   return `
     <section class="block">
       <h2><span class="dot dot-brick"></span>補休</h2>
-      <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時
-        <span style="display:inline-flex;align-items:center;gap:4px;margin-left:6px;">
-          <input type="number" id="hoursPerDayInput" value="${getHoursPerDay()}" min="1" max="24" step="0.5" style="width:50px;padding:3px 5px;font-size:11px;">
-          <button type="button" class="date-toggle" onclick="updateHoursPerDay()">更新工時</button>
-        </span>
-      </div>
+      <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）</div>
       <form class="entry" onsubmit="addComp(event)">
-        <div class="field"><label>類型</label>
-          <select id="compType">
-            <option value="earn">獲得補休</option>
-            <option value="use">使用補休</option>
-          </select>
-        </div>
-        <div class="field"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange()" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange();">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange();">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
-        <div class="field field-days">
-          <label>數量</label>
-          <div class="days-row">
-            <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required>
-            <select id="compUnit" onchange="onCompUnitChange()" style="width:64px;padding:8px 4px;">
-              <option value="day">天</option>
-              <option value="hour">小時</option>
+        <div class="form-row">
+          <div class="field" style="flex:0 0 160px;"><label>類型</label>
+            <select id="compType">
+              <option value="earn">獲得補休</option>
+              <option value="use">使用補休</option>
             </select>
-            <div class="quickdays" id="compQuickDay">
-              <button type="button" onclick="setDays('compAmount',0.5)">0.5</button>
-              <button type="button" onclick="setDays('compAmount',1)">1</button>
-              <button type="button" onclick="setDays('compAmount',2)">2</button>
-            </div>
-            <div class="quickdays" id="compQuickHour" style="display:none;">
-              <button type="button" onclick="setDays('compAmount',1)">1</button>
-              <button type="button" onclick="setDays('compAmount',2)">2</button>
-              <button type="button" onclick="setDays('compAmount',4)">4</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange()" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange();">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange();">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
+        </div>
+        <div class="form-row">
+          <div class="field field-days">
+            <label>數量</label>
+            <div class="days-row">
+              <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required>
+              <select id="compUnit" onchange="onCompUnitChange()" style="width:64px;padding:8px 4px;">
+                <option value="day">天</option>
+                <option value="hour">小時</option>
+              </select>
+              <div class="quickdays" id="compQuickDay">
+                <button type="button" onclick="setDays('compAmount',0.5)">0.5</button>
+                <button type="button" onclick="setDays('compAmount',1)">1</button>
+                <button type="button" onclick="setDays('compAmount',2)">2</button>
+              </div>
+              <div class="quickdays" id="compQuickHour" style="display:none;">
+                <button type="button" onclick="setDays('compAmount',1)">1</button>
+                <button type="button" onclick="setDays('compAmount',2)">2</button>
+                <button type="button" onclick="setDays('compAmount',4)">4</button>
+              </div>
             </div>
           </div>
         </div>
-        <div class="field" style="min-width:210px;">
-          <label>⏳ 到期日（選填，非登記日期）</label>
-          <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,2)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
+        <div class="form-row">
+          <div class="field" style="flex:1;min-width:210px;">
+            <label>⏳ 到期日（選填，非登記日期）</label>
+            <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,2)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
+          </div>
         </div>
-        <div class="field note"><label>備註</label><input type="text" id="compNote" placeholder="例如：假日加班換休"></div>
-        <button type="submit" class="btn-brick">登記</button>
+        <div class="form-row">
+          <div class="field note"><label>備註</label><input type="text" id="compNote" placeholder="例如：假日加班換休"></div>
+          <button type="submit" class="btn-brick">登記</button>
+        </div>
       </form>
       ${listHtml}
       <div class="reset-row">
@@ -1182,6 +1195,17 @@ function pageTools(){
 function pageData(){
   return `
     <div class="manage-grid">
+      <div class="backup">
+        <h2>⏱️ 每日工時設定</h2>
+        <p>所有假別登記「小時」時，都是依這個比例換算成天數（例如補休 4 小時 = 0.5 天）。若貴單位不是 8 小時制，可在此調整。</p>
+        <div class="total-row" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">
+          <div class="field" style="max-width:140px;">
+            <label>每日標準工時（小時）</label>
+            <input type="number" id="hoursPerDayInput" value="${getHoursPerDay()}" min="1" max="24" step="0.5">
+          </div>
+          <button type="button" class="btn-jade" onclick="updateHoursPerDay()">更新工時</button>
+        </div>
+      </div>
       <div class="backup">
         <h2>☁️ 雲端同步（跨裝置）</h2>
         <p>${currentUser? `已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。` : '登入 Google 帳號後，資料會自動備份到雲端，並可以在其他裝置用同一個帳號同步查看，不用手動匯出匯入。'}</p>
@@ -1279,7 +1303,16 @@ function render(){
     <header>
       <div class="eyebrow">Leave Passbook</div>
       <h1>${activePage==='home' ? '假期存摺' : pageTitle}</h1>
-      ${activePage==='home' ? '<p class="sub">特休、病假、事假、家庭照顧假、身心照顧假、補休，一本記清楚</p>' : ''}
+      ${activePage==='home' ? `
+        <p class="sub-lead">快速管理你的</p>
+        <div class="home-chips">
+          <span class="chip" style="background:var(--jade-soft);color:var(--jade);">特休</span>
+          <span class="chip" style="background:var(--brick-soft);color:var(--brick);">補休</span>
+          <span class="chip" style="background:var(--blue-soft);color:var(--blue);">病假</span>
+          <span class="chip" style="background:var(--olive-soft);color:var(--olive);">事假</span>
+        </div>
+        <p class="sub-foot">支援統計 · 備份 · 分享</p>
+      ` : ''}
     </header>
 
     ${pageContent}
