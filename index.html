@@ -91,7 +91,7 @@
   .dash-card .label{font-size:11px;color:var(--ink-soft);}
   .dash-card .num{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;margin-top:4px;}
 
-  .toolbar{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:18px;}
+  .toolbar{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin:10px 0 18px;}
   .toolbar-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .toolbar-row + .toolbar-row{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
   .toolbar-row input[type=text]{flex:1;min-width:160px;font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
@@ -115,16 +115,19 @@
   form.entry{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:flex-end;}
   .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px;}
   .field label{font-size:11px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .field input,.field select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:8px 12px;min-height:38px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);transition:border-color .15s ease, box-shadow .15s ease;box-sizing:border-box;}
+  .field input,.field select{font-family:'IBM Plex Mono',monospace;font-size:16px;padding:8px 12px;min-height:38px;border:1px solid var(--line);border-radius:10px;background:#fdfcf9;color:var(--ink);font-weight:600;transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;box-sizing:border-box;}
+  .field input:focus,.field select:focus{background:#fff;}
   .field input:focus,.field select:focus{outline:none;border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);}
   .field.note{flex:2;min-width:140px;}
   .form-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;flex:1 1 100%;margin-bottom:2px;}
   .quickdays{display:flex;gap:6px;}
-  .quickdays button{padding:8px 10px;min-height:38px;min-width:34px;font-size:12px;background:#fff;color:var(--ink-soft);border:1.5px solid var(--line);border-radius:12px;font-weight:700;box-sizing:border-box;}
+  .quickdays button{padding:8px 9px;min-height:38px;min-width:32px;font-size:11.5px;background:transparent;color:var(--ink-soft);border:none;border-bottom:1.5px dotted var(--line);border-radius:0;font-weight:600;box-sizing:border-box;}
+  .quickdays button:active{color:var(--jade);border-color:var(--jade);}
   .days-row{display:flex;gap:6px;align-items:center;}
   .date-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .date-row input{flex:1;min-width:130px;}
-  .date-toggle{padding:8px 10px;min-height:38px;min-width:36px;font-size:12px;background:#fff;color:var(--ink-soft);border:1.5px solid var(--line);border-radius:12px;font-weight:700;flex:none;box-sizing:border-box;}
+  .date-toggle{padding:8px 9px;min-height:38px;min-width:32px;font-size:11.5px;background:transparent;color:var(--ink-soft);border:none;border-bottom:1.5px dotted var(--line);border-radius:0;font-weight:600;flex:none;box-sizing:border-box;}
+  .date-toggle:active{color:var(--jade);border-color:var(--jade);}
   .days-row input[type=number]{width:66px;flex:none;border-radius:12px;}
   .field-days{flex:1 1 220px;min-width:220px;}
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
@@ -778,15 +781,15 @@ function keywordPanel(){
   return `
     <div class="block">
       <h2><span class="dot dot-jade"></span>關鍵字快速輸入</h2>
-      <p class="hint" style="margin-bottom:6px;">一行一筆，用關鍵字規則自動辨識（不經過 AI，純本機比對）。日期預設為目前瀏覽的 ${selectedYear} 年，也可以寫「今天／明天／昨天」「115/8/1」「2026/8/1」。</p>
-      <p class="hint" style="margin-bottom:8px;line-height:1.7;">
+      <p class="hint" style="margin-bottom:14px;">一行一筆，用關鍵字規則自動辨識（不經過 AI，純本機比對）。日期預設為目前瀏覽的 ${selectedYear} 年，也可以寫「今天／明天／昨天」「115/8/1」「2026/8/1」。</p>
+      <p class="hint" style="margin-bottom:18px;line-height:2;">
         支援寫法：<br>
         ・<b>2/16 加1補1 (除夕)</b> → 補休獲得<br>
         ・<b>3/25 補休4H (性別平等)</b> 或加「用／使用／獲得」明確指定 → 補休<br>
         ・<b>7/23 特休1 (回診)</b>、<b>明天 病假半天 (感冒)</b> → 各假別使用（也支援「請」開頭，數字可用「半天／全天」）<br>
         ・<b>7/23-7/25 特休1天 (返鄉)</b> → 日期區間，自動展開成每天一筆
       </p>
-      <div class="field" style="max-width:220px;margin-bottom:8px;">
+      <div class="field" style="max-width:220px;margin-bottom:16px;">
         <label>沒寫「用／獲得」的補休，預設當作</label>
         <select id="kwDefaultCompType">
           <option value="earn">獲得補休</option>
@@ -797,7 +800,7 @@ function keywordPanel(){
 2/16 加1補1 (除夕)
 7/23-7/25 特休1天 (返鄉)
 明天 病假半天 (感冒)"></textarea>
-      <div class="row" style="margin-top:8px;">
+      <div class="row" style="margin-top:10px;">
         <button class="btn-jade" onclick="kwParseInput()">解析</button>
         <button class="ghost" onclick="kwClearInput()">清空重填</button>
       </div>
@@ -1159,7 +1162,7 @@ function pageLeaves(){
   return `
     <div class="toolbar">
       <div class="toolbar-row">
-        <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="onSearchInput(this.value)" oncompositionstart="isComposing=true; if(searchDebounceTimer) clearTimeout(searchDebounceTimer);" oncompositionend="isComposing=false; searchQuery=this.value; renderSearchResult();">
+        <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="searchQuery=this.value" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="renderSearchResult();">
         <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
       </div>
       <div class="toolbar-row">
@@ -1178,6 +1181,7 @@ function pageLeaves(){
 function pageTools(){
   return `
     ${keywordPanel()}
+    <div class="section-label">視覺化檢視</div>
     <div class="toolbar">
       <div class="toolbar-row view-toggles">
         <button type="button" class="sortbtn" onclick="toggleCalendar()">${calendarMode?'隱藏行事曆':'📅 行事曆檢視'}</button>
@@ -1358,17 +1362,8 @@ function toggleDateInputType(id){
   }
 }
 
-let searchDebounceTimer = null;
-function onSearchInput(v){
-  searchQuery = v;
-  if(searchDebounceTimer) clearTimeout(searchDebounceTimer);
-  if(isComposing) return;
-  searchDebounceTimer = setTimeout(()=>{ renderSearchResult(); }, 400);
-}
 function renderSearchResult(){
   render();
-  const el = document.getElementById('searchInput');
-  if(el){ el.focus(); const p = el.value.length; try{ el.setSelectionRange(p,p); }catch(e){} }
 }
 
 function toggleSort(){ sortAsc = !sortAsc; render(); }
