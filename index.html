@@ -215,7 +215,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-02';
+const APP_VERSION = 'v2026.07.24-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -265,7 +265,11 @@ async function signInWithGoogle(){
   if(!fbAuth){ setStatus('雲端同步尚未就緒，請稍後再試', false); return; }
   try{
     const provider = new firebase.auth.GoogleAuthProvider();
-    await fbAuth.signInWithRedirect(provider);
+    const result = await fbAuth.signInWithPopup(provider);
+    if(result && result.user){
+      await pullOrPushOnSignIn();
+      render();
+    }
   }catch(e){
     setStatus('登入失敗：' + (e && e.message ? e.message : String(e)), false);
   }
