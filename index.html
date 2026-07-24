@@ -233,13 +233,19 @@ let cloudSyncing = false;
 
 function initFirebase(){
   try{
-    if(typeof firebase === 'undefined') return;
+    if(typeof firebase === 'undefined'){ setStatus('雲端功能載入失敗（Firebase 套件沒抓到）', false); return; }
     firebase.initializeApp(firebaseConfig);
     fbAuth = firebase.auth();
     fbDb = firebase.firestore();
     fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.error('設定登入保存方式失敗', e));
+    let firstAuthCheck = true;
     fbAuth.onAuthStateChanged(async (user)=>{
       currentUser = user;
+      if(firstAuthCheck){
+        firstAuthCheck = false;
+        if(user){ setStatus('✓ 偵測到已登入：' + (user.email||user.displayName||''), true); }
+        else { setStatus('偵測結果：目前沒有登入狀態', false); }
+      }
       render();
     });
     fbAuth.getRedirectResult().then(async (result)=>{
