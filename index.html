@@ -241,12 +241,12 @@ function initFirebase(){
     let firstAuthCheck = true;
     fbAuth.onAuthStateChanged(async (user)=>{
       currentUser = user;
+      render();
       if(firstAuthCheck){
         firstAuthCheck = false;
         if(user){ setStatus('✓ 偵測到已登入：' + (user.email||user.displayName||''), true); }
         else { setStatus('偵測結果：目前沒有登入狀態', false); }
       }
-      render();
     });
     fbAuth.getRedirectResult().then(async (result)=>{
       if(result && result.user){

@@ -1,6 +1,6 @@
 // 假期存摺 Service Worker — 提供離線瀏覽支援
 // 策略：先嘗試連網取得最新版本，失敗（離線）時才使用快取的版本
-const CACHE_NAME = 'leave-passbook-v1';
+const CACHE_NAME = 'leave-passbook-v2';
 const CACHE_FILES = [
   './index.html',
   './manifest.json',
