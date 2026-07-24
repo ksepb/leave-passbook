@@ -25,6 +25,7 @@
     --plum:#7A4B6B; --plum-soft:#EDDEE7;
     --rust:#A8592F; --rust-soft:#F1DDCC;
     --rose:#A8456B; --rose-soft:#F2DDE6;
+    --teal:#2A7A75; --teal-soft:#DBEBE9;
     --line:#C9C2B0;
     --amber:#B5761A;
   }
@@ -88,8 +89,8 @@
   .stamp-card.warn .num{color:var(--amber);}
   .seal{position:absolute;right:-8px;top:-8px;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-weight:900;font-size:18px;transform:rotate(-12deg);opacity:.8;border:2px solid currentColor;}
   .seal::after{content:'';position:absolute;inset:4px;border:1px solid currentColor;border-radius:50%;opacity:.6;}
-  .c-jade{color:var(--jade);} .c-brick{color:var(--brick);} .c-blue{color:var(--blue);} .c-olive{color:var(--olive);} .c-plum{color:var(--plum);} .c-rust{color:var(--rust);} .c-rose{color:var(--rose);}
-  .c-jade-bg{background:var(--jade);} .c-brick-bg{background:var(--brick);} .c-blue-bg{background:var(--blue);} .c-olive-bg{background:var(--olive);} .c-plum-bg{background:var(--plum);} .c-rust-bg{background:var(--rust);} .c-rose-bg{background:var(--rose);}
+  .c-jade{color:var(--jade);} .c-brick{color:var(--brick);} .c-blue{color:var(--blue);} .c-olive{color:var(--olive);} .c-plum{color:var(--plum);} .c-rust{color:var(--rust);} .c-rose{color:var(--rose);} .c-teal{color:var(--teal);}
+  .c-jade-bg{background:var(--jade);} .c-brick-bg{background:var(--brick);} .c-blue-bg{background:var(--blue);} .c-olive-bg{background:var(--olive);} .c-plum-bg{background:var(--plum);} .c-rust-bg{background:var(--rust);} .c-rose-bg{background:var(--rose);} .c-teal-bg{background:var(--teal);}
 
   .dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
   .dash-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 14px;text-align:center;}
@@ -115,7 +116,7 @@
   section.block{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;margin-bottom:20px;}
   section.block h2{font-family:'Noto Serif TC',serif;font-size:17px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
   section.block h2 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
-  .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);} .dot-rose{background:var(--rose);}
+  .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);} .dot-rose{background:var(--rose);} .dot-teal{background:var(--teal);}
 
   form.entry{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:flex-end;}
   .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px;}
@@ -137,7 +138,7 @@
   .field-days{flex:1 1 220px;min-width:220px;}
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
-  .btn-jade{background:var(--jade);} .btn-brick{background:var(--brick);} .btn-blue{background:var(--blue);} .btn-olive{background:var(--olive);} .btn-plum{background:var(--plum);} .btn-rust{background:var(--rust);} .btn-rose{background:var(--rose);}
+  .btn-jade{background:var(--jade);} .btn-brick{background:var(--brick);} .btn-blue{background:var(--blue);} .btn-olive{background:var(--olive);} .btn-plum{background:var(--plum);} .btn-rust{background:var(--rust);} .btn-rose{background:var(--rose);} .btn-teal{background:var(--teal);}
   button.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;}
 
   .total-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
@@ -221,7 +222,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-22';
+const APP_VERSION = 'v2026.07.24-24';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -443,11 +444,12 @@ function renderMonthGroups(listKey, rows, emptyMsg, liBuilder, totalFn, forceExp
   }).join('');
 }
 
-function onCompDateChange(){
+function onCompDateChange(category){
   if(expiryTouched) return;
+  const years = (COMP_CATEGORIES[category||'comp']||COMP_CATEGORIES.comp).defaultYears;
   const dateVal = parseFlexibleDate(document.getElementById('compDate').value);
   const expiryEl = document.getElementById('compExpiry');
-  if(dateVal && expiryEl) expiryEl.value = addYears(dateVal, 2);
+  if(dateVal && expiryEl) expiryEl.value = addYears(dateVal, years);
 }
 
 function yearMin(y){ return y+'-01-01'; }
@@ -606,9 +608,14 @@ function displayAmount(r){
   const amt = r.unit==='day' ? r.amount : r.days;
   return `${fmt(amt)} 天`;
 }
-function compBalanceUpTo(year){
-  return state.compRecords.filter(r=> parseInt(r.date.slice(0,4),10) <= year).reduce((s,r)=> s + (r.type==='earn'? toDays(r): -toDays(r)),0);
+function compBalanceUpTo(year, category){
+  category = category || 'comp';
+  return state.compRecords.filter(r=> parseInt(r.date.slice(0,4),10) <= year && (r.category||'comp')===category).reduce((s,r)=> s + (r.type==='earn'? toDays(r): -toDays(r)),0);
 }
+const COMP_CATEGORIES = {
+  comp: { label:'補休', c:'brick', defaultYears:2 },
+  exchange: { label:'換休', c:'teal', defaultYears:1 }
+};
 
 function stampCard(t){
   const remain = remainOf(t.key, selectedYear);
@@ -634,13 +641,15 @@ function stampCard(t){
     </div>`;
 }
 
-function compStampCard(){
-  const compBal = compBalanceUpTo(selectedYear);
+function compStampCard(category){
+  category = category || 'comp';
+  const info = COMP_CATEGORIES[category];
+  const compBal = compBalanceUpTo(selectedYear, category);
   return `
-    <div class="stamp-card ${compBal<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--brick) 45%, transparent);" onclick="viewLeaveDetail('comp')">
-      <div class="seal c-brick">補</div>
-      <div class="label">補休結餘</div>
-      <div class="num c-brick">${fmt(compBal)}天 <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span><small>至 ${selectedYear} 年底</small></div>
+    <div class="stamp-card ${compBal<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${info.c}) 45%, transparent);" onclick="viewLeaveDetail('${category}')">
+      <div class="seal c-${info.c}">${info.label.slice(0,1)}</div>
+      <div class="label">${info.label}結餘</div>
+      <div class="num c-${info.c}">${fmt(compBal)}天 <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span><small>至 ${selectedYear} 年底・期限${info.defaultYears}年</small></div>
     </div>`;
 }
 
@@ -686,7 +695,6 @@ function numOrCn(tok){
   if(CN_NUM_MAP[tok] !== undefined) return CN_NUM_MAP[tok];
   return parseFloat(tok);
 }
-const KW_YEARS_TOKEN = '(?:\\s*(1年|2年|一年|兩年|二年))?';
 
 function shiftDate(dateStr, deltaDays){
   const d = new Date(dateStr+'T00:00:00');
@@ -725,24 +733,39 @@ function parseAmountToken(numTok, unitTok){
 
 function kwBuildFromRest(rest, defaultCompType, leaveKeywordPattern){
   let mm;
-  // 加X補Y (備註) [1年/2年] -> 補休獲得
-  mm = rest.match(new RegExp(`^加\\s*${KW_NUM_OR_CN}\\s*補\\s*${KW_NUM_OR_CN}\\s*${KW_NOTE_TOKEN}${KW_YEARS_TOKEN}$`));
+  // 加X補Y (備註) -> 補休獲得（固定2年）
+  mm = rest.match(new RegExp(`^加\\s*${KW_NUM_OR_CN}\\s*補\\s*${KW_NUM_OR_CN}\\s*${KW_NOTE_TOKEN}$`));
   if(mm){
     const amount = numOrCn(mm[2]);
     if(isNaN(amount)) return null;
-    const years = (mm[4]==='2年'||mm[4]==='兩年'||mm[4]==='二年') ? 2 : (mm[4]==='1年'||mm[4]==='一年') ? 1 : null;
-    return { kind:'comp', compType:'earn', unit:'day', amount, note:(mm[3]||'').trim(), expiryYears: years };
+    return { kind:'comp', category:'comp', compType:'earn', unit:'day', amount, note:(mm[3]||'').trim() };
   }
-  // (使用|用|獲得|得)? 補休/補 X(H/天/半天/全天) (備註) [1年/2年]
-  mm = rest.match(new RegExp(`^(使用|用|獲得|得)?\\s*(?:補休|補)\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}${KW_YEARS_TOKEN}$`));
+  // 加X換Y (備註) -> 換休獲得（固定1年）
+  mm = rest.match(new RegExp(`^加\\s*${KW_NUM_OR_CN}\\s*換\\s*${KW_NUM_OR_CN}\\s*${KW_NOTE_TOKEN}$`));
+  if(mm){
+    const amount = numOrCn(mm[2]);
+    if(isNaN(amount)) return null;
+    return { kind:'comp', category:'exchange', compType:'earn', unit:'day', amount, note:(mm[3]||'').trim() };
+  }
+  // (使用|用|獲得|得)? 補休/補 X(H/天/半天/全天) (備註) -> 補休（固定2年）
+  mm = rest.match(new RegExp(`^(使用|用|獲得|得)?\\s*(?:補休|補)\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}$`));
   if(mm){
     const parsed = parseAmountToken(mm[2], mm[3]);
     if(!parsed) return null;
     let compType = defaultCompType;
     if(mm[1]==='使用' || mm[1]==='用') compType='use';
     else if(mm[1]==='獲得' || mm[1]==='得') compType='earn';
-    const years = (mm[5]==='2年'||mm[5]==='兩年'||mm[5]==='二年') ? 2 : (mm[5]==='1年'||mm[5]==='一年') ? 1 : null;
-    return { kind:'comp', compType, unit:parsed.unit, amount:parsed.amount, note:(mm[4]||'').trim(), expiryYears: years };
+    return { kind:'comp', category:'comp', compType, unit:parsed.unit, amount:parsed.amount, note:(mm[4]||'').trim() };
+  }
+  // (使用|用|獲得|得)? 換休/換 X(H/天/半天/全天) (備註) -> 換休（固定1年）
+  mm = rest.match(new RegExp(`^(使用|用|獲得|得)?\\s*(?:換休|換)\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}$`));
+  if(mm){
+    const parsed = parseAmountToken(mm[2], mm[3]);
+    if(!parsed) return null;
+    let compType = defaultCompType;
+    if(mm[1]==='使用' || mm[1]==='用') compType='use';
+    else if(mm[1]==='獲得' || mm[1]==='得') compType='earn';
+    return { kind:'comp', category:'exchange', compType, unit:parsed.unit, amount:parsed.amount, note:(mm[4]||'').trim() };
   }
   // (請|使用|用)? <假別關鍵字> X(H/天/半天/全天) (備註)
   mm = rest.match(new RegExp(`^(請|使用|用)?\\s*(${leaveKeywordPattern})\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}$`));
@@ -829,9 +852,10 @@ function keywordPanel(){
             label = `${it.quotaLabel}總天數`;
             amountText = `更新為 ${fmt(it.total)} 天`;
           } else if(it.kind==='comp'){
-            label = `補休（${it.compType==='use'?'使用':'獲得'}）`;
+            const info = COMP_CATEGORIES[it.category||'comp'];
+            label = `${info.label}（${it.compType==='use'?'使用':'獲得'}）`;
             amountText = `${fmt(it.amount)} ${it.unit==='hour'?'小時':'天'}`;
-            if(it.compType==='earn' && it.date){ amountText += ` ・到期 ${toROC(addYears(it.date, it.expiryYears||2))}`; }
+            if(it.compType==='earn' && it.date){ amountText += ` ・到期 ${toROC(addYears(it.date, info.defaultYears))}`; }
           } else {
             label = it.leaveLabel;
             amountText = `${fmt(it.amount)} ${it.unit==='hour'?'小時':'天'}`;
@@ -866,15 +890,15 @@ function keywordPanel(){
       <p class="hint" style="margin-bottom:14px;">一行一筆，用關鍵字規則自動辨識（不經過 AI，純本機比對）。日期預設為目前瀏覽的 ${selectedYear} 年，也可以寫「今天／明天／昨天」「115/8/1」「2026/8/1」。</p>
       <p class="hint" style="margin-bottom:18px;line-height:2;">
         支援寫法：<br>
-        ・<b>2/16 加1補1 (除夕)</b> 或 <b>加一補一</b>（中文數字也可以） → 補休獲得<br>
-        ・<b>3/25 補休4H (性別平等)</b> 或加「用／使用／獲得」明確指定 → 補休<br>
+        ・<b>2/16 加1補1 (除夕)</b> 或 <b>加一補一</b>（中文數字也可以） → 補休獲得，期限固定 2 年<br>
+        ・<b>2/16 加1換1 (輪班換休)</b> → 換休獲得，期限固定 1 年<br>
+        ・<b>3/25 補休4H (性別平等)</b>、<b>3/25 換休4H (假日出勤)</b> 或加「用／使用／獲得」明確指定 → 補休／換休<br>
         ・<b>7/23 特休1 (回診)</b>、<b>明天 病假半天 (感冒)</b> → 各假別使用（也支援「請」開頭，數字可用「半天／全天」）<br>
-        ・<b>7/23-7/25 特休1天 (返鄉)</b> → 日期區間，自動展開成每天一筆<br>
-        ・補休獲得的句子最後可加 <b>1年</b> 或 <b>2年</b> 指定到期年限，例如 <b>加1補1 (除夕) 1年</b>；沒寫預設 2 年
+        ・<b>7/23-7/25 特休1天 (返鄉)</b> → 日期區間，自動展開成每天一筆
       </p>
       <div class="form-row">
         <div class="field" style="max-width:220px;">
-          <label>沒寫「用／獲得」的補休，預設當作</label>
+          <label>沒寫「用／獲得」的補休／換休，預設當作</label>
           <select id="kwDefaultCompType">
             <option value="earn">獲得補休</option>
             <option value="use">使用補休</option>
@@ -895,7 +919,6 @@ function keywordPanel(){
 }
 
 function compExpiryReminders(){
-  if(compBalanceUpTo(CUR_YEAR) <= 0) return [];
   const todayD = new Date(TODAY);
   return state.compRecords.filter(r=>r.type==='earn' && r.expiry).map(r=>{
     const diffDays = Math.round((new Date(r.expiry) - todayD)/86400000);
@@ -908,9 +931,10 @@ function reminderBanner(){
   const compHtml = list.length? (()=>{
     const items = list.map(r=>{
       const statusTxt = r.diffDays < 0 ? `已過期 ${Math.abs(r.diffDays)} 天` : (r.diffDays===0? '今天到期' : `${r.diffDays} 天後到期`);
-      return `${toROC(r.date)} 獲得的 ${displayAmount(r)}補休，到期日 ${toROC(r.expiry)}（${statusTxt}）`;
+      const catLabel = COMP_CATEGORIES[r.category||'comp'].label;
+      return `${toROC(r.date)} 獲得的 ${displayAmount(r)}${catLabel}，到期日 ${toROC(r.expiry)}（${statusTxt}）`;
     }).join('<br>');
-    return `<div class="reminder-bar"><strong>⚠️ 補休到期提醒</strong>${items}</div>`;
+    return `<div class="reminder-bar"><strong>⚠️ 補休／換休到期提醒</strong>${items}</div>`;
   })() : '';
 
   const month = NOW.getMonth()+1;
@@ -942,7 +966,8 @@ function calendarPanel(){
     if(r.date.startsWith(ymPrefix)){
       const d = parseInt(r.date.slice(8,10),10);
       if(!dayMap[d]) dayMap[d]=[];
-      dayMap[d].push({seal:'補', c:'brick', label:`補休${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
+      const info = COMP_CATEGORIES[r.category||'comp'];
+      dayMap[d].push({seal:info.label.slice(0,1), c:info.c, label:`${info.label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
     }
   });
   let cells = '';
@@ -979,11 +1004,12 @@ function statsChart(){
   });
   state.compRecords.filter(r=>r.type==='use' && r.date.startsWith(String(y))).forEach(r=>{
     const mIdx = parseInt(r.date.slice(5,7),10)-1;
-    monthTotals[mIdx]['comp'] = (monthTotals[mIdx]['comp']||0) + toDays(r);
+    const cat = r.category||'comp';
+    monthTotals[mIdx][cat] = (monthTotals[mIdx][cat]||0) + toDays(r);
   });
   const maxVal = Math.max(1, ...monthTotals.map(m=> Object.values(m).reduce((s,v)=>s+v,0)));
   const TRACK_H = 130;
-  const typeList = LEAVE_TYPES.concat([{key:'comp', c:'brick', label:'補休使用'}]);
+  const typeList = LEAVE_TYPES.concat([{key:'comp', c:'brick', label:'補休使用'}, {key:'exchange', c:'teal', label:'換休使用'}]);
   const bars = monthTotals.map((m,i)=>{
     const total = Object.values(m).reduce((s,v)=>s+v,0);
     const segments = typeList.map(t=>{
@@ -1043,7 +1069,7 @@ function buildLeaveLi(t, r, dMin, dMax){
 
 function leaveTabBar(){
   const tabs = LEAVE_TYPES.map(t=>({key:t.key, label:t.label, c:t.c}))
-    .concat([{key:'comp', label:'補休', c:'brick'}]);
+    .concat([{key:'comp', label:'補休', c:'brick'}, {key:'exchange', label:'換休', c:'teal'}]);
   return `
     <div class="leave-tabs">
       ${tabs.map(t=>{
@@ -1119,14 +1145,16 @@ function leaveSection(t){
     </section>`;
 }
 
-function buildCompLi(r, dMin, dMax){
+function buildCompLi(r, dMin, dMax, category){
+  category = category || r.category || 'comp';
+  const info = COMP_CATEGORIES[category];
   if(editing && editing.kind==='comp' && editing.id===r.id){
     const eu = r.unit || 'day';
     const ea = r.unit ? r.amount : r.days;
     return `<li class="editrow">
       <select id="editCompType-${r.id}">
-        <option value="earn" ${r.type==='earn'?'selected':''}>獲得補休</option>
-        <option value="use" ${r.type==='use'?'selected':''}>使用補休</option>
+        <option value="earn" ${r.type==='earn'?'selected':''}>獲得${info.label}</option>
+        <option value="use" ${r.type==='use'?'selected':''}>使用${info.label}</option>
       </select>
       <span class="date-row" style="flex:none;"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}" style="width:130px;"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入">⌨</button></span>
       <input type="number" id="editCompAmount-${r.id}" value="${ea}" min="0.5" step="0.5" style="width:70px;">
@@ -1135,19 +1163,19 @@ function buildCompLi(r, dMin, dMax){
         <option value="hour" ${eu==='hour'?'selected':''}>小時</option>
       </select>
       <input type="text" id="editCompNote-${r.id}" value="${escapeAttr(r.note||'')}" style="flex:1;min-width:100px;">
-      <button class="btn-brick" onclick="saveEditComp('${r.id}')">儲存</button>
+      <button class="btn-${info.c}" onclick="saveEditComp('${r.id}')">儲存</button>
       <button class="ghost" onclick="cancelEdit()">取消</button>
     </li>`;
   }
   return `<li class="${r.id===lastAddedId?'stamp-in':''}">
     <div class="ledger-top">
       <span class="d">${toROC(r.date)}</span>
-      <span class="tag" style="background:var(--brick-soft);color:var(--brick);">${r.type==='earn'?'獲得':'使用'}</span>
+      <span class="tag" style="background:var(--${info.c}-soft);color:var(--${info.c});">${r.type==='earn'?'獲得':'使用'}</span>
       <span class="days">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
       ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
     </div>
     <div class="ledger-bottom">
-      ${r.expiry? `<div class="expiry">⏳ 補休到期日：${toROC(r.expiry)}</div>`:'<div></div>'}
+      ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>`:'<div></div>'}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
         <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
@@ -1156,33 +1184,35 @@ function buildCompLi(r, dMin, dMax){
   </li>`;
 }
 
-function compSectionHtml(){
-  const allComp = state.compRecords.filter(r=>r.date.startsWith(String(selectedYear)));
-  let compRows = allComp.filter(r=>matchesSearch(r.date, r.note, '補休', r.type==='earn'?'獲得':'使用'));
+function compSectionHtml(category){
+  category = category || 'comp';
+  const info = COMP_CATEGORIES[category];
+  const allComp = state.compRecords.filter(r=>r.date.startsWith(String(selectedYear)) && (r.category||'comp')===category);
+  let compRows = allComp.filter(r=>matchesSearch(r.date, r.note, info.label, r.type==='earn'?'獲得':'使用'));
   compRows.sort((a,b)=> sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
-  const compEmptyMsg = allComp.length===0 ? `${selectedYear} 年尚無補休紀錄，可以在上方表單登記第一筆 👆` : '查無符合搜尋的紀錄';
+  const compEmptyMsg = allComp.length===0 ? `${selectedYear} 年尚無${info.label}紀錄，可以在上方表單登記第一筆 👆` : '查無符合搜尋的紀錄';
   const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = defaultDateFor(selectedYear);
   const forceExpand = (groupRows)=> editing && editing.kind==='comp' && groupRows.some(r=>r.id===editing.id);
   const totalFn = (groupRows)=>{
     const net = groupRows.reduce((s,r)=> s + (r.type==='earn'? toDays(r): -toDays(r)), 0);
     return `${groupRows.length} 筆・淨 ${net>=0?'+':''}${fmt(net)} 天`;
   };
-  const listHtml = renderMonthGroups('comp', compRows, compEmptyMsg, r=>buildCompLi(r,dMin,dMax), totalFn, forceExpand);
+  const listHtml = renderMonthGroups(category, compRows, compEmptyMsg, r=>buildCompLi(r,dMin,dMax,category), totalFn, forceExpand);
   return `
     <section class="block">
-      <h2><span class="dot dot-brick"></span>補休</h2>
-      <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）</div>
-      <form class="entry" onsubmit="addComp(event)">
+      <h2><span class="dot dot-${info.c}"></span>${info.label}</h2>
+      <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>
+      <form class="entry" onsubmit="addComp(event, '${category}')">
         <div class="form-row">
           <div class="field" style="flex:0 0 160px;"><label>類型</label>
             <select id="compType">
-              <option value="earn">獲得補休</option>
-              <option value="use">使用補休</option>
+              <option value="earn">獲得${info.label}</option>
+              <option value="use">使用${info.label}</option>
             </select>
           </div>
         </div>
         <div class="form-row">
-          <div class="field" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange()" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange();">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange();">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
+          <div class="field" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange('${category}')" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange('${category}');">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange('${category}');">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
         </div>
         <div class="form-row">
           <div class="field field-days">
@@ -1208,14 +1238,13 @@ function compSectionHtml(){
         </div>
         <div class="form-row">
           <div class="field" style="flex:1;min-width:210px;">
-            <label>⏳ 到期日（選填，非登記日期）</label>
-            <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,2)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="setExpiryYears(1)">1年後</button><button type="button" class="date-toggle" onclick="setExpiryYears(2)">2年後</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
-            <div class="hint">依規定補休期限至少 1 年，經勞資協商可延長至 2 年，實際依貴單位規定</div>
+            <label>⏳ 到期日（自動預設 ${info.defaultYears} 年後，可手動修改）</label>
+            <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,info.defaultYears)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
           </div>
         </div>
         <div class="form-row">
           <div class="field note"><label>備註</label><input type="text" id="compNote" placeholder="例如：假日加班換休"></div>
-          <button type="submit" class="btn-brick">登記</button>
+          <button type="submit" class="btn-${info.c}">登記</button>
         </div>
       </form>
       ${listHtml}
@@ -1227,7 +1256,7 @@ function compSectionHtml(){
           <option value="year">指定某年</option>
           <option value="all">全部</option>
         </select>
-        <button class="danger-btn" onclick="resetRecords(document.getElementById('compResetScope').value, 'comp')">重置</button>
+        <button class="danger-btn" onclick="resetRecords(document.getElementById('compResetScope').value, '${category}')">重置</button>
       </div>
     </section>
 `;
@@ -1240,7 +1269,8 @@ function pageHome(){
 
     <div class="stamps">
       ${stampCard(LEAVE_TYPES[0])}
-      ${compStampCard()}
+      ${compStampCard('comp')}
+      ${compStampCard('exchange')}
       ${LEAVE_TYPES.slice(1).map(stampCard).join('')}
     </div>
 
@@ -1264,7 +1294,7 @@ function pageLeaves(){
       </div>
     </div>
     ${leaveTabBar()}
-    ${activeLeaveTab==='comp' ? compSectionHtml() : leaveSection(LEAVE_TYPES.find(t=>t.key===activeLeaveTab) || LEAVE_TYPES[0])}
+    ${activeLeaveTab==='comp' ? compSectionHtml('comp') : activeLeaveTab==='exchange' ? compSectionHtml('exchange') : leaveSection(LEAVE_TYPES.find(t=>t.key===activeLeaveTab) || LEAVE_TYPES[0])}
   `;
 }
 
@@ -1362,7 +1392,7 @@ function pageData(){
 
     <div class="backup danger-zone">
       <h2>⚠️ 整體重置</h2>
-      <p>清除「所有假別＋補休」在指定範圍內的紀錄，會直接刪除、沒有復原按鈕，執行前請務必先備份。</p>
+      <p>清除「所有假別＋補休＋換休」在指定範圍內的紀錄，會直接刪除、沒有復原按鈕，執行前請務必先備份。</p>
       <div class="row">
         <select id="allResetScope">
           <option value="day">指定某天</option>
@@ -1440,12 +1470,6 @@ function setDateQuick(id, offsetDays){
   const el = document.getElementById(id);
   if(!el) return;
   el.value = offsetDays===0 ? TODAY : shiftDate(TODAY, offsetDays);
-}
-function setExpiryYears(years){
-  const dateEl = document.getElementById('compDate');
-  const baseDate = (dateEl && dateEl.value) ? dateEl.value : TODAY;
-  const expiryEl = document.getElementById('compExpiry');
-  if(expiryEl){ expiryEl.value = addYears(baseDate, years); expiryTouched = true; }
 }
 function playRemoveAnimation(btnEl){
   return new Promise(resolve=>{
@@ -1644,17 +1668,6 @@ function kwParseInput(){
   const defaultCompType = document.getElementById('kwDefaultCompType').value;
   if(!text || !text.trim()){ setStatus('請先貼上想登記的內容', false); return; }
   const { items, unmatched } = parseKeywordLines(text, defaultCompType);
-  const unmarkedEarn = items.filter(it=>it.kind==='comp' && it.compType==='earn' && !it.expiryYears);
-  if(unmarkedEarn.length > 0){
-    const use2 = window.confirm(
-      `有 ${unmarkedEarn.length} 筆補休獲得沒有標記到期年限（1年／2年）。\n\n` +
-      `按「確定」→ 這些都套用 2 年後到期\n` +
-      `按「取消」→ 這些都套用 1 年後到期\n\n` +
-      `之後也可以在「假別」分頁該筆紀錄按「編輯」單獨修改到期日。`
-    );
-    const chosenYears = use2 ? 2 : 1;
-    unmarkedEarn.forEach(it=>{ it.expiryYears = chosenYears; });
-  }
   if(items.length===0){ setStatus('沒有辨識出可登記的資料，請確認格式', false); }
   else { setStatus(`辨識出 ${items.length} 筆，請確認後新增`, true); }
   kwPendingItems = items;
@@ -1691,8 +1704,10 @@ async function applyKwItems(){
       }
       const id = uid();
       if(item.kind==='comp'){
-        const rec = { id, type:item.compType, date:item.date, unit:item.unit, amount:Number(item.amount), note:item.note||'' };
-        if(rec.type==='earn'){ rec.expiry = addYears(item.date, item.expiryYears || 2); }
+        const category = item.category || 'comp';
+        const info = COMP_CATEGORIES[category];
+        const rec = { id, type:item.compType, date:item.date, unit:item.unit, amount:Number(item.amount), note:item.note||'', category };
+        if(rec.type==='earn'){ rec.expiry = addYears(item.date, info.defaultYears); }
         state.compRecords.push(rec);
       } else if(item.kind==='leave'){
         if(!state.records[item.leaveKey]) state.records[item.leaveKey]=[];
@@ -1737,20 +1752,20 @@ async function resetRecords(scope, key){
     scopeLabel = '全部（不限日期）';
   }
 
-  const keysToClear = key==='ALL' ? LEAVE_TYPES.map(t=>t.key).concat(['comp']) : [key];
+  const keysToClear = key==='ALL' ? LEAVE_TYPES.map(t=>t.key).concat(['comp','exchange']) : [key];
   let count = 0;
   keysToClear.forEach(k=>{
-    if(k==='comp'){ count += state.compRecords.filter(r=>matcher(r.date)).length; }
+    if(k==='comp' || k==='exchange'){ count += state.compRecords.filter(r=>(r.category||'comp')===k && matcher(r.date)).length; }
     else { count += (state.records[k]||[]).filter(r=>matcher(r.date)).length; }
   });
 
   if(count===0){ setStatus('這個範圍內沒有符合的紀錄', false); return; }
 
-  const targetLabel = key==='ALL' ? '所有假別（含補休）' : (key==='comp' ? '補休' : ((LEAVE_TYPES.find(t=>t.key===key)||{}).label||key));
+  const targetLabel = key==='ALL' ? '所有假別（含補休／換休）' : (key==='comp' ? '補休' : key==='exchange' ? '換休' : ((LEAVE_TYPES.find(t=>t.key===key)||{}).label||key));
   if(!window.confirm(`確定要清除「${targetLabel}」在 ${scopeLabel} 的 ${count} 筆紀錄嗎？\n此動作會直接刪除，沒有復原按鈕。`)) return;
 
   keysToClear.forEach(k=>{
-    if(k==='comp'){ state.compRecords = state.compRecords.filter(r=>!matcher(r.date)); }
+    if(k==='comp' || k==='exchange'){ state.compRecords = state.compRecords.filter(r=> !((r.category||'comp')===k && matcher(r.date))); }
     else { state.records[k] = (state.records[k]||[]).filter(r=>!matcher(r.date)); }
   });
 
@@ -1759,8 +1774,10 @@ async function resetRecords(scope, key){
   setStatus(`已清除 ${count} 筆紀錄`, true);
 }
 
-async function addComp(e){
+async function addComp(e, category){
   e.preventDefault();
+  category = category || 'comp';
+  const info = COMP_CATEGORIES[category];
   try{
     const type = document.getElementById('compType').value;
     const date = parseFlexibleDate(document.getElementById('compDate').value);
@@ -1771,19 +1788,19 @@ async function addComp(e){
     if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫日期與數量', false); return; }
     const daysEquiv = unit==='hour' ? amount/getHoursPerDay() : amount;
     if(type==='use'){
-      const currentBal = compBalanceUpTo(selectedYear);
+      const currentBal = compBalanceUpTo(selectedYear, category);
       if(currentBal - daysEquiv < 0){
-        if(!window.confirm(`這筆會超過可用的補休（目前結餘 ${fmt(currentBal)} 天 ≈ ${fmt(currentBal*getHoursPerDay())} 小時），仍要登記嗎？`)) return;
+        if(!window.confirm(`這筆會超過可用的${info.label}（目前結餘 ${fmt(currentBal)} 天 ≈ ${fmt(currentBal*getHoursPerDay())} 小時），仍要登記嗎？`)) return;
       }
     }
     const id = uid();
-    const record = { id, type, date, unit, amount, note };
+    const record = { id, type, date, unit, amount, note, category };
     if(type==='earn' && expiry) record.expiry = expiry;
     state.compRecords.push(record);
     lastAddedId = id;
     await saveState();
     render();
-    setStatus('已登記補休', true);
+    setStatus(`已登記${info.label}`, true);
   }catch(err){
     setStatus('儲存失敗：' + (err && err.message ? err.message : String(err)), false);
     console.error(err);
@@ -1824,7 +1841,7 @@ async function removeComp(btnEl, id){
     if(idx===-1) return;
     const item = state.compRecords[idx];
     state.compRecords.splice(idx,1);
-    registerUndo({ kind:'comp', item, index: idx, label: `補休 ${toROC(item.date)} ${displayAmount(item)}` });
+    registerUndo({ kind:'comp', item, index: idx, label: `${COMP_CATEGORIES[item.category||'comp'].label} ${toROC(item.date)} ${displayAmount(item)}` });
     await saveState();
     render();
   }catch(err){
@@ -1842,7 +1859,8 @@ function downloadExcelBackup(){
     LEAVE_TYPES.forEach(t=>{
       summaryRows.push([t.label, fmt(getQuota(t.key, CUR_YEAR)), fmt(usedOf(t.key, CUR_YEAR)), fmt(remainOf(t.key, CUR_YEAR))]);
     });
-    summaryRows.push(['補休', '', '', fmt(compBalanceUpTo(CUR_YEAR))]);
+    summaryRows.push(['補休', '', '', fmt(compBalanceUpTo(CUR_YEAR,'comp'))]);
+    summaryRows.push(['換休', '', '', fmt(compBalanceUpTo(CUR_YEAR,'exchange'))]);
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
     XLSX.utils.book_append_sheet(wb, summarySheet, '摘要');
 
@@ -1858,15 +1876,18 @@ function downloadExcelBackup(){
       XLSX.utils.book_append_sheet(wb, sheet, t.label);
     });
 
-    // 補休分頁
-    const compRows = [['日期(民國)','日期(西元)','類型','數量','單位','備註','到期日(民國)']];
-    state.compRecords.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>{
-      const unit = r.unit==='hour' ? '小時' : '天';
-      const amount = r.unit ? r.amount : r.days;
-      compRows.push([toROC(r.date), r.date, r.type==='earn'?'獲得':'使用', amount, unit, r.note||'', r.expiry? toROC(r.expiry):'']);
+    // 補休／換休分頁
+    ['comp','exchange'].forEach(cat=>{
+      const info = COMP_CATEGORIES[cat];
+      const compRows = [['日期(民國)','日期(西元)','類型','數量','單位','備註','到期日(民國)']];
+      state.compRecords.filter(r=>(r.category||'comp')===cat).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>{
+        const unit = r.unit==='hour' ? '小時' : '天';
+        const amount = r.unit ? r.amount : r.days;
+        compRows.push([toROC(r.date), r.date, r.type==='earn'?'獲得':'使用', amount, unit, r.note||'', r.expiry? toROC(r.expiry):'']);
+      });
+      const compSheet = XLSX.utils.aoa_to_sheet(compRows);
+      XLSX.utils.book_append_sheet(wb, compSheet, info.label);
     });
-    const compSheet = XLSX.utils.aoa_to_sheet(compRows);
-    XLSX.utils.book_append_sheet(wb, compSheet, '補休');
 
     const d = new Date();
     const stamp = d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
@@ -1898,19 +1919,23 @@ function buildFullReportText(){
     lines.push('');
   });
 
-  lines.push('■ 補休');
-  const compRecs = state.compRecords.slice().sort((a,b)=>a.date.localeCompare(b.date));
-  if(compRecs.length===0){ lines.push('　（無紀錄）'); }
-  else {
-    compRecs.forEach(r=>{
-      let line = `　${toROC(r.date)}　${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}`;
-      if(r.note) line += '　'+r.note;
-      if(r.expiry) line += `　（到期：${toROC(r.expiry)}）`;
-      lines.push(line);
-    });
-  }
-  lines.push('');
-  lines.push(`目前補休結餘：${fmt(compBalanceUpTo(CUR_YEAR))} 天（≈ ${fmt(compBalanceUpTo(CUR_YEAR)*getHoursPerDay())} 小時）`);
+  ['comp','exchange'].forEach(cat=>{
+    const info = COMP_CATEGORIES[cat];
+    lines.push(`■ ${info.label}`);
+    const compRecs = state.compRecords.filter(r=>(r.category||'comp')===cat).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    if(compRecs.length===0){ lines.push('　（無紀錄）'); }
+    else {
+      compRecs.forEach(r=>{
+        let line = `　${toROC(r.date)}　${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}`;
+        if(r.note) line += '　'+r.note;
+        if(r.expiry) line += `　（到期：${toROC(r.expiry)}）`;
+        lines.push(line);
+      });
+    }
+    lines.push('');
+    lines.push(`目前${info.label}結餘：${fmt(compBalanceUpTo(CUR_YEAR,cat))} 天（≈ ${fmt(compBalanceUpTo(CUR_YEAR,cat)*getHoursPerDay())} 小時）`);
+    lines.push('');
+  });
 
   return lines.join('\n');
 }
@@ -1952,14 +1977,18 @@ function buildSummaryText(){
   LEAVE_TYPES.forEach(t=>{
     lines.push(`${t.label}：剩餘 ${fmt(remainOf(t.key, CUR_YEAR))} 天（共 ${fmt(getQuota(t.key, CUR_YEAR))} 天）`);
   });
-  lines.push(`補休：結餘 ${fmt(compBalanceUpTo(CUR_YEAR))} 天（≈ ${fmt(compBalanceUpTo(CUR_YEAR)*getHoursPerDay())} 小時）`);
+  lines.push(`補休：結餘 ${fmt(compBalanceUpTo(CUR_YEAR,'comp'))} 天（≈ ${fmt(compBalanceUpTo(CUR_YEAR,'comp')*getHoursPerDay())} 小時）`);
+  lines.push(`換休：結餘 ${fmt(compBalanceUpTo(CUR_YEAR,'exchange'))} 天（≈ ${fmt(compBalanceUpTo(CUR_YEAR,'exchange')*getHoursPerDay())} 小時）`);
   lines.push('');
   lines.push('最近紀錄：');
   const combined = [];
   LEAVE_TYPES.forEach(t=>{
     (state.records[t.key]||[]).forEach(r=> combined.push({date:r.date, text:`${t.label} 用 ${displayAmount(r)}${r.note? '　'+r.note:''}`}));
   });
-  state.compRecords.forEach(r=> combined.push({date:r.date, text:`補休 ${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '　'+r.note:''}`}));
+  state.compRecords.forEach(r=>{
+    const info = COMP_CATEGORIES[r.category||'comp'];
+    combined.push({date:r.date, text:`${info.label} ${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '　'+r.note:''}`});
+  });
   combined.sort((a,b)=> b.date.localeCompare(a.date));
   if(combined.length===0){ lines.push('（尚無紀錄）'); }
   else { combined.slice(0,10).forEach(c=> lines.push(`${toROC(c.date)}　${c.text}`)); }
