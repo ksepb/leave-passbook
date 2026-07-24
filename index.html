@@ -565,20 +565,20 @@ function compBalanceUpTo(year){
 function stampCard(t){
   const remain = remainOf(t.key, selectedYear);
   return `
-    <div class="stamp-card ${remain<0?'warn':''}" onclick="viewLeaveDetail('${t.key}')">
+    <div class="stamp-card ${remain<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetail('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
-      <div class="num">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天</small></div>
+      <div class="num c-${t.c}">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天</small></div>
     </div>`;
 }
 
 function compStampCard(){
   const compBal = compBalanceUpTo(selectedYear);
   return `
-    <div class="stamp-card ${compBal<0?'warn':''}" onclick="viewLeaveDetail('comp')">
+    <div class="stamp-card ${compBal<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--brick) 45%, transparent);" onclick="viewLeaveDetail('comp')">
       <div class="seal c-brick">補</div>
       <div class="label">補休結餘</div>
-      <div class="num">${fmt(compBal)}天<small>≈ ${fmt(compBal*getHoursPerDay())} 小時（至 ${selectedYear} 年底）</small></div>
+      <div class="num c-brick">${fmt(compBal)}天<small>≈ ${fmt(compBal*getHoursPerDay())} 小時（至 ${selectedYear} 年底）</small></div>
     </div>`;
 }
 
