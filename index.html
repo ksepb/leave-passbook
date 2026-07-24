@@ -216,7 +216,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-05';
+const APP_VERSION = 'v2026.07.24-06';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -708,8 +708,13 @@ function parseKeywordLines(text, defaultCompType){
     m = line.match(/^(\S+)\s*[~～]\s*(\S+)\s+(.+)$/) || line.match(/^(\S+)-(\S+)\s+(.+)$/);
     if(m){
       const d1 = parseDateToken(m[1], selectedYear);
-      const d2 = parseDateToken(m[2], selectedYear);
+      let d2 = parseDateToken(m[2], selectedYear);
       if(d1 && d2){
+        // 若結束日期比開始日期早，視為跨年（例如 12/30-1/2），結束日期年份自動+1
+        if(new Date(d2+'T00:00:00').getTime() < new Date(d1+'T00:00:00').getTime()){
+          const d2Parts = d2.split('-');
+          d2 = isoDate(parseInt(d2Parts[0],10)+1, parseInt(d2Parts[1],10), parseInt(d2Parts[2],10));
+        }
         const built = kwBuildFromRest(m[3].trim(), defaultCompType, leaveKeywordPattern);
         if(built){
           let cur = d1, guard = 0;
