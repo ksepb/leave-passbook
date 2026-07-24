@@ -215,6 +215,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
+const APP_VERSION = 'v2026.07.24-02';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -1310,7 +1311,7 @@ function render(){
 
   document.getElementById('app').innerHTML = `
     <header>
-      <div class="eyebrow">Leave Passbook</div>
+      <div class="eyebrow">Leave Passbook · ${APP_VERSION}</div>
       <h1>${activePage==='home' ? '假期存摺' : pageTitle}</h1>
       ${activePage==='home' ? `
         <p class="sub-lead">快速管理你的</p>
