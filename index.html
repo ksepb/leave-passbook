@@ -81,6 +81,8 @@
   .stamp-card .label{font-size:11px;color:var(--ink-soft);letter-spacing:.03em;}
   .stamp-card .num{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;line-height:1.15;margin-top:8px;}
   .stamp-card .num small{font-size:11px;font-weight:500;color:var(--ink-soft);display:block;margin-top:8px;line-height:1.5;}
+  .mini-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+  .mini-chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;}
   .stamp-card.warn .num{color:var(--amber);}
   .seal{position:absolute;right:-8px;top:-8px;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-weight:900;font-size:18px;transform:rotate(-12deg);opacity:.8;border:2px solid currentColor;}
   .seal::after{content:'';position:absolute;inset:4px;border:1px solid currentColor;border-radius:50%;opacity:.6;}
@@ -217,7 +219,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-10';
+const APP_VERSION = 'v2026.07.24-12';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -359,7 +361,7 @@ async function syncToCloud(){
 const LEAVE_TYPES = [
   {key:'annual', label:'特休', seal:'休', c:'jade', defaultQuota:0, hint:'依到職年資自行填入'},
   {key:'menstrual', label:'生理假', seal:'生', c:'rose', defaultQuota:12, hint:'每月至多1天；全年前3天不併入病假，超過部分自動併入病假計算（性平法第14條）'},
-  {key:'sick', label:'病假', seal:'病', c:'blue', defaultQuota:30, hint:'常見上限 30 天／年（半薪），實際依公司規定；生理假超過3天的部分會自動併入此處計算；超過總天數的部分依規定可用事假或特休擇一抵銷，需自行決定'},
+  {key:'sick', label:'病假', seal:'病', c:'blue', defaultQuota:28, hint:'常見上限 28 天／年，實際依公司規定；生理假超過3天的部分會自動併入此處計算；超過總天數的部分依規定可用事假或特休擇一抵銷，需自行決定'},
   {key:'personal', label:'事假', seal:'事', c:'olive', defaultQuota:14, hint:'常見上限 14 天／年（不給薪），實際依公司規定；家庭照顧假會全額自動併入此處計算'},
   {key:'familyCare', label:'家庭照顧假', seal:'家', c:'plum', defaultQuota:7, hint:'併入事假總天數計算，常見上限 7 天／年'},
   {key:'mentalCare', label:'身心照顧假', seal:'心', c:'rust', defaultQuota:3, hint:'依公司規定，預設 3 天，可自行調整'}
@@ -608,23 +610,25 @@ function compBalanceUpTo(year){
 
 function stampCard(t){
   const remain = remainOf(t.key, selectedYear);
-  let noteHtml = '';
+  const chips = [];
   if(t.key==='sick'){
     const excess = menstrualExcess(selectedYear);
-    if(excess>0) noteHtml = `<br>⚠️ 已含生理假併入 ${fmt(excess)} 天`;
-    if(remain<0) noteHtml += `<br>⚠️ 超過 ${fmt(-remain)} 天，可用事假或特休擇一抵銷`;
+    if(excess>0) chips.push(`<span class="mini-chip" style="background:var(--rose-soft);color:var(--rose);">生理假併入 ${fmt(excess)}天</span>`);
+    if(remain<0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">超額 ${fmt(-remain)}天，需擇一抵銷</span>`);
   }
   if(t.key==='personal'){
     const fc = usedOf('familyCare', selectedYear);
-    if(fc>0) noteHtml = `<br>⚠️ 已含家庭照顧假 ${fmt(fc)} 天`;
+    if(fc>0) chips.push(`<span class="mini-chip" style="background:var(--plum-soft);color:var(--plum);">家照併入 ${fmt(fc)}天</span>`);
     const paid = personalPaidUsed(selectedYear), unpaid = personalUnpaidUsed(selectedYear);
-    if(paid>0 || unpaid>0){ noteHtml += `<br>💰 有薪已用 ${fmt(paid)} 天・無薪已用 ${fmt(unpaid)} 天`; }
+    if(paid>0) chips.push(`<span class="mini-chip" style="background:var(--jade-soft);color:var(--jade);">💰有薪 ${fmt(paid)}天</span>`);
+    if(unpaid>0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">無薪 ${fmt(unpaid)}天</span>`);
   }
   return `
     <div class="stamp-card ${remain<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetail('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
-      <div class="num c-${t.c}">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天 ≈ ${fmt(remain*getHoursPerDay())} 小時${noteHtml}</small></div>
+      <div class="num c-${t.c}">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天 ≈ ${fmt(remain*getHoursPerDay())} 小時</small></div>
+      ${chips.length? `<div class="mini-chips">${chips.join('')}</div>` : ''}
     </div>`;
 }
 
