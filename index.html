@@ -102,6 +102,7 @@
   .toolbar-row + .toolbar-row{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
   .toolbar-row input[type=text]{flex:1;min-width:160px;font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
   .year-switch{display:flex;align-items:center;gap:6px;}
+  .year-switch button.sortbtn{width:38px;height:38px;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;color:var(--jade);background:var(--jade-soft);border-color:var(--jade-soft);border-radius:50%;}
   .view-toggles{display:flex;gap:8px;}
   .view-toggles button{flex:1;}
   button.sortbtn{background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;padding:9px 14px;min-height:38px;}
@@ -124,7 +125,7 @@
   .field input,.field select{font-family:'IBM Plex Mono',monospace;font-size:16px;padding:8px 12px;min-height:38px;border:1px solid var(--line);border-radius:10px;background:#fdfcf9;color:var(--ink);font-weight:600;transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;box-sizing:border-box;}
   select{
     -webkit-appearance:none; appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6' fill='none' stroke='%232B2A28' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTYgOWw2IDYgNi02IiBmaWxsPSJub25lIiBzdHJva2U9IiMyQjJBMjgiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=");
     background-repeat:no-repeat; background-position:right 10px center; background-size:16px;
     padding-right:32px !important;
   }
@@ -201,7 +202,7 @@
   .month-header{width:100%;display:flex;align-items:center;gap:8px;background:var(--paper-deep);border:1px solid var(--line);border-radius:6px;padding:9px 12px;color:var(--ink);text-align:left;}
   .month-header .month-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:13.5px;}
   .month-header .month-meta{font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;margin-left:auto;}
-  .month-header .chevron{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--jade-soft);color:var(--jade);font-size:13px;font-weight:900;flex:none;}
+  .month-header .chevron{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--jade);color:#fff;font-size:14px;font-weight:900;flex:none;}
   .month-group .ledger{margin-top:8px;}
   .reset-row{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);flex-wrap:wrap;}
   .history-divider{display:flex;align-items:center;text-align:center;color:var(--ink-soft);font-size:12px;font-weight:600;margin:20px 0 14px;}
@@ -236,7 +237,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-31';
+const APP_VERSION = 'v2026.07.24-32';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
