@@ -237,6 +237,7 @@ function initFirebase(){
     firebase.initializeApp(firebaseConfig);
     fbAuth = firebase.auth();
     fbDb = firebase.firestore();
+    fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.error('設定登入保存方式失敗', e));
     fbAuth.onAuthStateChanged(async (user)=>{
       currentUser = user;
       render();
