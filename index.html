@@ -80,10 +80,11 @@
   .stamp-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px 16px;overflow:hidden;box-shadow:0 2px 6px rgba(43,42,40,.05);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;}
   .stamp-card:active{transform:scale(.97);}
   .stamp-card .label{font-size:11px;color:var(--ink-soft);letter-spacing:.03em;}
-  .stamp-card .num{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;line-height:1.15;margin-top:8px;}
+  .stamp-card .num{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;line-height:1.15;margin-top:8px;white-space:nowrap;}
   .stamp-card .num small{font-size:11px;font-weight:500;color:var(--ink-soft);display:block;margin-top:8px;line-height:1.5;}
   .mini-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
   .mini-chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;}
+  .hour-inline{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:var(--amber);vertical-align:middle;}
   .stamp-card.warn .num{color:var(--amber);}
   .seal{position:absolute;right:-8px;top:-8px;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-weight:900;font-size:18px;transform:rotate(-12deg);opacity:.8;border:2px solid currentColor;}
   .seal::after{content:'';position:absolute;inset:4px;border:1px solid currentColor;border-radius:50%;opacity:.6;}
@@ -220,7 +221,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-14';
+const APP_VERSION = 'v2026.07.24-17';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -628,7 +629,7 @@ function stampCard(t){
     <div class="stamp-card ${remain<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetail('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
-      <div class="num c-${t.c}">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天 ≈ ${fmt(remain*getHoursPerDay())} 小時</small></div>
+      <div class="num c-${t.c}">${fmt(remain)}天 <span class="hour-inline">${fmt(remain*getHoursPerDay())}小時</span><small>共 ${fmt(getQuota(t.key,selectedYear))} 天</small></div>
       ${chips.length? `<div class="mini-chips">${chips.join('')}</div>` : ''}
     </div>`;
 }
@@ -639,7 +640,7 @@ function compStampCard(){
     <div class="stamp-card ${compBal<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--brick) 45%, transparent);" onclick="viewLeaveDetail('comp')">
       <div class="seal c-brick">補</div>
       <div class="label">補休結餘</div>
-      <div class="num c-brick">${fmt(compBal)}天<small>≈ ${fmt(compBal*getHoursPerDay())} 小時（至 ${selectedYear} 年底）</small></div>
+      <div class="num c-brick">${fmt(compBal)}天 <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span><small>至 ${selectedYear} 年底</small></div>
     </div>`;
 }
 
