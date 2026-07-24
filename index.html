@@ -221,7 +221,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-21';
+const APP_VERSION = 'v2026.07.24-22';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -676,7 +676,7 @@ const KEYWORD_LEAVE_MAP = [
   {re:'家庭照顧假|家照', key:'familyCare', label:'家庭照顧假'},
   {re:'身心照顧假|身照|身心|不爽假', key:'mentalCare', label:'身心照顧假'}
 ];
-const KW_AMOUNT_TOKEN = '(半天|全天|整天|[\\d.]+)';
+const KW_AMOUNT_TOKEN = '(半天|全天|整天|[\\d.]+|[一二三四五六七八九十兩])';
 const KW_UNIT_TOKEN = '(H|h|小時|天)?';
 const KW_NOTE_TOKEN = '[\\(（]?([^\\)）]*)[\\)）]?';
 const CN_NUM_MAP = {'半':0.5,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
@@ -716,7 +716,8 @@ function parseDateToken(tok, contextYear){
 function parseAmountToken(numTok, unitTok){
   if(numTok==='半天') return {amount:0.5, unit:'day'};
   if(numTok==='全天' || numTok==='整天') return {amount:1, unit:'day'};
-  const amount = parseFloat(numTok);
+  let amount = parseFloat(numTok);
+  if(isNaN(amount) && CN_NUM_MAP[numTok] !== undefined) amount = CN_NUM_MAP[numTok];
   if(isNaN(amount)) return null;
   const unit = (unitTok==='H'||unitTok==='h'||unitTok==='小時') ? 'hour' : 'day';
   return {amount, unit};
