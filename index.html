@@ -1148,7 +1148,7 @@ function pageLeaves(){
   return `
     <div class="toolbar">
       <div class="toolbar-row">
-        <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="if(!isComposing) onSearchInput(this.value)" oncompositionstart="isComposing=true" oncompositionend="isComposing=false; onSearchInput(this.value)">
+        <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="onSearchInput(this.value)" oncompositionstart="isComposing=true; if(searchDebounceTimer) clearTimeout(searchDebounceTimer);" oncompositionend="isComposing=false; searchQuery=this.value; renderSearchResult();">
         <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
       </div>
       <div class="toolbar-row">
@@ -1327,8 +1327,14 @@ function toggleDateInputType(id){
   }
 }
 
+let searchDebounceTimer = null;
 function onSearchInput(v){
   searchQuery = v;
+  if(searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  if(isComposing) return;
+  searchDebounceTimer = setTimeout(()=>{ renderSearchResult(); }, 400);
+}
+function renderSearchResult(){
   render();
   const el = document.getElementById('searchInput');
   if(el){ el.focus(); const p = el.value.length; try{ el.setSelectionRange(p,p); }catch(e){} }
