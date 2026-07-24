@@ -77,7 +77,7 @@
   .reminder-bar{background:#FDF1DC;border:1px solid var(--amber);color:#6b4a12;padding:10px 14px;border-radius:6px;font-size:14px;margin-bottom:16px;line-height:1.7;}
   .reminder-bar strong{display:block;margin-bottom:4px;font-size:13px;}
 
-  .stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+  .stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;align-items:start;}
   .stamp-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px 16px;overflow:hidden;box-shadow:0 2px 6px rgba(43,42,40,.05);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;}
   .stamp-card:active{transform:scale(.97);}
   .stamp-card .label{font-size:11px;color:var(--ink-soft);letter-spacing:.03em;}
@@ -201,6 +201,11 @@
   .history-divider{display:flex;align-items:center;text-align:center;color:var(--ink-soft);font-size:12px;font-weight:600;margin:20px 0 14px;}
   .history-divider::before,.history-divider::after{content:'';flex:1;border-top:1px dashed var(--line);}
   .history-divider span{padding:0 10px;white-space:nowrap;}
+  .kw-examples{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+  .kw-example{display:flex;align-items:flex-start;gap:9px;}
+  .kw-example .kw-dot{width:8px;height:8px;border-radius:50%;flex:none;margin-top:7px;}
+  .kw-example > div{font-size:13px;color:var(--ink-soft);line-height:1.9;}
+  .kw-code{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;display:inline-block;margin:2px 0;}
   .reset-label{font-size:12px;color:var(--ink-soft);}
   .reset-row select{font-family:'Noto Sans TC',sans-serif;font-size:12.5px;padding:6px 7px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
   .danger-btn{background:#fff;color:var(--brick);border:1px solid var(--brick);font-weight:700;padding:8px 14px;min-height:38px;font-size:12.5px;}
@@ -225,7 +230,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-26';
+const APP_VERSION = 'v2026.07.24-27';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -891,14 +896,13 @@ function keywordPanel(){
     <div class="block">
       <h2><span class="dot dot-jade"></span>關鍵字快速輸入</h2>
       <p class="hint" style="margin-bottom:14px;">一行一筆，用關鍵字規則自動辨識（不經過 AI，純本機比對）。日期預設為目前瀏覽的 ${selectedYear} 年，也可以寫「今天／明天／昨天」「115/8/1」「2026/8/1」。</p>
-      <p class="hint" style="margin-bottom:18px;line-height:2;">
-        支援寫法：<br>
-        ・<b>2/16 加1補1 (除夕)</b> 或 <b>加一補一</b>（中文數字也可以） → 補休獲得，期限固定 2 年<br>
-        ・<b>2/16 加1換1 (輪班換休)</b> → 換休獲得，期限固定 1 年<br>
-        ・<b>3/25 補休4H (性別平等)</b>、<b>3/25 換休4H (假日出勤)</b> 或加「用／使用／獲得」明確指定 → 補休／換休<br>
-        ・<b>7/23 特休1 (回診)</b>、<b>明天 病假半天 (感冒)</b> → 各假別使用（也支援「請」開頭，數字可用「半天／全天」）<br>
-        ・<b>7/23-7/25 特休1天 (返鄉)</b> → 日期區間，自動展開成每天一筆
-      </p>
+      <div class="kw-examples">
+        <div class="kw-example"><span class="kw-dot" style="background:var(--brick);"></span><div><code class="kw-code" style="background:var(--brick-soft);color:var(--brick);">加1補1 (除夕)</code> <span class="hint" style="display:inline;">／</span> <code class="kw-code" style="background:var(--brick-soft);color:var(--brick);">加一補一</code><span class="hint" style="display:inline;">（中文數字也可以）→ 補休獲得，期限固定 2 年</span></div></div>
+        <div class="kw-example"><span class="kw-dot" style="background:var(--teal);"></span><div><code class="kw-code" style="background:var(--teal-soft);color:var(--teal);">加1換1 (輪班換休)</code><span class="hint" style="display:inline;"> → 換休獲得，期限固定 1 年</span></div></div>
+        <div class="kw-example"><span class="kw-dot" style="background:var(--brick);"></span><div><code class="kw-code" style="background:var(--brick-soft);color:var(--brick);">補休4H (性別平等)</code> <code class="kw-code" style="background:var(--teal-soft);color:var(--teal);">換休4H (假日出勤)</code><span class="hint" style="display:inline;"> 或加「用／使用／獲得」明確指定</span></div></div>
+        <div class="kw-example"><span class="kw-dot" style="background:var(--jade);"></span><div><code class="kw-code" style="background:var(--jade-soft);color:var(--jade);">特休1 (回診)</code> <code class="kw-code" style="background:var(--blue-soft);color:var(--blue);">病假半天 (感冒)</code><span class="hint" style="display:inline;"> → 各假別使用（也支援「請」開頭，數字可用「半天／全天」）</span></div></div>
+        <div class="kw-example"><span class="kw-dot" style="background:var(--jade);"></span><div><code class="kw-code" style="background:var(--jade-soft);color:var(--jade);">7/23-7/25 特休1天 (返鄉)</code><span class="hint" style="display:inline;"> → 日期區間，自動展開成每天一筆</span></div></div>
+      </div>
       <div class="form-row">
         <div class="field" style="max-width:220px;">
           <label>沒寫「用／獲得」的補休／換休，預設當作</label>
