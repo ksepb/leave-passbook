@@ -568,7 +568,7 @@ function stampCard(t){
     <div class="stamp-card ${remain<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetail('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
-      <div class="num c-${t.c}">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天</small></div>
+      <div class="num c-${t.c}">${fmt(remain)}天<small>共 ${fmt(getQuota(t.key,selectedYear))} 天 ≈ ${fmt(remain*getHoursPerDay())} 小時</small></div>
     </div>`;
 }
 
