@@ -244,7 +244,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-36';
+const APP_VERSION = 'v2026.07.24-39';
 const STORAGE_KEY = 'leave-passbook-data';
 
 const firebaseConfig = {
@@ -255,6 +255,9 @@ const firebaseConfig = {
   messagingSenderId: "391707124875",
   appId: "1:391707124875:web:adc76c284479df83e8a08e"
 };
+
+const GEMINI_API_KEY = "AQ.Ab8RN6IH1NyWVbBr75wknlhe7tW4CambaPwgb641tDhApx6tHA";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
 let currentUser = null;
 let fbAuth = null;
@@ -899,7 +902,9 @@ function keywordPanel(){
       <div class="row" style="margin-top:10px;">
         <button class="btn-jade" onclick="applyKwItems()">確認新增全部</button>
         <button class="ghost" onclick="cancelKwItems()">取消</button>
+        <button id="aiHealthCheckBtn" class="ghost" onclick="aiHealthCheck()">🔍 AI 健檢</button>
       </div>
+      <div id="aiHealthCheckResult"></div>
     </div>` : '';
   const unmatchedHtml = kwUnmatchedLines.length? `
     <div style="margin-top:10px;font-size:12px;color:var(--brick);">
@@ -1355,6 +1360,7 @@ function pageLeaves(){
 
 function pageTools(){
   return `
+    ${aiFreeformPanel()}
     ${keywordPanel()}
     <div class="section-label">視覺化檢視</div>
     <div class="toolbar">
@@ -1367,6 +1373,22 @@ function pageTools(){
     ${statsChart()}
     ${!calendarMode && !chartMode ? '<div class="empty" style="text-align:center;">選擇上面的「行事曆檢視」或「年度統計圖」查看視覺化資料</div>' : ''}
   `;
+}
+
+function aiFreeformPanel(){
+  return `
+    <div class="block">
+      <h2><span class="dot dot-rose"></span>✨ AI 自由輸入</h2>
+      <p class="hint" style="margin-bottom:12px;">用自己的話描述請假或補休狀況就好，不用照固定格式，AI 會幫你判斷日期跟假別。解析完一樣會先給你預覽，確認沒問題才會登記。</p>
+      <textarea id="aiInputText" rows="4" placeholder="例如：上禮拜三請了一天特休回診，明天要用半天病假"></textarea>
+      <div class="row" style="margin-top:10px;">
+        <button id="aiParseBtn" class="btn-rose" onclick="aiParseFreeform()">AI 解析</button>
+        <button id="voiceInputBtn" class="ghost" onclick="toggleVoiceInput()" style="display:none;">🎤 語音輸入</button>
+        <button class="ghost" onclick="document.getElementById('aiInputText').value='';">清空</button>
+      </div>
+      <div id="voiceHint" class="hint" style="display:none;margin-top:8px;">🔴 聆聽中…請對著手機說話</div>
+    </div>
+`;
 }
 
 function pageData(){
@@ -1510,6 +1532,8 @@ function render(){
   `;
   lastAddedId = null;
   document.getElementById('bottomNavHolder').innerHTML = bottomNav();
+  const voiceBtn = document.getElementById('voiceInputBtn');
+  if(voiceBtn && (window.SpeechRecognition || window.webkitSpeechRecognition)){ voiceBtn.style.display = ''; }
 }
 
 function setStatus(msg, ok){
@@ -1730,6 +1754,148 @@ function kwParseInput(){
   render();
 }
 
+function buildAiPrompt(userInput){
+  return `你是請假紀錄小幫手。使用者會用中文自然語句描述請假、補休或換休的獲得與使用情況，請你解析成結構化 JSON 陣列，只回傳 JSON，不要有其他文字、不要加 markdown 的\`\`\`標記。
+
+今天日期（西元）：${TODAY}
+目前使用者瀏覽的年度：${selectedYear}（如果句子沒提到年份，用這個年度）
+
+可用的一般假別 leaveKey：
+annual=特休, sick=病假, personal=事假, familyCare=家庭照顧假, menstrual=生理假, mentalCare=身心照顧假
+
+補休與換休是另一種類型，有「獲得」與「使用」兩種狀態：
+category: comp=補休, exchange=換休
+compType: earn=獲得, use=使用
+
+請針對使用者輸入的每一件事，輸出一個物件，格式擇一：
+
+一般假別使用：
+{"kind":"leave","leaveKey":"annual","amount":1,"unit":"day","date":"2026-07-16","note":"回診"}
+
+補休／換休：
+{"kind":"comp","category":"comp","compType":"earn","amount":8,"unit":"hour","date":"2026-01-01","note":"除夕"}
+
+規則：
+- unit 只能是 "day" 或 "hour"
+- date 一律輸出西元格式 YYYY-MM-DD（例如使用者說「上禮拜三」「下週一」「明天」都要換算成實際日期）
+- amount 是數字，半天請輸出 0.5
+- 如果某件事看不懂、或無法判斷是哪個假別/哪一天，該筆不要輸出，不要亂猜
+- 最外層直接輸出 JSON 陣列，例如 [{"kind":"leave",...}, {"kind":"comp",...}]，如果一件事都看不懂就輸出空陣列 []
+
+使用者輸入：
+"""
+${userInput}
+"""`;
+}
+
+let voiceRecognition = null;
+let voiceListening = false;
+function toggleVoiceInput(){
+  const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognitionCtor){ setStatus('這個瀏覽器不支援語音輸入', false); return; }
+  const hintEl = document.getElementById('voiceHint');
+  const btnEl = document.getElementById('voiceInputBtn');
+  if(voiceListening && voiceRecognition){
+    voiceRecognition.stop();
+    return;
+  }
+  const recognition = new SpeechRecognitionCtor();
+  voiceRecognition = recognition;
+  recognition.lang = 'zh-TW';
+  recognition.interimResults = false;
+  recognition.continuous = false;
+  recognition.onstart = () => {
+    voiceListening = true;
+    if(hintEl) hintEl.style.display = '';
+    if(btnEl) btnEl.textContent = '⏹ 停止聆聽';
+  };
+  recognition.onresult = (event) => {
+    const transcript = Array.from(event.results).map(r=>r[0].transcript).join('');
+    const textEl = document.getElementById('aiInputText');
+    if(textEl){
+      textEl.value = (textEl.value ? textEl.value.trim() + '，' : '') + transcript;
+    }
+  };
+  recognition.onerror = (event) => {
+    setStatus('語音輸入失敗：' + (event.error || '未知錯誤') + '（如果是用「加到主畫面」開啟，麻煩改用 Safari 分頁開啟再試）', false);
+  };
+  recognition.onend = () => {
+    voiceListening = false;
+    voiceRecognition = null;
+    if(hintEl) hintEl.style.display = 'none';
+    if(btnEl) btnEl.textContent = '🎤 語音輸入';
+  };
+  try{
+    recognition.start();
+  }catch(err){
+    setStatus('語音輸入啟動失敗：' + (err && err.message ? err.message : String(err)), false);
+  }
+}
+
+async function aiParseFreeform(){
+  const btn = document.getElementById('aiParseBtn');
+  const textEl = document.getElementById('aiInputText');
+  const text = textEl ? textEl.value : '';
+  if(!text || !text.trim()){ setStatus('請先輸入想描述的內容', false); return; }
+  if(!GEMINI_API_KEY){ setStatus('尚未設定 AI 金鑰', false); return; }
+  if(btn){ btn.disabled = true; btn.textContent = 'AI 解析中…'; }
+  try{
+    const prompt = buildAiPrompt(text.trim());
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
+      })
+    });
+    if(!resp.ok){
+      const errText = await resp.text().catch(()=> '');
+      throw new Error(`AI 服務回應錯誤（${resp.status}）${errText ? '：' + errText.slice(0,120) : ''}`);
+    }
+    const data = await resp.json();
+    const raw = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : '';
+    if(!raw){ throw new Error('AI 沒有回傳可用的內容'); }
+    let cleaned = raw.trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
+    let parsed;
+    try{ parsed = JSON.parse(cleaned); }
+    catch(e){ throw new Error('AI 回傳的內容格式異常，請換個說法再試一次'); }
+    if(!Array.isArray(parsed)) parsed = [];
+
+    const validLeaveKeys = LEAVE_TYPES.map(t=>t.key);
+    const items = [];
+    const rejected = [];
+    parsed.forEach(it=>{
+      if(!it || typeof it !== 'object'){ return; }
+      const dateOk = typeof it.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(it.date);
+      const amountOk = typeof it.amount === 'number' && it.amount > 0;
+      const unitOk = it.unit === 'day' || it.unit === 'hour';
+      if(!dateOk || !amountOk || !unitOk){ rejected.push(JSON.stringify(it)); return; }
+      if(it.kind === 'leave'){
+        if(!validLeaveKeys.includes(it.leaveKey)){ rejected.push(JSON.stringify(it)); return; }
+        const label = (LEAVE_TYPES.find(t=>t.key===it.leaveKey)||{}).label || it.leaveKey;
+        items.push({ kind:'leave', leaveKey: it.leaveKey, leaveLabel: label, unit: it.unit, amount: it.amount, note: it.note||'', date: it.date, raw: '(AI) ' + (it.note||'') });
+      } else if(it.kind === 'comp'){
+        const category = (it.category==='exchange') ? 'exchange' : 'comp';
+        const compType = (it.compType==='use') ? 'use' : 'earn';
+        items.push({ kind:'comp', category, compType, unit: it.unit, amount: it.amount, note: it.note||'', date: it.date, raw: '(AI) ' + (it.note||'') });
+      } else {
+        rejected.push(JSON.stringify(it));
+      }
+    });
+
+    kwPendingItems = items;
+    kwUnmatchedLines = rejected;
+    if(items.length===0){ setStatus('AI 沒有辨識出可登記的資料，換個說法再試試看', false); }
+    else { setStatus(`AI 辨識出 ${items.length} 筆，請確認後新增`, true); }
+    render();
+  }catch(err){
+    setStatus('AI 解析失敗：' + (err && err.message ? err.message : String(err)), false);
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'AI 解析'; }
+  }
+}
+
 function kwClearInput(){
   const ta = document.getElementById('kwInputText');
   if(ta && ta.value.trim() && !window.confirm('確定要清空目前輸入的文字嗎？')) return;
@@ -1741,6 +1907,91 @@ function kwClearInput(){
 
 function removeKwItem(idx){ kwPendingItems.splice(idx,1); render(); }
 function cancelKwItems(){ kwPendingItems = []; kwUnmatchedLines = []; render(); }
+
+function buildHealthCheckPrompt(pendingItems){
+  const contextLines = [];
+  const seenKeys = new Set();
+  pendingItems.forEach(it=>{
+    const ctxKey = it.kind==='leave' ? ('leave:'+it.leaveKey) : ('comp:'+it.category);
+    if(seenKeys.has(ctxKey)) return;
+    seenKeys.add(ctxKey);
+    let recent = [];
+    if(it.kind==='leave'){
+      recent = (state.records[it.leaveKey]||[]).slice(-8);
+      contextLines.push(`${it.leaveLabel}最近既有紀錄：` + (recent.length? recent.map(r=>`${r.date} ${displayAmount(r)}${r.note?'('+r.note+')':''}`).join('；') : '（無）'));
+    } else {
+      recent = state.compRecords.filter(r=>(r.category||'comp')===it.category).slice(-8);
+      const label = COMP_CATEGORIES[it.category].label;
+      contextLines.push(`${label}最近既有紀錄：` + (recent.length? recent.map(r=>`${r.date} ${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note?'('+r.note+')':''}`).join('；') : '（無）'));
+    }
+  });
+
+  const pendingLines = pendingItems.map((it,idx)=>{
+    if(it.kind==='leave'){
+      return `#${idx}：${it.leaveLabel} ${it.date} ${it.amount}${it.unit==='hour'?'小時':'天'}${it.note?'，備註：'+it.note:''}`;
+    } else {
+      const label = COMP_CATEGORIES[it.category].label;
+      return `#${idx}：${label} ${it.date} ${it.compType==='earn'?'獲得':'使用'} ${it.amount}${it.unit==='hour'?'小時':'天'}${it.note?'，備註：'+it.note:''}`;
+    }
+  });
+
+  return `你是請假紀錄的健檢小幫手。請檢查以下「即將新增」的假期紀錄，看有沒有可能是輸入錯誤或需要使用者留意的地方，例如：
+- 跟既有紀錄重複（同一天、同假別、金額也差不多，可能手滑重複登記）
+- 備註內容看起來跟選的假別不搭（例如備註寫「感冒」卻選了事假）
+- 天數或小時數看起來異常大（例如既有紀錄都是1天，這筆卻是10天）
+- 日期看起來可能選錯了（例如年份差很多、或是很久以前/未來的日期）
+
+即將新增的紀錄：
+${pendingLines.join('\n')}
+
+參考的既有紀錄（同假別最近幾筆，供比對用）：
+${contextLines.join('\n')}
+
+請只回傳一個 JSON 陣列的字串，每個字串是一句簡短的提醒（繁體中文，20字以內），格式例如：["#0 這天跟7/10的紀錄重複，確定要再新增一筆嗎？"]。如果都沒問題，回傳空陣列 []。不要輸出其他文字。`;
+}
+
+async function aiHealthCheck(){
+  const btn = document.getElementById('aiHealthCheckBtn');
+  const resultEl = document.getElementById('aiHealthCheckResult');
+  if(!kwPendingItems.length){ setStatus('目前沒有待確認的資料', false); return; }
+  if(!GEMINI_API_KEY){ setStatus('尚未設定 AI 金鑰', false); return; }
+  if(btn){ btn.disabled = true; btn.textContent = 'AI 健檢中…'; }
+  if(resultEl) resultEl.innerHTML = '';
+  try{
+    const prompt = buildHealthCheckPrompt(kwPendingItems);
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
+      })
+    });
+    if(!resp.ok){
+      const errText = await resp.text().catch(()=> '');
+      throw new Error(`AI 服務回應錯誤（${resp.status}）${errText ? '：' + errText.slice(0,120) : ''}`);
+    }
+    const data = await resp.json();
+    const raw = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : '';
+    let cleaned = (raw||'').trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
+    let warnings = [];
+    try{ warnings = JSON.parse(cleaned); }catch(e){ warnings = []; }
+    if(!Array.isArray(warnings)) warnings = [];
+
+    if(resultEl){
+      if(warnings.length===0){
+        resultEl.innerHTML = `<div class="reminder-bar" style="background:var(--jade-soft);border-color:var(--jade);color:var(--jade);"><strong>✓ AI 健檢完成</strong>沒有發現明顯異常。</div>`;
+      } else {
+        resultEl.innerHTML = `<div class="reminder-bar"><strong>🔍 AI 健檢提醒</strong>${warnings.map(w=>escapeHtml(String(w))).join('<br>')}</div>`;
+      }
+    }
+    setStatus(warnings.length? `AI 健檢發現 ${warnings.length} 項提醒` : 'AI 健檢完成，沒有異常', true);
+  }catch(err){
+    setStatus('AI 健檢失敗：' + (err && err.message ? err.message : String(err)), false);
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '🔍 AI 健檢'; }
+  }
+}
 
 async function applyKwItems(){
   const recordCount = kwPendingItems.filter(it=>it.kind!=='quota').length;
