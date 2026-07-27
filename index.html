@@ -255,6 +255,7 @@ const firebaseConfig = {
   messagingSenderId: "391707124875",
   appId: "1:391707124875:web:adc76c284479df83e8a08e"
 };
+window.firebaseConfig = firebaseConfig;
 
 // Gemini API 呼叫改由 Firebase AI Logic（見本檔案後面的 type="module" 區塊）處理，
 // 前端不再持有任何 AI 金鑰，額度濫用防護交給 App Check。
@@ -2380,6 +2381,7 @@ async function restoreBackup(){
      開頁面後主控台會印出一組 debug token，拿去 App Check → Apps → 你的 App → Manage debug tokens 註冊
 -->
 <script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
   import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-ai.js';
   import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app-check.js';
 
@@ -2388,29 +2390,42 @@ async function restoreBackup(){
 
   const RECAPTCHA_V3_SITE_KEY = '6LcJyGgtAAAAALqIS95jj0GX1GK1HIURpQDBAvhF';
 
-  function setupAiLogic(){
-    if(typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length){
-      setTimeout(setupAiLogic, 300);
+  function showAiError(msg){
+    window.aiReady = false;
+    console.error('Firebase AI Logic 初始化失敗：', msg);
+    // 等主程式的 setStatus 準備好再顯示，避免載入順序問題
+    const tryShow = () => {
+      if(typeof window.setStatus === 'function'){ window.setStatus('AI 初始化失敗：' + msg, false); }
+      else { setTimeout(tryShow, 300); }
+    };
+    tryShow();
+  }
+
+  function setupAiLogic(retries){
+    if(typeof window.firebaseConfig === 'undefined'){
+      if(retries <= 0){ showAiError('等不到 firebaseConfig，程式載入順序可能有問題'); return; }
+      setTimeout(()=>setupAiLogic(retries-1), 300);
       return;
     }
     try{
-      const app = firebase.app();
-      initializeAppCheck(app, {
+      // 用獨立的、跟主程式（compat SDK）分開的 App 實例來跑 AI Logic，
+      // 避免 compat 版跟 modular 版的物件型別不相容。
+      const aiApp = initializeApp(window.firebaseConfig, 'aiLogicApp');
+      initializeAppCheck(aiApp, {
         provider: new ReCaptchaV3Provider(RECAPTCHA_V3_SITE_KEY),
         isTokenAutoRefreshEnabled: true
       });
-      const ai = getAI(app, { backend: new GoogleAIBackend() });
+      const ai = getAI(aiApp, { backend: new GoogleAIBackend() });
       window.aiModel = getGenerativeModel(ai, {
         model: 'gemini-flash-latest',
         generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
       });
       window.aiReady = true;
     }catch(err){
-      console.error('Firebase AI Logic 初始化失敗', err);
-      window.aiReady = false;
+      showAiError((err && err.message) ? err.message : String(err));
     }
   }
-  setupAiLogic();
+  setupAiLogic(20);
 </script>
 </body>
 </html>
