@@ -232,9 +232,9 @@
   .status.err{color:var(--brick);}
   .loading{text-align:center;padding:60px 0;color:var(--ink-soft);font-size:13px;}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -256,9 +256,8 @@ const firebaseConfig = {
   appId: "1:391707124875:web:adc76c284479df83e8a08e"
 };
 
-const GEMINI_API_KEY = "AQ.Ab8RN6IaB2ijEa4Ou4C-moR9NCmG_g3-MmoBO75lS4Ut-aTfug";
-const GEMINI_MODEL = "gemini-flash-latest";
-
+// Gemini API 呼叫改由 Firebase AI Logic（見本檔案後面的 type="module" 區塊）處理，
+// 前端不再持有任何 AI 金鑰，額度濫用防護交給 App Check。
 let currentUser = null;
 let fbAuth = null;
 let fbDb = null;
@@ -1837,24 +1836,12 @@ async function aiParseFreeform(){
   const textEl = document.getElementById('aiInputText');
   const text = textEl ? textEl.value : '';
   if(!text || !text.trim()){ setStatus('請先輸入想描述的內容', false); return; }
-  if(!GEMINI_API_KEY){ setStatus('尚未設定 AI 金鑰', false); return; }
+  if(!window.aiReady || !window.aiModel){ setStatus('AI 服務尚未就緒，請稍後再試（若剛開啟頁面請等一下）', false); return; }
   if(btn){ btn.disabled = true; btn.textContent = 'AI 解析中…'; }
   try{
     const prompt = buildAiPrompt(text.trim());
-    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
-      })
-    });
-    if(!resp.ok){
-      const errText = await resp.text().catch(()=> '');
-      throw new Error(`AI 服務回應錯誤（${resp.status}）${errText ? '：' + errText.slice(0,120) : ''}`);
-    }
-    const data = await resp.json();
-    const raw = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : '';
+    const result = await window.aiModel.generateContent(prompt);
+    const raw = result && result.response ? result.response.text() : '';
     if(!raw){ throw new Error('AI 沒有回傳可用的內容'); }
     let cleaned = raw.trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
     let parsed;
@@ -1954,25 +1941,13 @@ async function aiHealthCheck(){
   const btn = document.getElementById('aiHealthCheckBtn');
   const resultEl = document.getElementById('aiHealthCheckResult');
   if(!kwPendingItems.length){ setStatus('目前沒有待確認的資料', false); return; }
-  if(!GEMINI_API_KEY){ setStatus('尚未設定 AI 金鑰', false); return; }
+  if(!window.aiReady || !window.aiModel){ setStatus('AI 服務尚未就緒，請稍後再試', false); return; }
   if(btn){ btn.disabled = true; btn.textContent = 'AI 健檢中…'; }
   if(resultEl) resultEl.innerHTML = '';
   try{
     const prompt = buildHealthCheckPrompt(kwPendingItems);
-    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
-      })
-    });
-    if(!resp.ok){
-      const errText = await resp.text().catch(()=> '');
-      throw new Error(`AI 服務回應錯誤（${resp.status}）${errText ? '：' + errText.slice(0,120) : ''}`);
-    }
-    const data = await resp.json();
-    const raw = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : '';
+    const result = await window.aiModel.generateContent(prompt);
+    const raw = result && result.response ? result.response.text() : '';
     let cleaned = (raw||'').trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
     let warnings = [];
     try{ warnings = JSON.parse(cleaned); }catch(e){ warnings = []; }
@@ -2391,6 +2366,51 @@ async function restoreBackup(){
     navigator.serviceWorker.register('sw.js').catch(e=>console.error('Service Worker 註冊失敗', e));
   }
 })();
+</script>
+
+<!--
+  Firebase AI Logic（前身 Vertex AI in Firebase）：Google 官方的「後端中繼」，
+  不用自己寫 Cloud Function。App Check 負責擋濫用，金鑰完全不會出現在前端。
+
+  部署前要做的事（Firebase 主控台）：
+  1. AI Services → AI Logic → 開始使用 → 選「Gemini Developer API」（免費，不用升級 Blaze）
+  2. Security → App Check → 幫這個 Web App 註冊 reCAPTCHA v3 provider，
+     把下面的 RECAPTCHA_V3_SITE_KEY 換成你拿到的 site key
+  3. 本機測試（例如用 localhost 開啟）：把下面 FIREBASE_APPCHECK_DEBUG_TOKEN 那行取消註解，
+     開頁面後主控台會印出一組 debug token，拿去 App Check → Apps → 你的 App → Manage debug tokens 註冊
+-->
+<script type="module">
+  import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-ai.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app-check.js';
+
+  // 本機開發用（正式站台請保持註解）：
+  // self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+
+  const RECAPTCHA_V3_SITE_KEY = '6LcJyGgtAAAAALqIS95jj0GX1GK1HIURpQDBAvhF';
+
+  function setupAiLogic(){
+    if(typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length){
+      setTimeout(setupAiLogic, 300);
+      return;
+    }
+    try{
+      const app = firebase.app();
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(RECAPTCHA_V3_SITE_KEY),
+        isTokenAutoRefreshEnabled: true
+      });
+      const ai = getAI(app, { backend: new GoogleAIBackend() });
+      window.aiModel = getGenerativeModel(ai, {
+        model: 'gemini-flash-latest',
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
+      });
+      window.aiReady = true;
+    }catch(err){
+      console.error('Firebase AI Logic 初始化失敗', err);
+      window.aiReady = false;
+    }
+  }
+  setupAiLogic();
 </script>
 </body>
 </html>
