@@ -244,8 +244,10 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.24-42';
+const APP_VERSION = 'v2026.07.28-01';
 const STORAGE_KEY = 'leave-passbook-data';
+
+// 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
 
 const firebaseConfig = {
   apiKey: "AIzaSyC5YIH145QTtNlSy8JyRsXsJjerS98eufE",
@@ -1394,6 +1396,10 @@ function aiFreeformPanel(){
 function pageData(){
   return `
     <div class="manage-grid">
+      <div class="backup">
+        <h2>🔖 版本資訊</h2>
+        <p>目前版本：<strong>${APP_VERSION}</strong>。上傳新版檔案後，若這裡的版本號沒有變，代表瀏覽器還在用舊的快取，請完全關閉分頁（或刪除主畫面捷徑重新加入）再打開一次。</p>
+      </div>
       <div class="backup">
         <h2>⏱️ 每日工時設定</h2>
         <p>所有假別登記「小時」時，都是依這個比例換算成天數（例如補休 4 小時 = 0.5 天）。若貴單位不是 8 小時制，可在此調整。</p>
