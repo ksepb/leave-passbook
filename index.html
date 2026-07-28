@@ -2375,20 +2375,20 @@ async function restoreBackup(){
 
   部署前要做的事（Firebase 主控台）：
   1. AI Services → AI Logic → 開始使用 → 選「Gemini Developer API」（免費，不用升級 Blaze）
-  2. Security → App Check → 幫這個 Web App 註冊 reCAPTCHA v3 provider，
-     把下面的 RECAPTCHA_V3_SITE_KEY 換成你拿到的 site key
-  3. 本機測試（例如用 localhost 開啟）：把下面 FIREBASE_APPCHECK_DEBUG_TOKEN 那行取消註解，
-     開頁面後主控台會印出一組 debug token，拿去 App Check → Apps → 你的 App → Manage debug tokens 註冊
+  1. AI Services → AI Logic → 開始使用 → 選「Gemini Developer API」（免費，不用升級 Blaze）
+  2. Security → App Check → 這個 Web App → 「⋮」→ Manage debug tokens
+     → 新增一組 debug token，貼上下面 DEBUG_TOKEN 這個值，存檔
+  （這裡改用固定的 Debug Token，不透過 reCAPTCHA，
+   可避免 AdGuard / iCloud Private Relay 等網路環境干擾驗證）
 -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
   import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-ai.js';
-  import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app-check.js';
+  import { initializeAppCheck, CustomProvider } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app-check.js';
 
-  // 本機開發用（正式站台請保持註解）：
-  // self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-
-  const RECAPTCHA_V3_SITE_KEY = '6LcJyGgtAAAAALqIS95jj0GX1GK1HIURpQDBAvhF';
+  // 固定的除錯權杖：要到 Firebase 主控台 App Check → 這個 Web App →
+  // 「⋮」→ Manage debug tokens 裡新增同一組值，App Check 才會放行。
+  const DEBUG_TOKEN = 'ee98caa0-d498-4290-b655-7af270801aba';
 
   function showAiError(msg){
     window.aiReady = false;
@@ -2412,7 +2412,12 @@ async function restoreBackup(){
       // 避免 compat 版跟 modular 版的物件型別不相容。
       const aiApp = initializeApp(window.firebaseConfig, 'aiLogicApp');
       initializeAppCheck(aiApp, {
-        provider: new ReCaptchaV3Provider(RECAPTCHA_V3_SITE_KEY),
+        provider: new CustomProvider({
+          getToken: () => Promise.resolve({
+            token: DEBUG_TOKEN,
+            expireTimeMillis: Date.now() + 60 * 60 * 1000
+          })
+        }),
         isTokenAutoRefreshEnabled: true
       });
       const ai = getAI(aiApp, { backend: new GoogleAIBackend() });
