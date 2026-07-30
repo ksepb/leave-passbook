@@ -244,7 +244,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-03';
+const APP_VERSION = 'v2026.07.28-06';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -717,6 +717,10 @@ const KW_UNIT_TOKEN = '(H|h|小時|天)?';
 const KW_NOTE_TOKEN = '[\\(（]?([^\\)）]*)[\\)）]?';
 const CN_NUM_MAP = {'半':0.5,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
 const KW_NUM_OR_CN = '([\\d.]+|[一二三四五六七八九十兩半])';
+// 明確的日期格式（不用 \S+ 抓一整段，這樣日期後面不管有沒有空格都能正確切開）
+const DATE_TOKEN_RE = '(?:今天|今日|明天|明日|昨天|昨日|\\d{1,4}[\\/\\-]\\d{1,2}[\\/\\-]\\d{1,2}|\\d{1,2}[\\/\\-]\\d{1,2}|\\d{1,2}月\\d{1,2}日?)';
+// 給日期區間用，只認斜線格式的日期，避免跟區間用的「-」混在一起分不清
+const DATE_SLASH_RE = '(?:\\d{1,4}\\/\\d{1,2}\\/\\d{1,2}|\\d{1,2}\\/\\d{1,2})';
 function numOrCn(tok){
   if(tok===undefined || tok===null) return NaN;
   if(CN_NUM_MAP[tok] !== undefined) return CN_NUM_MAP[tok];
@@ -749,6 +753,7 @@ function parseDateToken(tok, contextYear){
 }
 
 function parseAmountToken(numTok, unitTok){
+  if(numTok===undefined || numTok===null || numTok==='') return {amount:1, unit:'day'};
   if(numTok==='半天') return {amount:0.5, unit:'day'};
   if(numTok==='全天' || numTok==='整天') return {amount:1, unit:'day'};
   let amount = parseFloat(numTok);
@@ -775,7 +780,7 @@ function kwBuildFromRest(rest, defaultCompType, leaveKeywordPattern){
     return { kind:'comp', category:'exchange', compType:'earn', unit:'day', amount, note:(mm[3]||'').trim() };
   }
   // (使用|用|獲得|得)? 補休/補 X(H/天/半天/全天) (備註) -> 補休（固定2年）
-  mm = rest.match(new RegExp(`^(使用|用|獲得|得)?\\s*(?:補休|補)\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}$`));
+  mm = rest.match(new RegExp(`^(使用|用|獲得|得)?\\s*(?:補休|補)\\s*(?:${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN})?\\s*${KW_NOTE_TOKEN}$`));
   if(mm){
     const parsed = parseAmountToken(mm[2], mm[3]);
     if(!parsed) return null;
@@ -785,7 +790,7 @@ function kwBuildFromRest(rest, defaultCompType, leaveKeywordPattern){
     return { kind:'comp', category:'comp', compType, unit:parsed.unit, amount:parsed.amount, note:(mm[4]||'').trim() };
   }
   // (使用|用|獲得|得)? 換休/換 X(H/天/半天/全天) (備註) -> 換休（固定1年）
-  mm = rest.match(new RegExp(`^(使用|用|獲得|得)?\\s*(?:換休|換)\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}$`));
+  mm = rest.match(new RegExp(`^(使用|用|獲得|得)?\\s*(?:換休|換)\\s*(?:${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN})?\\s*${KW_NOTE_TOKEN}$`));
   if(mm){
     const parsed = parseAmountToken(mm[2], mm[3]);
     if(!parsed) return null;
@@ -795,7 +800,7 @@ function kwBuildFromRest(rest, defaultCompType, leaveKeywordPattern){
     return { kind:'comp', category:'exchange', compType, unit:parsed.unit, amount:parsed.amount, note:(mm[4]||'').trim() };
   }
   // (請|使用|用)? <假別關鍵字> X(H/天/半天/全天) (備註)
-  mm = rest.match(new RegExp(`^(請|使用|用)?\\s*(${leaveKeywordPattern})\\s*${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN}\\s*${KW_NOTE_TOKEN}$`));
+  mm = rest.match(new RegExp(`^(請|使用|用)?\\s*(${leaveKeywordPattern})\\s*(?:${KW_AMOUNT_TOKEN}\\s*${KW_UNIT_TOKEN})?\\s*${KW_NOTE_TOKEN}$`));
   if(mm){
     const mapEntry = KEYWORD_LEAVE_MAP.find(k=> new RegExp('^(?:'+k.re+')$').test(mm[2]));
     const parsed = parseAmountToken(mm[3], mm[4]);
@@ -808,7 +813,7 @@ function kwBuildFromRest(rest, defaultCompType, leaveKeywordPattern){
 function parseKeywordLines(text, defaultCompType){
   const items = [];
   const unmatched = [];
-  const rawLines = text.split('\n').map(l=>l.trim());
+  const rawLines = text.split('\n').map(l=>l.replace(/[\s\u3000]+/g,' ').trim());
   const leaveKeywordPattern = KEYWORD_LEAVE_MAP.map(k=>k.re).join('|');
 
   rawLines.forEach(line=>{
@@ -817,8 +822,9 @@ function parseKeywordLines(text, defaultCompType){
 
     let m;
 
-    // A) 日期區間：M/D~M/D 或 M/D-M/D <內容> -> 展開成每天一筆
-    m = line.match(/^(\S+)\s*[~～]\s*(\S+)\s+(.+)$/) || line.match(/^(\S+)-(\S+)\s+(.+)$/);
+    // A) 日期區間：M/D~M/D 或 M/D-M/D <內容> -> 展開成每天一筆（有沒有空格都可以）
+    m = line.match(new RegExp(`^(${DATE_TOKEN_RE})\\s*[~～]\\s*(${DATE_TOKEN_RE})\\s*(.+)$`))
+      || line.match(new RegExp(`^(${DATE_SLASH_RE})-(${DATE_SLASH_RE})\\s*(.+)$`));
     if(m){
       const d1 = parseDateToken(m[1], selectedYear);
       let d2 = parseDateToken(m[2], selectedYear);
@@ -842,8 +848,8 @@ function parseKeywordLines(text, defaultCompType){
       }
     }
 
-    // B) 單一日期開頭：<日期> <其餘內容>
-    m = line.match(/^(\S+)\s+(.+)$/);
+    // B) 單一日期開頭：<日期><其餘內容>，日期後面有沒有空格都可以
+    m = line.match(new RegExp(`^(${DATE_TOKEN_RE})\\s*(.+)$`));
     if(m){
       const d = parseDateToken(m[1], selectedYear);
       if(d){
@@ -1362,7 +1368,6 @@ function pageLeaves(){
 
 function pageTools(){
   return `
-    ${aiFreeformPanel()}
     ${keywordPanel()}
     <div class="section-label">視覺化檢視</div>
     <div class="toolbar">
@@ -1399,6 +1404,14 @@ function pageData(){
       <div class="backup">
         <h2>🔖 版本資訊</h2>
         <p>目前版本：<strong>${APP_VERSION}</strong>。上傳新版檔案後，若這裡的版本號沒有變，代表瀏覽器還在用舊的快取，請完全關閉分頁（或刪除主畫面捷徑重新加入）再打開一次。</p>
+      </div>
+      <div class="backup">
+        <h2>🔑 AI 除錯權杖（本機）</h2>
+        <p>這組是這台裝置自動產生的權杖，需要到 Firebase 主控台 → App Check → 這個 Web App → Manage debug tokens 裡新增（先把舊的都刪掉，避免混淆）。請按下面「複製」直接貼上，不要手打，才不會打錯字。</p>
+        <div class="total-row" style="border-bottom:none;padding-bottom:0;margin-bottom:0;gap:8px;">
+          <input type="text" id="aiDebugTokenInput" readonly value="${window.aiDebugToken || '尚未產生，請稍候…'}" style="flex:1;font-family:monospace;font-size:13px;" onclick="this.select();">
+          <button type="button" class="btn-jade" onclick="copyAiDebugToken()">複製</button>
+        </div>
       </div>
       <div class="backup">
         <h2>⏱️ 每日工時設定</h2>
@@ -1599,6 +1612,22 @@ function changeCalMonth(delta){
   render();
 }
 function toggleChart(){ chartMode = !chartMode; render(); }
+
+function copyAiDebugToken(){
+  const input = document.getElementById('aiDebugTokenInput');
+  if(!input || !input.value || input.value.includes('尚未產生')){ setStatus('權杖還沒準備好，稍等一下再試', false); return; }
+  input.select();
+  input.setSelectionRange(0, 99999);
+  const doFallback = () => {
+    try{ document.execCommand('copy'); setStatus('已複製到剪貼簿', true); }
+    catch(e){ setStatus('自動複製失敗，請長按輸入框手動選取複製', false); }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(input.value).then(()=>setStatus('已複製到剪貼簿', true)).catch(doFallback);
+  } else {
+    doFallback();
+  }
+}
 
 async function updateHoursPerDay(){
   try{
@@ -2392,9 +2421,20 @@ async function restoreBackup(){
   import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-ai.js';
   import { initializeAppCheck, CustomProvider } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app-check.js';
 
-  // 固定的除錯權杖：要到 Firebase 主控台 App Check → 這個 Web App →
-  // 「⋮」→ Manage debug tokens 裡新增同一組值，App Check 才會放行。
-  const DEBUG_TOKEN = '9f0e6a2f-e353-478d-aa60-1b360411906a';
+  // 除錯權杖：由這台裝置自動產生一次後存在 localStorage，之後都用同一組。
+  // 使用者要做的事：去「設定」頁把這組值複製起來，貼到 Firebase 主控台
+  // App Check → 這個 Web App → Manage debug tokens 裡新增（不要手打）。
+  let DEBUG_TOKEN = null;
+  try{
+    DEBUG_TOKEN = localStorage.getItem('aiDebugToken');
+    if(!DEBUG_TOKEN){
+      DEBUG_TOKEN = crypto.randomUUID();
+      localStorage.setItem('aiDebugToken', DEBUG_TOKEN);
+    }
+  }catch(e){
+    DEBUG_TOKEN = crypto.randomUUID();
+  }
+  window.aiDebugToken = DEBUG_TOKEN;
 
   function showAiError(msg){
     window.aiReady = false;
