@@ -76,6 +76,8 @@
 
   .reminder-bar{background:#FDF1DC;border:1px solid var(--amber);color:#6b4a12;padding:10px 14px;border-radius:6px;font-size:14px;margin-bottom:16px;line-height:1.7;}
   .reminder-bar strong{display:block;margin-bottom:4px;font-size:13px;}
+  .reminder-bar.reminder-urgent{background:#FBE4E2;border-color:#C0392B;color:#8b241a;}
+  .reminder-bar .urgent-line{color:#C0392B;font-weight:700;}
 
   .stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;align-items:start;}
   .stamp-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px 16px;overflow:hidden;box-shadow:0 2px 6px rgba(43,42,40,.05);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;}
@@ -244,7 +246,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-06';
+const APP_VERSION = 'v2026.07.28-08';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -910,9 +912,7 @@ function keywordPanel(){
       <div class="row" style="margin-top:10px;">
         <button class="btn-jade" onclick="applyKwItems()">確認新增全部</button>
         <button class="ghost" onclick="cancelKwItems()">取消</button>
-        <button id="aiHealthCheckBtn" class="ghost" onclick="aiHealthCheck()">🔍 AI 健檢</button>
       </div>
-      <div id="aiHealthCheckResult"></div>
     </div>` : '';
   const unmatchedHtml = kwUnmatchedLines.length? `
     <div style="margin-top:10px;font-size:12px;color:var(--brick);">
@@ -992,12 +992,14 @@ function compExpiryReminders(){
 function reminderBanner(){
   const list = compExpiryReminders();
   const compHtml = list.length? (()=>{
+    const hasUrgent = list.some(r=>r.diffDays<=7);
     const items = list.map(r=>{
       const statusTxt = r.diffDays < 0 ? `已過期 ${Math.abs(r.diffDays)} 天` : (r.diffDays===0? '今天到期' : `${r.diffDays} 天後到期`);
       const catLabel = COMP_CATEGORIES[r.category||'comp'].label;
-      return `${toROC(r.date)} 獲得的 ${displayAmount(r)}${catLabel}，到期日 ${toROC(r.expiry)}（${statusTxt}）`;
+      const lineClass = r.diffDays<=7 ? 'urgent-line' : '';
+      return `<span class="${lineClass}">${toROC(r.date)} 獲得的 ${displayAmount(r)}${catLabel}，到期日 ${toROC(r.expiry)}（${statusTxt}）</span>`;
     }).join('<br>');
-    return `<div class="reminder-bar"><strong>⚠️ 補休／換休到期提醒</strong>${items}</div>`;
+    return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>⚠️ 補休／換休到期提醒</strong>${items}</div>`;
   })() : '';
 
   const month = NOW.getMonth()+1;
@@ -1382,36 +1384,12 @@ function pageTools(){
   `;
 }
 
-function aiFreeformPanel(){
-  return `
-    <div class="block">
-      <h2><span class="dot dot-rose"></span>✨ AI 自由輸入</h2>
-      <p class="hint" style="margin-bottom:12px;">用自己的話描述請假或補休狀況就好，不用照固定格式，AI 會幫你判斷日期跟假別。解析完一樣會先給你預覽，確認沒問題才會登記。</p>
-      <textarea id="aiInputText" rows="4" placeholder="例如：上禮拜三請了一天特休回診，明天要用半天病假"></textarea>
-      <div class="row" style="margin-top:10px;">
-        <button id="aiParseBtn" class="btn-rose" onclick="aiParseFreeform()">AI 解析</button>
-        <button id="voiceInputBtn" class="ghost" onclick="toggleVoiceInput()" style="display:none;">🎤 語音輸入</button>
-        <button class="ghost" onclick="document.getElementById('aiInputText').value='';">清空</button>
-      </div>
-      <div id="voiceHint" class="hint" style="display:none;margin-top:8px;">🔴 聆聽中…請對著手機說話</div>
-    </div>
-`;
-}
-
 function pageData(){
   return `
     <div class="manage-grid">
       <div class="backup">
         <h2>🔖 版本資訊</h2>
         <p>目前版本：<strong>${APP_VERSION}</strong>。上傳新版檔案後，若這裡的版本號沒有變，代表瀏覽器還在用舊的快取，請完全關閉分頁（或刪除主畫面捷徑重新加入）再打開一次。</p>
-      </div>
-      <div class="backup">
-        <h2>🔑 AI 除錯權杖（本機）</h2>
-        <p>這組是這台裝置自動產生的權杖，需要到 Firebase 主控台 → App Check → 這個 Web App → Manage debug tokens 裡新增（先把舊的都刪掉，避免混淆）。請按下面「複製」直接貼上，不要手打，才不會打錯字。</p>
-        <div class="total-row" style="border-bottom:none;padding-bottom:0;margin-bottom:0;gap:8px;">
-          <input type="text" id="aiDebugTokenInput" readonly value="${window.aiDebugToken || '尚未產生，請稍候…'}" style="flex:1;font-family:monospace;font-size:13px;" onclick="this.select();">
-          <button type="button" class="btn-jade" onclick="copyAiDebugToken()">複製</button>
-        </div>
       </div>
       <div class="backup">
         <h2>⏱️ 每日工時設定</h2>
@@ -1453,6 +1431,28 @@ function pageData(){
         </div>
         <div id="summaryArea" style="display:none;margin-top:6px;">
           <textarea id="summaryText" rows="6" readonly></textarea>
+        </div>
+      </div>
+
+      <div class="backup">
+        <h2>🔧 篩選匯出範圍（選填）</h2>
+        <p>下面「下載 Excel 檔」預設會匯出全部假別、全部日期。若只需要部分資料，可以先在這裡勾選／設定範圍再匯出。</p>
+        <div class="row" style="flex-wrap:wrap;gap:6px 16px;margin-bottom:10px;">
+          ${LEAVE_TYPES.map(t=>`<label style="display:flex;align-items:center;gap:4px;font-size:14px;"><input type="checkbox" class="exportTypeChk" value="${t.key}" checked> ${t.label}</label>`).join('')}
+          <label style="display:flex;align-items:center;gap:4px;font-size:14px;"><input type="checkbox" class="exportTypeChk" value="comp" checked> 補休</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:14px;"><input type="checkbox" class="exportTypeChk" value="exchange" checked> 換休</label>
+        </div>
+        <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="field" style="max-width:170px;">
+            <label>開始日期（留空＝不限）</label>
+            <div class="date-row"><input type="date" id="exportStartDate"><button type="button" class="date-toggle" onclick="toggleDateInputType('exportStartDate')" title="切換手動輸入">⌨</button></div>
+          </div>
+          <div class="field" style="max-width:170px;">
+            <label>結束日期（留空＝不限）</label>
+            <div class="date-row"><input type="date" id="exportEndDate"><button type="button" class="date-toggle" onclick="toggleDateInputType('exportEndDate')" title="切換手動輸入">⌨</button></div>
+          </div>
+          <button type="button" class="ghost" onclick="setExportAllTypes(true)">全選假別</button>
+          <button type="button" class="ghost" onclick="setExportAllTypes(false)">全部取消</button>
         </div>
       </div>
 
@@ -1551,8 +1551,6 @@ function render(){
   `;
   lastAddedId = null;
   document.getElementById('bottomNavHolder').innerHTML = bottomNav();
-  const voiceBtn = document.getElementById('voiceInputBtn');
-  if(voiceBtn && (window.SpeechRecognition || window.webkitSpeechRecognition)){ voiceBtn.style.display = ''; }
 }
 
 function setStatus(msg, ok){
@@ -1612,22 +1610,6 @@ function changeCalMonth(delta){
   render();
 }
 function toggleChart(){ chartMode = !chartMode; render(); }
-
-function copyAiDebugToken(){
-  const input = document.getElementById('aiDebugTokenInput');
-  if(!input || !input.value || input.value.includes('尚未產生')){ setStatus('權杖還沒準備好，稍等一下再試', false); return; }
-  input.select();
-  input.setSelectionRange(0, 99999);
-  const doFallback = () => {
-    try{ document.execCommand('copy'); setStatus('已複製到剪貼簿', true); }
-    catch(e){ setStatus('自動複製失敗，請長按輸入框手動選取複製', false); }
-  };
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(input.value).then(()=>setStatus('已複製到剪貼簿', true)).catch(doFallback);
-  } else {
-    doFallback();
-  }
-}
 
 async function updateHoursPerDay(){
   try{
@@ -1789,136 +1771,6 @@ function kwParseInput(){
   render();
 }
 
-function buildAiPrompt(userInput){
-  return `你是請假紀錄小幫手。使用者會用中文自然語句描述請假、補休或換休的獲得與使用情況，請你解析成結構化 JSON 陣列，只回傳 JSON，不要有其他文字、不要加 markdown 的\`\`\`標記。
-
-今天日期（西元）：${TODAY}
-目前使用者瀏覽的年度：${selectedYear}（如果句子沒提到年份，用這個年度）
-
-可用的一般假別 leaveKey：
-annual=特休, sick=病假, personal=事假, familyCare=家庭照顧假, menstrual=生理假, mentalCare=身心照顧假
-
-補休與換休是另一種類型，有「獲得」與「使用」兩種狀態：
-category: comp=補休, exchange=換休
-compType: earn=獲得, use=使用
-
-請針對使用者輸入的每一件事，輸出一個物件，格式擇一：
-
-一般假別使用：
-{"kind":"leave","leaveKey":"annual","amount":1,"unit":"day","date":"2026-07-16","note":"回診"}
-
-補休／換休：
-{"kind":"comp","category":"comp","compType":"earn","amount":8,"unit":"hour","date":"2026-01-01","note":"除夕"}
-
-規則：
-- unit 只能是 "day" 或 "hour"
-- date 一律輸出西元格式 YYYY-MM-DD（例如使用者說「上禮拜三」「下週一」「明天」都要換算成實際日期）
-- amount 是數字，半天請輸出 0.5
-- 如果某件事看不懂、或無法判斷是哪個假別/哪一天，該筆不要輸出，不要亂猜
-- 最外層直接輸出 JSON 陣列，例如 [{"kind":"leave",...}, {"kind":"comp",...}]，如果一件事都看不懂就輸出空陣列 []
-
-使用者輸入：
-"""
-${userInput}
-"""`;
-}
-
-let voiceRecognition = null;
-let voiceListening = false;
-function toggleVoiceInput(){
-  const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SpeechRecognitionCtor){ setStatus('這個瀏覽器不支援語音輸入', false); return; }
-  const hintEl = document.getElementById('voiceHint');
-  const btnEl = document.getElementById('voiceInputBtn');
-  if(voiceListening && voiceRecognition){
-    voiceRecognition.stop();
-    return;
-  }
-  const recognition = new SpeechRecognitionCtor();
-  voiceRecognition = recognition;
-  recognition.lang = 'zh-TW';
-  recognition.interimResults = false;
-  recognition.continuous = false;
-  recognition.onstart = () => {
-    voiceListening = true;
-    if(hintEl) hintEl.style.display = '';
-    if(btnEl) btnEl.textContent = '⏹ 停止聆聽';
-  };
-  recognition.onresult = (event) => {
-    const transcript = Array.from(event.results).map(r=>r[0].transcript).join('');
-    const textEl = document.getElementById('aiInputText');
-    if(textEl){
-      textEl.value = (textEl.value ? textEl.value.trim() + '，' : '') + transcript;
-    }
-  };
-  recognition.onerror = (event) => {
-    setStatus('語音輸入失敗：' + (event.error || '未知錯誤') + '（如果是用「加到主畫面」開啟，麻煩改用 Safari 分頁開啟再試）', false);
-  };
-  recognition.onend = () => {
-    voiceListening = false;
-    voiceRecognition = null;
-    if(hintEl) hintEl.style.display = 'none';
-    if(btnEl) btnEl.textContent = '🎤 語音輸入';
-  };
-  try{
-    recognition.start();
-  }catch(err){
-    setStatus('語音輸入啟動失敗：' + (err && err.message ? err.message : String(err)), false);
-  }
-}
-
-async function aiParseFreeform(){
-  const btn = document.getElementById('aiParseBtn');
-  const textEl = document.getElementById('aiInputText');
-  const text = textEl ? textEl.value : '';
-  if(!text || !text.trim()){ setStatus('請先輸入想描述的內容', false); return; }
-  if(!window.aiReady || !window.aiModel){ setStatus('AI 服務尚未就緒，請稍後再試（若剛開啟頁面請等一下）', false); return; }
-  if(btn){ btn.disabled = true; btn.textContent = 'AI 解析中…'; }
-  try{
-    const prompt = buildAiPrompt(text.trim());
-    const result = await window.aiModel.generateContent(prompt);
-    const raw = result && result.response ? result.response.text() : '';
-    if(!raw){ throw new Error('AI 沒有回傳可用的內容'); }
-    let cleaned = raw.trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
-    let parsed;
-    try{ parsed = JSON.parse(cleaned); }
-    catch(e){ throw new Error('AI 回傳的內容格式異常，請換個說法再試一次'); }
-    if(!Array.isArray(parsed)) parsed = [];
-
-    const validLeaveKeys = LEAVE_TYPES.map(t=>t.key);
-    const items = [];
-    const rejected = [];
-    parsed.forEach(it=>{
-      if(!it || typeof it !== 'object'){ return; }
-      const dateOk = typeof it.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(it.date);
-      const amountOk = typeof it.amount === 'number' && it.amount > 0;
-      const unitOk = it.unit === 'day' || it.unit === 'hour';
-      if(!dateOk || !amountOk || !unitOk){ rejected.push(JSON.stringify(it)); return; }
-      if(it.kind === 'leave'){
-        if(!validLeaveKeys.includes(it.leaveKey)){ rejected.push(JSON.stringify(it)); return; }
-        const label = (LEAVE_TYPES.find(t=>t.key===it.leaveKey)||{}).label || it.leaveKey;
-        items.push({ kind:'leave', leaveKey: it.leaveKey, leaveLabel: label, unit: it.unit, amount: it.amount, note: it.note||'', date: it.date, raw: '(AI) ' + (it.note||'') });
-      } else if(it.kind === 'comp'){
-        const category = (it.category==='exchange') ? 'exchange' : 'comp';
-        const compType = (it.compType==='use') ? 'use' : 'earn';
-        items.push({ kind:'comp', category, compType, unit: it.unit, amount: it.amount, note: it.note||'', date: it.date, raw: '(AI) ' + (it.note||'') });
-      } else {
-        rejected.push(JSON.stringify(it));
-      }
-    });
-
-    kwPendingItems = items;
-    kwUnmatchedLines = rejected;
-    if(items.length===0){ setStatus('AI 沒有辨識出可登記的資料，換個說法再試試看', false); }
-    else { setStatus(`AI 辨識出 ${items.length} 筆，請確認後新增`, true); }
-    render();
-  }catch(err){
-    setStatus('AI 解析失敗：' + (err && err.message ? err.message : String(err)), false);
-  }finally{
-    if(btn){ btn.disabled = false; btn.textContent = 'AI 解析'; }
-  }
-}
-
 function kwClearInput(){
   const ta = document.getElementById('kwInputText');
   if(ta && ta.value.trim() && !window.confirm('確定要清空目前輸入的文字嗎？')) return;
@@ -1930,79 +1782,6 @@ function kwClearInput(){
 
 function removeKwItem(idx){ kwPendingItems.splice(idx,1); render(); }
 function cancelKwItems(){ kwPendingItems = []; kwUnmatchedLines = []; render(); }
-
-function buildHealthCheckPrompt(pendingItems){
-  const contextLines = [];
-  const seenKeys = new Set();
-  pendingItems.forEach(it=>{
-    const ctxKey = it.kind==='leave' ? ('leave:'+it.leaveKey) : ('comp:'+it.category);
-    if(seenKeys.has(ctxKey)) return;
-    seenKeys.add(ctxKey);
-    let recent = [];
-    if(it.kind==='leave'){
-      recent = (state.records[it.leaveKey]||[]).slice(-8);
-      contextLines.push(`${it.leaveLabel}最近既有紀錄：` + (recent.length? recent.map(r=>`${r.date} ${displayAmount(r)}${r.note?'('+r.note+')':''}`).join('；') : '（無）'));
-    } else {
-      recent = state.compRecords.filter(r=>(r.category||'comp')===it.category).slice(-8);
-      const label = COMP_CATEGORIES[it.category].label;
-      contextLines.push(`${label}最近既有紀錄：` + (recent.length? recent.map(r=>`${r.date} ${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note?'('+r.note+')':''}`).join('；') : '（無）'));
-    }
-  });
-
-  const pendingLines = pendingItems.map((it,idx)=>{
-    if(it.kind==='leave'){
-      return `#${idx}：${it.leaveLabel} ${it.date} ${it.amount}${it.unit==='hour'?'小時':'天'}${it.note?'，備註：'+it.note:''}`;
-    } else {
-      const label = COMP_CATEGORIES[it.category].label;
-      return `#${idx}：${label} ${it.date} ${it.compType==='earn'?'獲得':'使用'} ${it.amount}${it.unit==='hour'?'小時':'天'}${it.note?'，備註：'+it.note:''}`;
-    }
-  });
-
-  return `你是請假紀錄的健檢小幫手。請檢查以下「即將新增」的假期紀錄，看有沒有可能是輸入錯誤或需要使用者留意的地方，例如：
-- 跟既有紀錄重複（同一天、同假別、金額也差不多，可能手滑重複登記）
-- 備註內容看起來跟選的假別不搭（例如備註寫「感冒」卻選了事假）
-- 天數或小時數看起來異常大（例如既有紀錄都是1天，這筆卻是10天）
-- 日期看起來可能選錯了（例如年份差很多、或是很久以前/未來的日期）
-
-即將新增的紀錄：
-${pendingLines.join('\n')}
-
-參考的既有紀錄（同假別最近幾筆，供比對用）：
-${contextLines.join('\n')}
-
-請只回傳一個 JSON 陣列的字串，每個字串是一句簡短的提醒（繁體中文，20字以內），格式例如：["#0 這天跟7/10的紀錄重複，確定要再新增一筆嗎？"]。如果都沒問題，回傳空陣列 []。不要輸出其他文字。`;
-}
-
-async function aiHealthCheck(){
-  const btn = document.getElementById('aiHealthCheckBtn');
-  const resultEl = document.getElementById('aiHealthCheckResult');
-  if(!kwPendingItems.length){ setStatus('目前沒有待確認的資料', false); return; }
-  if(!window.aiReady || !window.aiModel){ setStatus('AI 服務尚未就緒，請稍後再試', false); return; }
-  if(btn){ btn.disabled = true; btn.textContent = 'AI 健檢中…'; }
-  if(resultEl) resultEl.innerHTML = '';
-  try{
-    const prompt = buildHealthCheckPrompt(kwPendingItems);
-    const result = await window.aiModel.generateContent(prompt);
-    const raw = result && result.response ? result.response.text() : '';
-    let cleaned = (raw||'').trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
-    let warnings = [];
-    try{ warnings = JSON.parse(cleaned); }catch(e){ warnings = []; }
-    if(!Array.isArray(warnings)) warnings = [];
-
-    if(resultEl){
-      if(warnings.length===0){
-        resultEl.innerHTML = `<div class="reminder-bar" style="background:var(--jade-soft);border-color:var(--jade);color:var(--jade);"><strong>✓ AI 健檢完成</strong>沒有發現明顯異常。</div>`;
-      } else {
-        resultEl.innerHTML = `<div class="reminder-bar"><strong>🔍 AI 健檢提醒</strong>${warnings.map(w=>escapeHtml(String(w))).join('<br>')}</div>`;
-      }
-    }
-    setStatus(warnings.length? `AI 健檢發現 ${warnings.length} 項提醒` : 'AI 健檢完成，沒有異常', true);
-  }catch(err){
-    setStatus('AI 健檢失敗：' + (err && err.message ? err.message : String(err)), false);
-  }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '🔍 AI 健檢'; }
-  }
-}
 
 async function applyKwItems(){
   const recordCount = kwPendingItems.filter(it=>it.kind!=='quota').length;
@@ -2166,49 +1945,77 @@ async function removeComp(btnEl, id){
   }
 }
 
+function getExportFilters(){
+  const selectedTypes = Array.from(document.querySelectorAll('.exportTypeChk')).filter(c=>c.checked).map(c=>c.value);
+  const startEl = document.getElementById('exportStartDate');
+  const endEl = document.getElementById('exportEndDate');
+  const start = startEl && startEl.value ? startEl.value : null;
+  const end = endEl && endEl.value ? endEl.value : null;
+  return { selectedTypes, start, end };
+}
+function setExportAllTypes(val){
+  document.querySelectorAll('.exportTypeChk').forEach(c=>{ c.checked = val; });
+}
+function inExportRange(dateStr, start, end){
+  if(start && dateStr < start) return false;
+  if(end && dateStr > end) return false;
+  return true;
+}
+
 function downloadExcelBackup(){
   try{
     if(typeof XLSX === 'undefined'){ setStatus('Excel 匯出功能載入失敗，請檢查網路連線', false); return; }
+    const { selectedTypes, start, end } = getExportFilters();
+    if(selectedTypes.length===0){ setStatus('請至少勾選一個假別才能匯出', false); return; }
+    const allTypeKeys = LEAVE_TYPES.map(t=>t.key).concat(['comp','exchange']);
+    const isFiltered = !!start || !!end || selectedTypes.length < allTypeKeys.length;
     const wb = XLSX.utils.book_new();
 
-    // 摘要頁
-    const summaryRows = [['假別','總天數','已使用(天)','剩餘(天)']];
-    LEAVE_TYPES.forEach(t=>{
-      summaryRows.push([t.label, fmt(getQuota(t.key, CUR_YEAR)), fmt(usedOf(t.key, CUR_YEAR)), fmt(remainOf(t.key, CUR_YEAR))]);
-    });
-    summaryRows.push(['補休', '', '', fmt(compBalanceUpTo(CUR_YEAR,'comp'))]);
-    summaryRows.push(['換休', '', '', fmt(compBalanceUpTo(CUR_YEAR,'exchange'))]);
-    const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
-    XLSX.utils.book_append_sheet(wb, summarySheet, '摘要');
+    if(!isFiltered){
+      // 摘要頁：只有完全沒篩選（全假別、全日期）才附上，因為摘要是全年度總覽，跟局部篩選對不上
+      const summaryRows = [['假別','總天數','已使用(天)','剩餘(天)']];
+      LEAVE_TYPES.forEach(t=>{
+        summaryRows.push([t.label, fmt(getQuota(t.key, CUR_YEAR)), fmt(usedOf(t.key, CUR_YEAR)), fmt(remainOf(t.key, CUR_YEAR))]);
+      });
+      summaryRows.push(['補休', '', '', fmt(compBalanceUpTo(CUR_YEAR,'comp'))]);
+      summaryRows.push(['換休', '', '', fmt(compBalanceUpTo(CUR_YEAR,'exchange'))]);
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
+      XLSX.utils.book_append_sheet(wb, summarySheet, '摘要');
+    }
 
     // 各假別分頁
-    LEAVE_TYPES.forEach(t=>{
+    LEAVE_TYPES.filter(t=>selectedTypes.includes(t.key)).forEach(t=>{
       const rows = [['日期(民國)','日期(西元)','數量','單位','備註']];
-      (state.records[t.key]||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>{
+      (state.records[t.key]||[]).filter(r=>inExportRange(r.date, start, end)).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>{
         const unit = r.unit==='hour' ? '小時' : '天';
         const amount = r.unit ? r.amount : r.days;
         rows.push([toROC(r.date), r.date, amount, unit, r.note||'']);
       });
+      if(rows.length===1 && isFiltered) return; // 篩選後這個假別沒有資料，不產生空分頁
       const sheet = XLSX.utils.aoa_to_sheet(rows);
       XLSX.utils.book_append_sheet(wb, sheet, t.label);
     });
 
     // 補休／換休分頁
-    ['comp','exchange'].forEach(cat=>{
+    ['comp','exchange'].filter(cat=>selectedTypes.includes(cat)).forEach(cat=>{
       const info = COMP_CATEGORIES[cat];
       const compRows = [['日期(民國)','日期(西元)','類型','數量','單位','備註','到期日(民國)']];
-      state.compRecords.filter(r=>(r.category||'comp')===cat).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>{
+      state.compRecords.filter(r=>(r.category||'comp')===cat && inExportRange(r.date, start, end)).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>{
         const unit = r.unit==='hour' ? '小時' : '天';
         const amount = r.unit ? r.amount : r.days;
         compRows.push([toROC(r.date), r.date, r.type==='earn'?'獲得':'使用', amount, unit, r.note||'', r.expiry? toROC(r.expiry):'']);
       });
+      if(compRows.length===1 && isFiltered) return;
       const compSheet = XLSX.utils.aoa_to_sheet(compRows);
       XLSX.utils.book_append_sheet(wb, compSheet, info.label);
     });
 
+    if(wb.SheetNames.length===0){ setStatus('篩選範圍內沒有資料可以匯出', false); return; }
+
     const d = new Date();
     const stamp = d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
-    XLSX.writeFile(wb, `假期存摺備份-${stamp}.xlsx`);
+    const suffix = isFiltered ? '-篩選' : '';
+    XLSX.writeFile(wb, `假期存摺備份-${stamp}${suffix}.xlsx`);
     setStatus('已下載 Excel 檔', true);
   }catch(e){
     setStatus('Excel 匯出失敗：' + (e && e.message ? e.message : String(e)), false);
@@ -2404,80 +2211,5 @@ async function restoreBackup(){
 })();
 </script>
 
-<!--
-  Firebase AI Logic（前身 Vertex AI in Firebase）：Google 官方的「後端中繼」，
-  不用自己寫 Cloud Function。App Check 負責擋濫用，金鑰完全不會出現在前端。
-
-  部署前要做的事（Firebase 主控台）：
-  1. AI Services → AI Logic → 開始使用 → 選「Gemini Developer API」（免費，不用升級 Blaze）
-  1. AI Services → AI Logic → 開始使用 → 選「Gemini Developer API」（免費，不用升級 Blaze）
-  2. Security → App Check → 這個 Web App → 「⋮」→ Manage debug tokens
-     → 新增一組 debug token，貼上下面 DEBUG_TOKEN 這個值，存檔
-  （這裡改用固定的 Debug Token，不透過 reCAPTCHA，
-   可避免 AdGuard / iCloud Private Relay 等網路環境干擾驗證）
--->
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
-  import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-ai.js';
-  import { initializeAppCheck, CustomProvider } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app-check.js';
-
-  // 除錯權杖：由這台裝置自動產生一次後存在 localStorage，之後都用同一組。
-  // 使用者要做的事：去「設定」頁把這組值複製起來，貼到 Firebase 主控台
-  // App Check → 這個 Web App → Manage debug tokens 裡新增（不要手打）。
-  let DEBUG_TOKEN = null;
-  try{
-    DEBUG_TOKEN = localStorage.getItem('aiDebugToken');
-    if(!DEBUG_TOKEN){
-      DEBUG_TOKEN = crypto.randomUUID();
-      localStorage.setItem('aiDebugToken', DEBUG_TOKEN);
-    }
-  }catch(e){
-    DEBUG_TOKEN = crypto.randomUUID();
-  }
-  window.aiDebugToken = DEBUG_TOKEN;
-
-  function showAiError(msg){
-    window.aiReady = false;
-    console.error('Firebase AI Logic 初始化失敗：', msg);
-    // 等主程式的 setStatus 準備好再顯示，避免載入順序問題
-    const tryShow = () => {
-      if(typeof window.setStatus === 'function'){ window.setStatus('AI 初始化失敗：' + msg, false); }
-      else { setTimeout(tryShow, 300); }
-    };
-    tryShow();
-  }
-
-  function setupAiLogic(retries){
-    if(typeof window.firebaseConfig === 'undefined'){
-      if(retries <= 0){ showAiError('等不到 firebaseConfig，程式載入順序可能有問題'); return; }
-      setTimeout(()=>setupAiLogic(retries-1), 300);
-      return;
-    }
-    try{
-      // 用獨立的、跟主程式（compat SDK）分開的 App 實例來跑 AI Logic，
-      // 避免 compat 版跟 modular 版的物件型別不相容。
-      const aiApp = initializeApp(window.firebaseConfig, 'aiLogicApp');
-      // 官方除錯權杖流程：設定這個全域旗標後，SDK 會自動忽略下面傳入的
-      // provider，改用這組字串向 Firebase 換一個真正的 App Check 權杖。
-      // （之前直接把 UUID 當成權杖送出是錯的，伺服器當然判定無效。）
-      self.FIREBASE_APPCHECK_DEBUG_TOKEN = DEBUG_TOKEN;
-      initializeAppCheck(aiApp, {
-        provider: new CustomProvider({
-          getToken: () => Promise.reject(new Error('debug token 模式下不應呼叫到這裡'))
-        }),
-        isTokenAutoRefreshEnabled: true
-      });
-      const ai = getAI(aiApp, { backend: new GoogleAIBackend() });
-      window.aiModel = getGenerativeModel(ai, {
-        model: 'gemini-flash-latest',
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
-      });
-      window.aiReady = true;
-    }catch(err){
-      showAiError((err && err.message) ? err.message : String(err));
-    }
-  }
-  setupAiLogic(20);
-</script>
 </body>
 </html>
