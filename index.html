@@ -192,11 +192,15 @@
   .cal-daynum{font-size:10px;color:var(--ink-soft);}
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
+  .cal-makeup-badge{display:inline-block;font-size:7px;font-weight:700;color:#fff;background:var(--blue);border-radius:3px;padding:0 2px;margin-left:2px;vertical-align:middle;}
+  .cal-detail-makeup{font-size:13px;color:var(--blue);margin-bottom:6px;}
   .cal-cell:not(.empty){cursor:pointer;transition:background .1s ease;}
   .cal-cell:not(.empty):active{background:var(--paper-soft, #F4EEE2);}
-  .cal-cell.weekend{background:var(--paper-soft, #F7F3EA);}
-  .cal-cell.weekend.selected{background:var(--blue-soft);}
+  .cal-cell.weekend, .cal-cell.holiday-bg{background:var(--rose-soft);}
+  .cal-cell.weekend.selected, .cal-cell.holiday-bg.selected{background:var(--blue-soft);}
   .cal-month-summary{font-size:12.5px;color:var(--ink-soft);margin:8px 0 10px;}
+  .cal-picker-row{display:flex;gap:8px;justify-content:center;margin:8px 0;}
+  .cal-picker-row select{padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-today-btn{margin:6px 0 4px;font-size:12.5px;padding:6px 12px;}
   .cal-swipe-area{touch-action:pan-y;}
   .cal-detail-panel{margin-top:12px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;}
@@ -210,9 +214,13 @@
   .cal-detail-add-row select{flex:1;padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px;}
   .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:700;color:#fff;}
+  .cal-dot-wide{width:auto;min-width:20px;padding:0 3px;border-radius:6px;font-size:7.5px;letter-spacing:-.02em;}
 
   .chart-wrap{display:flex;gap:5px;align-items:flex-end;height:150px;padding:8px 2px 0;overflow-x:auto;}
-  .chart-col{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;}
+  .chart-col{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;cursor:pointer;border-radius:8px;padding:4px 2px;transition:background .1s ease;}
+  .chart-col:active{background:var(--paper-soft, #F4EEE2);}
+  .chart-col-active{background:var(--blue-soft);}
+  .chart-col-active .chart-label{color:var(--blue);font-weight:700;}
   .chart-bar-track{width:100%;max-width:24px;height:130px;display:flex;flex-direction:column-reverse;background:var(--paper-deep);border-radius:2px 2px 0 0;overflow:hidden;}
   .chart-seg{width:100%;}
   .chart-label{font-size:9.5px;color:var(--ink-soft);margin-top:4px;}
@@ -271,7 +279,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-24';
+const APP_VERSION = 'v2026.07.28-29';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -451,6 +459,11 @@ let calendarMode = true;
 let calYear = CUR_YEAR;
 let calMonth = NOW.getMonth()+1;
 let calSelectedDate = null;
+let calPickerOpen = false;
+function toggleCalPicker(){ calPickerOpen = !calPickerOpen; render(); }
+function jumpCalYear(v){ calYear = parseInt(v,10); render(); }
+function jumpCalMonth(v){ calMonth = parseInt(v,10); render(); }
+function jumpToCalMonth(yy, mm){ calYear = yy; calMonth = mm; calendarMode = true; calSelectedDate = null; render(); }
 function selectCalDay(dateStr){
   calSelectedDate = (calSelectedDate===dateStr) ? null : dateStr;
   render();
@@ -1131,7 +1144,8 @@ function calendarPanel(){
       if(!dayMap[d]) dayMap[d]=[];
       const cat = r.category||'comp';
       const info = COMP_CATEGORIES[cat];
-      dayMap[d].push({kind:'comp', key:cat, id:r.id, seal:info.label.slice(0,1), c:info.c, label:`${info.label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
+      const sign = r.type==='earn' ? '+' : '－';
+      dayMap[d].push({kind:'comp', key:cat, id:r.id, seal:sign+info.label, wide:true, c:info.c, label:`${info.label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
     }
   });
   let cells = '';
@@ -1139,7 +1153,7 @@ function calendarPanel(){
   const monthUsage = {}; // key -> 天數，給月摘要用
   for(let d=1; d<=daysInMonth; d++){
     const items = dayMap[d]||[];
-    const dots = items.map(it=>`<span class="cal-dot c-${it.c}-bg">${it.seal}</span>`).join('');
+    const dots = items.map(it=>`<span class="cal-dot ${it.wide?'cal-dot-wide':''} c-${it.c}-bg">${it.seal}</span>`).join('');
     const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = (dateStr===TODAY);
     const isSelected = (dateStr===calSelectedDate);
@@ -1147,8 +1161,12 @@ function calendarPanel(){
     const isWeekend = weekday===0 || weekday===6;
     const h = holidays ? holidays[dateStr] : null;
     const isNamedHoliday = h && h.isHoliday && h.description; // 只標「有名字」的假日（國定假日/補假等），週六日本來就看得出來，不特別標
+    const isMakeupWorkday = h && h.isHoliday===false && h.description; // 例如「補行上班」：本來是假日但這天要上班
     const daynumClass = isNamedHoliday ? 'holiday' : '';
-    cells += `<div class="cal-cell ${isToday?'today':''} ${isSelected?'selected':''} ${isWeekend?'weekend':''}" onclick="selectCalDay('${dateStr}')"><div class="cal-daynum ${daynumClass}">${d}${isNamedHoliday?'<span class="cal-holiday-dot"></span>':''}</div><div class="cal-dots">${dots}</div></div>`;
+    const weekendClass = (isWeekend && !isMakeupWorkday) ? 'weekend' : '';
+    const holidayBgClass = isNamedHoliday ? 'holiday-bg' : '';
+    const makeupBadge = isMakeupWorkday ? `<span class="cal-makeup-badge">班</span>` : '';
+    cells += `<div class="cal-cell ${isToday?'today':''} ${isSelected?'selected':''} ${weekendClass} ${holidayBgClass}" onclick="selectCalDay('${dateStr}')"><div class="cal-daynum ${daynumClass}">${d}${isNamedHoliday?'<span class="cal-holiday-dot"></span>':''}${makeupBadge}</div><div class="cal-dots">${dots}</div></div>`;
   }
   // 月摘要：這個月每個假別／補休換休「使用」加總了幾天
   LEAVE_TYPES.forEach(t=>{
@@ -1169,7 +1187,8 @@ function calendarPanel(){
     const dNum = parseInt(calSelectedDate.slice(8,10),10);
     const items = dayMap[dNum]||[];
     const h = holidays ? holidays[calSelectedDate] : null;
-    const holidayLine = (h && h.isHoliday && h.description) ? `<div class="cal-detail-holiday">🔴 ${escapeHtml(h.description)}</div>` : '';
+    const holidayLine = (h && h.isHoliday && h.description) ? `<div class="cal-detail-holiday">🔴 ${escapeHtml(h.description)}</div>`
+      : (h && h.isHoliday===false && h.description) ? `<div class="cal-detail-makeup">🔵 ${escapeHtml(h.description)}（原本是假日，這天要補班）</div>` : '';
     const weekLabel = ['日','一','二','三','四','五','六'][new Date(calSelectedDate+'T00:00:00').getDay()];
     const recordChips = items.length ? `<div class="cal-detail-chips">${items.map(it=>`
       <span class="cal-detail-chip" style="background:var(--${it.c}-soft);color:var(--${it.c});">
@@ -1191,9 +1210,13 @@ function calendarPanel(){
     <div class="block">
       <div class="cal-header">
         <button type="button" class="ghost" onclick="changeCalMonth(-1)">‹</button>
-        <div class="cal-title">${y} 年 ${m} 月</div>
+        <div class="cal-title" onclick="toggleCalPicker()" style="cursor:pointer;">${y} 年 ${m} 月 ${calPickerOpen?'▲':'▼'}</div>
         <button type="button" class="ghost" onclick="changeCalMonth(1)">›</button>
       </div>
+      ${calPickerOpen ? `<div class="cal-picker-row">
+        <select onchange="jumpCalYear(this.value)">${Array.from({length:11},(_,i)=>CUR_YEAR-5+i).map(yy=>`<option value="${yy}" ${yy===y?'selected':''}>${yy} 年</option>`).join('')}</select>
+        <select onchange="jumpCalMonth(this.value)">${Array.from({length:12},(_,i)=>i+1).map(mm=>`<option value="${mm}" ${mm===m?'selected':''}>${mm} 月</option>`).join('')}</select>
+      </div>` : ''}
       ${(y!==CUR_YEAR || m!==NOW.getMonth()+1) ? `<button type="button" class="ghost cal-today-btn" onclick="jumpToToday()">📍 回到今天</button>` : ''}
       <div class="cal-month-summary">${monthSummary}</div>
       <div class="cal-swipe-area" ontouchstart="calTouchStart(event)" ontouchend="calTouchEnd(event)">
@@ -1233,7 +1256,8 @@ function statsChart(){
       const px = Math.max(2, Math.round(v/maxVal*TRACK_H));
       return `<div class="chart-seg c-${t.c}-bg" style="height:${px}px" title="${t.label} ${fmt(v)}天"></div>`;
     }).join('');
-    return `<div class="chart-col">
+    const isActiveMonth = calendarMode && calYear===y && (i+1)===calMonth;
+    return `<div class="chart-col ${isActiveMonth?'chart-col-active':''}" onclick="jumpToCalMonth(${y},${i+1})">
       <div class="chart-bar-track">${segments}</div>
       <div class="chart-label">${i+1}月</div>
       <div class="chart-total">${total>0?fmt(total):''}</div>
@@ -1692,7 +1716,7 @@ function bottomNav(){
     {key:'home', icon:'🏠', label:'首頁'},
     {key:'viz', icon:'📅', label:'行事曆'},
     {key:'quick', icon:'⌨️', label:'快速輸入'},
-    {key:'leaves', icon:'📋', label:'假別'},
+    {key:'leaves', icon:'📋', label:'假別紀錄'},
     {key:'data', icon:'⚙️', label:'設定'}
   ];
   const effectiveActive = activePage==='addRecord' ? 'leaves' : activePage;
