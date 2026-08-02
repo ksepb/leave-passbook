@@ -287,7 +287,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.03-02';
+const APP_VERSION = 'v2026.08.03-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1585,11 +1585,6 @@ function compSectionHtml(category){
     .filter(r=>r.type==='earn' && (r.category||'comp')===category && r.expiry)
     .map(r=>Object.assign({}, r, {diffDays: Math.round((new Date(r.expiry) - new Date(TODAY))/86400000)}))
     .sort((a,b)=>a.diffDays-b.diffDays)[0];
-  const expiryTxt = nearestExpiry ? (()=>{
-    const statusTxt = nearestExpiry.diffDays < 0 ? `已過期 ${Math.abs(nearestExpiry.diffDays)} 天` : (nearestExpiry.diffDays===0? '今天到期' : `${nearestExpiry.diffDays} 天後到期`);
-    const urgent = nearestExpiry.diffDays <= 7;
-    return `　最近到期：<strong style="color:${urgent?'var(--brick)':'var(--amber)'};">${toROC(nearestExpiry.expiry)}（${statusTxt}）</strong>`;
-  })() : '';
   return `
     <section class="block">
       <h2><span class="dot dot-${info.c}"></span>${info.label}</h2>
@@ -1597,8 +1592,9 @@ function compSectionHtml(category){
       <button type="button" class="btn-${info.c}" style="margin-bottom:14px;" onclick="openAddRecord('${category}')">＋ 新增一筆</button>
       <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
       ${listHtml}
-      <div class="quota-summary-row">
-        <span>截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong>${expiryTxt}</span>
+      <div class="quota-summary-row" style="border-bottom:none;border-top:1px dashed var(--line);padding-top:14px;margin-top:16px;margin-bottom:0;padding-bottom:0;flex-direction:column;align-items:flex-start;gap:6px;">
+        <span>截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong></span>
+        ${nearestExpiry ? `<span>⏳ 最近到期：<strong style="color:${nearestExpiry.diffDays<=7?'var(--brick)':'var(--amber)'};">${toROC(nearestExpiry.expiry)}（${nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`)}）</strong></span>` : ''}
       </div>
       <div class="reset-row">
         <span class="reset-label">清除紀錄：</span>
