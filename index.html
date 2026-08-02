@@ -156,6 +156,10 @@
 
   .total-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
   .quota-summary-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--line);font-size:13.5px;flex-wrap:wrap;}
+  .quota-accordion-item{border-bottom:1px solid var(--line);}
+  .quota-accordion-item:last-child{border-bottom:none;}
+  .quota-accordion-head{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;padding:12px 2px;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink);}
+  .quota-accordion-body{padding:0 2px 14px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;}
   .hint{font-size:14px;color:var(--ink-soft);line-height:1.6;}
   .total-row .hint{flex-basis:100%;margin-top:-2px;}
 
@@ -281,7 +285,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-32';
+const APP_VERSION = 'v2026.07.28-38';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -324,6 +328,7 @@ function initFirebase(){
       if(result && result.user){
         // 真正剛從登入跳轉回來，才需要詢問雲端/本機衝突
         await pullOrPushOnSignIn();
+        applyUiScale();
         render();
       }
     }).catch(e=>{
@@ -339,6 +344,7 @@ async function signInWithGoogle(){
     const result = await fbAuth.signInWithPopup(provider);
     if(result && result.user){
       await pullOrPushOnSignIn();
+      applyUiScale();
       render();
     }
   }catch(e){
@@ -471,6 +477,10 @@ function selectCalDay(dateStr){
   render();
 }
 let addRecordDate = null;
+let quotaExpandedKey = null;
+function toggleQuotaExpand(key){ quotaExpandedKey = (quotaExpandedKey===key) ? null : key; render(); }
+let settingsExpandedKey = null;
+function toggleSettingsExpand(key){ settingsExpandedKey = (settingsExpandedKey===key) ? null : key; render(); }
 function openAddRecord(key){
   activeLeaveTab = key;
   addRecordDate = null;
@@ -596,7 +606,7 @@ function addYears(dateStr, n){
 function defaultState(){
   const records={};
   LEAVE_TYPES.forEach(t=>{ records[t.key]=[]; });
-  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS };
+  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1 };
 }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -607,6 +617,22 @@ function matchesSearch(...parts){
   if(!searchQuery) return true;
   const q = searchQuery.toLowerCase();
   return parts.some(p => (p||'').toString().toLowerCase().includes(q));
+}
+
+function getUiScale(){ return (state && state.uiScale) ? Number(state.uiScale) : 1; }
+function applyUiScale(){
+  try{ document.body.style.zoom = getUiScale(); }catch(e){ /* 舊瀏覽器不支援 zoom 就算了，不影響其他功能 */ }
+}
+async function setUiScale(v){
+  try{
+    state.uiScale = v;
+    applyUiScale();
+    await saveState();
+    render();
+    setStatus('已更新畫面大小', true);
+  }catch(err){
+    setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
+  }
 }
 
 async function loadState(){
@@ -636,6 +662,7 @@ async function loadState(){
       }
       if(parsed.hoursPerDay){ state.hoursPerDay = Number(parsed.hoursPerDay); }
       if(parsed.personalPaidDays !== undefined && parsed.personalPaidDays !== null){ state.personalPaidDays = Number(parsed.personalPaidDays); }
+      if(parsed.uiScale){ state.uiScale = Number(parsed.uiScale); }
     }
   }catch(e){ /* 無資料，使用預設值 */ }
 }
@@ -1593,25 +1620,50 @@ function pageData(){
   return `
     <div class="manage-grid">
       <div class="backup">
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('scale')">
+          <span>🔍 畫面大小</span>
+          <span>${settingsExpandedKey==='scale'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='scale' ? `
+        <p>覺得文字太小可以調大一點，會連按鈕、間距一起放大（不是只有文字），方便點選。</p>
+        <div class="row" style="gap:8px;">
+          <button type="button" class="leave-tab" style="${getUiScale()===0.9?'background:var(--jade);color:#fff;border-color:var(--jade);':'background:#fff;color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(0.9)">小</button>
+          <button type="button" class="leave-tab" style="${getUiScale()===1?'background:var(--jade);color:#fff;border-color:var(--jade);':'background:#fff;color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(1)">中（預設）</button>
+          <button type="button" class="leave-tab" style="${getUiScale()===1.15?'background:var(--jade);color:#fff;border-color:var(--jade);':'background:#fff;color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(1.15)">大</button>
+          <button type="button" class="leave-tab" style="${getUiScale()===1.3?'background:var(--jade);color:#fff;border-color:var(--jade);':'background:#fff;color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(1.3)">特大</button>
+        </div>
+        ` : ''}
+      </div>
+      <div class="backup">
         <h2>📐 各假別總天數設定</h2>
-        <p class="hint" style="margin-bottom:12px;">這是每個假別今年（${selectedYear} 年）的總天數上限，通常一年只需要調整一兩次。</p>
-        ${LEAVE_TYPES.map(t=>`
-          <div class="total-row" style="border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px;">
-            <div class="field">
-              <label>${t.label}總天數</label>
-              <input type="number" id="${t.key}TotalInput" min="0" step="0.5" value="${getQuota(t.key,selectedYear)}">
-            </div>
-            <button class="btn-${t.c}" onclick="updateQuota('${t.key}')">更新</button>
-            <div class="hint">${t.hint}</div>
-          </div>
-        `).join('')}
+        <p class="hint" style="margin-bottom:8px;">這是每個假別今年（${selectedYear} 年）的總天數上限，通常一年只需要調整一兩次。點假別名稱展開調整。</p>
+        ${LEAVE_TYPES.map(t=>{
+          const isOpen = quotaExpandedKey===t.key;
+          return `
+          <div class="quota-accordion-item">
+            <button type="button" class="quota-accordion-head" onclick="toggleQuotaExpand('${t.key}')">
+              <span>${t.label}</span>
+              <span>${fmt(getQuota(t.key,selectedYear))} 天　${isOpen?'▲':'▼'}</span>
+            </button>
+            ${isOpen ? `
+              <div class="quota-accordion-body">
+                <div class="field">
+                  <label>${t.label}總天數</label>
+                  <input type="number" id="${t.key}TotalInput" min="0" step="0.5" value="${getQuota(t.key,selectedYear)}">
+                </div>
+                <button class="btn-${t.c}" onclick="updateQuota('${t.key}')">更新</button>
+                <div class="hint">${t.hint}</div>
+              </div>
+            ` : ''}
+          </div>`;
+        }).join('')}
       </div>
       <div class="backup">
-        <h2>🔖 版本資訊</h2>
-        <p>目前版本：<strong>${APP_VERSION}</strong>。上傳新版檔案後，若這裡的版本號沒有變，代表瀏覽器還在用舊的快取，請完全關閉分頁（或刪除主畫面捷徑重新加入）再打開一次。</p>
-      </div>
-      <div class="backup">
-        <h2>⏱️ 每日工時設定</h2>
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('hours')">
+          <span>⏱️ 每日工時設定</span>
+          <span>${fmt(getHoursPerDay())} 小時／天　${settingsExpandedKey==='hours'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='hours' ? `
         <p>所有假別登記「小時」時，都是依這個比例換算成天數（例如補休 4 小時 = 0.5 天）。若貴單位不是 8 小時制，可在此調整。</p>
         <div class="total-row" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">
           <div class="field" style="max-width:140px;">
@@ -1620,9 +1672,14 @@ function pageData(){
           </div>
           <button type="button" class="btn-jade" onclick="updateHoursPerDay()">更新工時</button>
         </div>
+        ` : ''}
       </div>
       <div class="backup">
-        <h2>💰 事假有薪天數設定</h2>
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('paid')">
+          <span>💰 事假有薪天數設定</span>
+          <span>${fmt(getPersonalPaidDays())} 天　${settingsExpandedKey==='paid'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='paid' ? `
         <p>常見規定是事假每年前 7 天工資照給、超過的部分不給薪。這裡只是幫你算出「有薪／無薪」各用了幾天，方便對帳，不會影響事假的總天數或剩餘天數計算。</p>
         <div class="total-row" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">
           <div class="field" style="max-width:140px;">
@@ -1631,18 +1688,28 @@ function pageData(){
           </div>
           <button type="button" class="btn-jade" onclick="updatePersonalPaidDays()">更新設定</button>
         </div>
+        ` : ''}
       </div>
       <div class="backup">
-        <h2>☁️ 雲端同步（跨裝置）</h2>
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('cloud')">
+          <span>☁️ 雲端同步（跨裝置）</span>
+          <span>${currentUser?'已登入':'未登入'}　${settingsExpandedKey==='cloud'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='cloud' ? `
         <p>${currentUser? `已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。` : '登入 Google 帳號後，資料會自動備份到雲端，並可以在其他裝置用同一個帳號同步查看，不用手動匯出匯入。'}</p>
         <div class="row">
           ${currentUser
             ? `<button class="ghost" onclick="signOutUser()">登出</button>`
             : `<button class="btn-jade" onclick="signInWithGoogle()">使用 Google 帳號登入</button>`}
         </div>
+        ` : ''}
       </div>
       <div class="backup">
-        <h2>分享摘要（可加入備忘錄）</h2>
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('share')">
+          <span>分享摘要（可加入備忘錄）</span>
+          <span>${settingsExpandedKey==='share'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='share' ? `
         <p>把目前各假別剩餘天數與「最新 10 筆」紀錄整理成一段文字，方便貼到 iPhone 備忘錄快速看現況（不是完整備份）。</p>
         <div class="row">
           <button class="ghost" onclick="shareSummary()">分享…（可選備忘錄）</button>
@@ -1651,10 +1718,15 @@ function pageData(){
         <div id="summaryArea" style="display:none;margin-top:6px;">
           <textarea id="summaryText" rows="6" readonly></textarea>
         </div>
+        ` : ''}
       </div>
 
       <div class="backup">
-        <h2>🔧 篩選匯出範圍（選填）</h2>
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('exportFilter')">
+          <span>🔧 篩選匯出範圍（選填）</span>
+          <span>${settingsExpandedKey==='exportFilter'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='exportFilter' ? `
         <p>下面「下載 Excel 檔」預設會匯出全部假別、全部日期。若只需要部分資料，可以先在這裡勾選／設定範圍再匯出。</p>
         <div class="row" style="flex-wrap:wrap;gap:6px 16px;margin-bottom:10px;">
           ${LEAVE_TYPES.map(t=>`<label style="display:flex;align-items:center;gap:4px;font-size:14px;"><input type="checkbox" class="exportTypeChk" value="${t.key}" checked> ${t.label}</label>`).join('')}
@@ -1673,10 +1745,15 @@ function pageData(){
           <button type="button" class="ghost" onclick="setExportAllTypes(true)">全選假別</button>
           <button type="button" class="ghost" onclick="setExportAllTypes(false)">全部取消</button>
         </div>
+        ` : ''}
       </div>
 
       <div class="backup">
-        <h2>完整文字紀錄</h2>
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('report')">
+          <span>完整文字紀錄</span>
+          <span>${settingsExpandedKey==='report'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='report' ? `
         <p>把「所有年度、所有假別、所有筆數」的紀錄整理成完整報表（不限筆數），適合列印、寄信或存檔留底，但不能拿來還原資料——要還原請用下方「備份與還原」的 JSON 檔。</p>
         <div class="row">
           <button class="ghost" onclick="downloadFullReport()">下載完整報表（.txt）</button>
@@ -1686,10 +1763,15 @@ function pageData(){
         <div id="fullReportArea" style="display:none;margin-top:6px;">
           <textarea id="fullReportText" rows="8" readonly></textarea>
         </div>
+        ` : ''}
       </div>
 
       <div class="backup">
-        <h2>備份與還原</h2>
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('backup')">
+          <span>備份與還原</span>
+          <span>${settingsExpandedKey==='backup'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='backup' ? `
         <p>資料目前會自動存到雲端（僅此存摺可見）。若想額外備份一份，或換到新的存摺網頁時匯入資料，可使用下方功能。</p>
         <div class="row">
           <button class="ghost" onclick="downloadBackup()">下載備份檔（.json）</button>
@@ -1702,11 +1784,16 @@ function pageData(){
             <button style="background:var(--ink-soft);" onclick="restoreBackup()">確認還原（會覆蓋目前資料）</button>
           </div>
         </div>
+        ` : ''}
       </div>
     </div>
 
     <div class="backup danger-zone">
-      <h2>⚠️ 整體重置</h2>
+      <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('reset')" style="color:var(--brick);">
+        <span>⚠️ 整體重置</span>
+        <span>${settingsExpandedKey==='reset'?'▲':'▼'}</span>
+      </button>
+      ${settingsExpandedKey==='reset' ? `
       <p>清除「所有假別＋補休＋換休」在指定範圍內的紀錄，會直接刪除、沒有復原按鈕，執行前請務必先備份。</p>
       <div class="row">
         <select id="allResetScope">
@@ -1717,6 +1804,7 @@ function pageData(){
         </select>
         <button class="danger-btn" onclick="resetRecords(document.getElementById('allResetScope').value, 'ALL')">整體重置</button>
       </div>
+      ` : ''}
     </div>
   `;
 }
@@ -2453,6 +2541,7 @@ async function restoreBackup(){
 
 (async function init(){
   await loadState();
+  applyUiScale();
   render();
   initFirebase();
   if('serviceWorker' in navigator){
