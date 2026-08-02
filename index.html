@@ -246,7 +246,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-08';
+const APP_VERSION = 'v2026.07.28-09';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -393,7 +393,7 @@ async function syncToCloud(){
 const LEAVE_TYPES = [
   {key:'annual', label:'特休', seal:'休', c:'jade', defaultQuota:0, hint:'依到職年資自行填入'},
   {key:'sick', label:'病假', seal:'病', c:'blue', defaultQuota:28, hint:'常見上限 28 天／年，實際依公司規定；生理假超過3天的部分會自動併入此處計算；超過總天數的部分依規定可用事假或特休擇一抵銷，需自行決定'},
-  {key:'personal', label:'事假', seal:'事', c:'olive', defaultQuota:14, hint:'常見上限 14 天／年（不給薪），實際依公司規定；家庭照顧假會全額自動併入此處計算'},
+  {key:'personal', label:'事假', seal:'事', c:'olive', defaultQuota:7, hint:'常見上限 7 天／年（不給薪），實際依公司規定；家庭照顧假會全額自動併入此處計算'},
   {key:'familyCare', label:'家庭照顧假', seal:'家', c:'plum', defaultQuota:7, hint:'併入事假總天數計算，常見上限 7 天／年'},
   {key:'menstrual', label:'生理假', seal:'生', c:'rose', defaultQuota:12, hint:'每月至多1天；全年前3天不併入病假，超過部分自動併入病假計算（性平法第14條）'},
   {key:'mentalCare', label:'身心照顧假', seal:'心', c:'rust', defaultQuota:3, hint:'依公司規定，預設 3 天，可自行調整'}
