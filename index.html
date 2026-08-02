@@ -155,6 +155,7 @@
   button.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;}
 
   .total-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
+  .quota-summary-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--line);font-size:13.5px;flex-wrap:wrap;}
   .hint{font-size:14px;color:var(--ink-soft);line-height:1.6;}
   .total-row .hint{flex-basis:100%;margin-top:-2px;}
 
@@ -186,17 +187,22 @@
   .cal-cell{min-height:52px;border:1px solid var(--line);border-radius:4px;padding:3px;background:#fff;}
   .cal-cell.empty{border:none;background:transparent;}
   .cal-cell.today{border-color:var(--jade);box-shadow:0 0 0 1px var(--jade) inset;}
+  .cal-cell.selected{background:var(--blue-soft);border-color:var(--blue);}
+  .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
   .cal-daynum{font-size:10px;color:var(--ink-soft);}
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
   .cal-cell:not(.empty){cursor:pointer;transition:background .1s ease;}
   .cal-cell:not(.empty):active{background:var(--paper-soft, #F4EEE2);}
-  .cal-cell.selected{border-color:var(--jade);border-width:2px;padding:2px;}
   .cal-detail-panel{margin-top:12px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;}
   .cal-detail-date{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;margin-bottom:6px;}
   .cal-detail-holiday{font-size:13px;color:var(--brick);margin-bottom:6px;}
   .cal-detail-chips{display:flex;flex-wrap:wrap;gap:6px;}
-  .cal-detail-chip{font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:14px;border:none;cursor:pointer;}
+  .cal-detail-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:6px 6px 6px 10px;border-radius:14px;}
+  .cal-detail-chip span{cursor:pointer;}
+  .cal-detail-chip-del{background:rgba(0,0,0,.08);border:none;border-radius:50%;width:18px;height:18px;font-size:10px;line-height:1;cursor:pointer;color:inherit;flex-shrink:0;}
+  .cal-detail-add-row{display:flex;gap:8px;margin-top:12px;align-items:center;}
+  .cal-detail-add-row select{flex:1;padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px;}
   .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:700;color:#fff;}
 
@@ -260,7 +266,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-17';
+const APP_VERSION = 'v2026.07.28-22';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -443,6 +449,23 @@ let calSelectedDate = null;
 function selectCalDay(dateStr){
   calSelectedDate = (calSelectedDate===dateStr) ? null : dateStr;
   render();
+}
+let addRecordDate = null;
+function openAddRecord(key){
+  activeLeaveTab = key;
+  addRecordDate = null;
+  switchPage('addRecord');
+}
+function addFromCalendar(dateStr){
+  const sel = document.getElementById('calAddTypeSelect');
+  activeLeaveTab = sel ? sel.value : 'annual';
+  addRecordDate = dateStr;
+  selectedYear = parseInt(dateStr.slice(0,4),10);
+  switchPage('addRecord');
+}
+function removeFromCalendar(btnEl, kind, key, id){
+  if(kind==='comp'){ removeComp(btnEl, id); }
+  else { removeRecord(btnEl, key, id); }
 }
 
 // 國定假日（純參考，不影響任何假別計算）
@@ -1093,7 +1116,7 @@ function calendarPanel(){
       if(r.date.startsWith(ymPrefix)){
         const d = parseInt(r.date.slice(8,10),10);
         if(!dayMap[d]) dayMap[d]=[];
-        dayMap[d].push({key:t.key, seal:t.seal, c:t.c, label:`${t.label} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
+        dayMap[d].push({kind:'leave', key:t.key, id:r.id, seal:t.seal, c:t.c, label:`${t.label} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
       }
     });
   });
@@ -1103,7 +1126,7 @@ function calendarPanel(){
       if(!dayMap[d]) dayMap[d]=[];
       const cat = r.category||'comp';
       const info = COMP_CATEGORIES[cat];
-      dayMap[d].push({key:cat, seal:info.label.slice(0,1), c:info.c, label:`${info.label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
+      dayMap[d].push({kind:'comp', key:cat, id:r.id, seal:info.label.slice(0,1), c:info.c, label:`${info.label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
     }
   });
   let cells = '';
@@ -1125,11 +1148,20 @@ function calendarPanel(){
     const h = holidays ? holidays[calSelectedDate] : null;
     const holidayLine = (h && h.isHoliday && h.description) ? `<div class="cal-detail-holiday">🔴 ${escapeHtml(h.description)}</div>` : '';
     const weekLabel = ['日','一','二','三','四','五','六'][new Date(calSelectedDate+'T00:00:00').getDay()];
-    const recordChips = items.length ? `<div class="cal-detail-chips">${items.map(it=>`<button type="button" class="cal-detail-chip" style="background:var(--${it.c}-soft);color:var(--${it.c});" onclick="viewLeaveDetail('${it.key}','${calSelectedDate}')">${escapeHtml(it.label)} ›</button>`).join('')}</div>` : `<div class="hint">這天沒有請假紀錄</div>`;
+    const recordChips = items.length ? `<div class="cal-detail-chips">${items.map(it=>`
+      <span class="cal-detail-chip" style="background:var(--${it.c}-soft);color:var(--${it.c});">
+        <span onclick="viewLeaveDetail('${it.key}','${calSelectedDate}')">${escapeHtml(it.label)} ›</span>
+        <button type="button" class="cal-detail-chip-del" onclick="event.stopPropagation();removeFromCalendar(this,'${it.kind}','${it.key}','${it.id}')" aria-label="刪除">✕</button>
+      </span>`).join('')}</div>` : `<div class="hint">這天沒有請假紀錄</div>`;
+    const typeOptions = LEAVE_TYPES.map(t=>`<option value="${t.key}">${t.label}</option>`).join('') + `<option value="comp">補休</option><option value="exchange">換休</option>`;
     return `<div class="cal-detail-panel">
       <div class="cal-detail-date">${toROC(calSelectedDate)}（${weekLabel}）</div>
       ${holidayLine}
       ${recordChips}
+      <div class="cal-detail-add-row">
+        <select id="calAddTypeSelect">${typeOptions}</select>
+        <button type="button" class="btn-jade" onclick="addFromCalendar('${calSelectedDate}')">＋ 新增</button>
+      </div>
     </div>`;
   })() : '';
   return `
@@ -1253,19 +1285,11 @@ function leaveSection(t){
   return `
     <section class="block">
       <h2><span class="dot dot-${t.c}"></span>${t.label}</h2>
-      <div class="total-row">
-        <div class="field">
-          <label>${t.label}總天數（${selectedYear} 年）</label>
-          <input type="number" id="${t.key}TotalInput" min="0" step="0.5" value="${getQuota(t.key,selectedYear)}">
-        </div>
-        <button class="btn-${t.c}" onclick="updateQuota('${t.key}')">更新總天數</button>
-        <div class="hint">${t.hint}</div>
-      </div>
       ${t.key==='sick' && menstrualExcess(selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 生理假併入病假提醒</strong>${selectedYear} 年生理假已使用超過 ${MENSTRUAL_FREE_DAYS} 天，超過的 ${fmt(menstrualExcess(selectedYear))} 天已自動計入病假已使用天數。</div>` : ''}
       ${t.key==='sick' && remainOf('sick',selectedYear)<0 ? `<div class="reminder-bar"><strong>⚠️ 病假超額提醒</strong>${selectedYear} 年病假已超過總天數 ${fmt(-remainOf('sick',selectedYear))} 天，依規定可用事假或特別休假擇一抵銷，請自行決定後手動在事假或特休登記這幾天（本系統不會自動幫你決定要扣哪一邊）。</div>` : ''}
       ${t.key==='personal' && usedOf('familyCare',selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 併入事假提醒</strong>${selectedYear} 年家庭照顧假 ${fmt(usedOf('familyCare',selectedYear))} 天已全額自動計入事假已使用天數。</div>` : ''}
       ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>💰 有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))} 天，其中有薪 ${fmt(personalPaidUsed(selectedYear))} 天、無薪 ${fmt(personalUnpaidUsed(selectedYear))} 天（門檻：每年前 ${fmt(getPersonalPaidDays())} 天有薪，可在「設定」分頁調整）。</div>` : ''}
-      <button type="button" class="btn-${t.c}" style="margin-bottom:14px;" onclick="switchPage('addRecord')">＋ 新增一筆</button>
+      <button type="button" class="btn-${t.c}" style="margin-bottom:14px;" onclick="openAddRecord('${t.key}')">＋ 新增一筆</button>
       <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
       ${listHtml}
       <div class="reset-row">
@@ -1278,12 +1302,16 @@ function leaveSection(t){
         </select>
         <button class="danger-btn" onclick="resetRecords(document.getElementById('${t.key}ResetScope').value, '${t.key}')">重置</button>
       </div>
+      <div class="quota-summary-row" style="border-bottom:none;border-top:1px dashed var(--line);padding-top:14px;margin-top:16px;margin-bottom:0;padding-bottom:0;">
+        <span>${selectedYear} 年${t.label}總天數：<strong>${fmt(getQuota(t.key,selectedYear))} 天</strong>（剩餘 ${fmt(remainOf(t.key,selectedYear))} 天）</span>
+        <button type="button" class="ghost" onclick="switchPage('data')">✎ 調整總天數</button>
+      </div>
     </section>`;
 }
 
 function pageAddRecord(){
   const key = activeLeaveTab;
-  const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = defaultDateFor(selectedYear);
+  const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = addRecordDate || defaultDateFor(selectedYear);
   const backBtn = `<button type="button" class="ghost" style="margin-bottom:14px;" onclick="switchPage('leaves')">‹ 返回列表</button>`;
 
   if(key==='comp' || key==='exchange'){
@@ -1429,7 +1457,7 @@ function compSectionHtml(category){
     <section class="block">
       <h2><span class="dot dot-${info.c}"></span>${info.label}</h2>
       <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>
-      <button type="button" class="btn-${info.c}" style="margin-bottom:14px;" onclick="switchPage('addRecord')">＋ 新增一筆</button>
+      <button type="button" class="btn-${info.c}" style="margin-bottom:14px;" onclick="openAddRecord('${category}')">＋ 新增一筆</button>
       <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
       ${listHtml}
       <div class="reset-row">
@@ -1503,6 +1531,20 @@ function pageViz(){
 function pageData(){
   return `
     <div class="manage-grid">
+      <div class="backup">
+        <h2>📐 各假別總天數設定</h2>
+        <p class="hint" style="margin-bottom:12px;">這是每個假別今年（${selectedYear} 年）的總天數上限，通常一年只需要調整一兩次。</p>
+        ${LEAVE_TYPES.map(t=>`
+          <div class="total-row" style="border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px;">
+            <div class="field">
+              <label>${t.label}總天數</label>
+              <input type="number" id="${t.key}TotalInput" min="0" step="0.5" value="${getQuota(t.key,selectedYear)}">
+            </div>
+            <button class="btn-${t.c}" onclick="updateQuota('${t.key}')">更新</button>
+            <div class="hint">${t.hint}</div>
+          </div>
+        `).join('')}
+      </div>
       <div class="backup">
         <h2>🔖 版本資訊</h2>
         <p>目前版本：<strong>${APP_VERSION}</strong>。上傳新版檔案後，若這裡的版本號沒有變，代表瀏覽器還在用舊的快取，請完全關閉分頁（或刪除主畫面捷徑重新加入）再打開一次。</p>
