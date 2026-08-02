@@ -93,8 +93,6 @@
   .stamp-card.level-warn .num{color:var(--amber);}
   .stamp-card.level-danger{border-color:var(--brick);background:var(--brick-soft);}
   .stamp-card.level-danger .num{color:var(--brick);}
-  .fab-add{position:fixed;right:18px;bottom:calc(94px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;color:#fff;font-size:26px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(43,42,40,.3);z-index:45;border:none;cursor:pointer;line-height:1;transition:transform .12s ease;}
-  .fab-add:active{transform:scale(.92);}
   .seal{position:absolute;right:-8px;top:-8px;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-weight:900;font-size:18px;transform:rotate(-12deg);opacity:.8;border:2px solid currentColor;}
   .seal::after{content:'';position:absolute;inset:4px;border:1px solid currentColor;border-radius:50%;opacity:.6;}
   .c-jade{color:var(--jade);} .c-brick{color:var(--brick);} .c-blue{color:var(--blue);} .c-olive{color:var(--olive);} .c-plum{color:var(--plum);} .c-rust{color:var(--rust);} .c-rose{color:var(--rose);} .c-teal{color:var(--teal);}
@@ -191,6 +189,14 @@
   .cal-daynum{font-size:10px;color:var(--ink-soft);}
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
+  .cal-cell:not(.empty){cursor:pointer;transition:background .1s ease;}
+  .cal-cell:not(.empty):active{background:var(--paper-soft, #F4EEE2);}
+  .cal-cell.selected{border-color:var(--jade);border-width:2px;padding:2px;}
+  .cal-detail-panel{margin-top:12px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;}
+  .cal-detail-date{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;margin-bottom:6px;}
+  .cal-detail-holiday{font-size:13px;color:var(--brick);margin-bottom:6px;}
+  .cal-detail-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .cal-detail-chip{font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:14px;border:none;cursor:pointer;}
   .cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px;}
   .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:700;color:#fff;}
 
@@ -254,7 +260,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-15';
+const APP_VERSION = 'v2026.07.28-17';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -433,6 +439,11 @@ let selectedYear = CUR_YEAR;
 let calendarMode = true;
 let calYear = CUR_YEAR;
 let calMonth = NOW.getMonth()+1;
+let calSelectedDate = null;
+function selectCalDay(dateStr){
+  calSelectedDate = (calSelectedDate===dateStr) ? null : dateStr;
+  render();
+}
 
 // 國定假日（純參考，不影響任何假別計算）
 // 資料來源：ruyut/TaiwanCalendar（源自人事行政總處公告的辦公日曆表），透過 jsDelivr CDN 取得
@@ -472,18 +483,17 @@ let kwUnmatchedLines = [];
 let expandedMonths = {};
 let isComposing = false;
 let activeLeaveTab = 'annual';
-let addFormOpen = false;
-function switchLeaveTab(key){ activeLeaveTab = key; searchQuery=''; addFormOpen=false; render(); }
-function toggleAddForm(){
-  addFormOpen = !addFormOpen;
-  render();
-  if(addFormOpen){
-    setTimeout(()=>{ const el=document.getElementById('addFormPanel'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 30);
-  }
-}
+function switchLeaveTab(key){ activeLeaveTab = key; searchQuery=''; render(); }
 let activePage = 'home';
 function switchPage(page){ activePage = page; window.scrollTo(0,0); render(); }
-function viewLeaveDetail(key){ activeLeaveTab = key; switchPage('leaves'); }
+function viewLeaveDetail(key, dateStr){
+  activeLeaveTab = key;
+  if(dateStr){
+    selectedYear = parseInt(dateStr.slice(0,4),10);
+    searchQuery = dateStr;
+  }
+  switchPage('leaves');
+}
 
 function monthLabel(ym){
   const y = parseInt(ym.slice(0,4),10) - 1911;
@@ -1083,7 +1093,7 @@ function calendarPanel(){
       if(r.date.startsWith(ymPrefix)){
         const d = parseInt(r.date.slice(8,10),10);
         if(!dayMap[d]) dayMap[d]=[];
-        dayMap[d].push({seal:t.seal, c:t.c, label:`${t.label} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
+        dayMap[d].push({key:t.key, seal:t.seal, c:t.c, label:`${t.label} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
       }
     });
   });
@@ -1091,23 +1101,37 @@ function calendarPanel(){
     if(r.date.startsWith(ymPrefix)){
       const d = parseInt(r.date.slice(8,10),10);
       if(!dayMap[d]) dayMap[d]=[];
-      const info = COMP_CATEGORIES[r.category||'comp'];
-      dayMap[d].push({seal:info.label.slice(0,1), c:info.c, label:`${info.label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
+      const cat = r.category||'comp';
+      const info = COMP_CATEGORIES[cat];
+      dayMap[d].push({key:cat, seal:info.label.slice(0,1), c:info.c, label:`${info.label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
     }
   });
   let cells = '';
   for(let i=0;i<startWeekday;i++) cells += `<div class="cal-cell empty"></div>`;
   for(let d=1; d<=daysInMonth; d++){
     const items = dayMap[d]||[];
-    const dots = items.map(it=>`<span class="cal-dot c-${it.c}-bg" title="${escapeAttr(it.label)}">${it.seal}</span>`).join('');
+    const dots = items.map(it=>`<span class="cal-dot c-${it.c}-bg">${it.seal}</span>`).join('');
     const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = (dateStr===TODAY);
+    const isSelected = (dateStr===calSelectedDate);
     const h = holidays ? holidays[dateStr] : null;
     const isNamedHoliday = h && h.isHoliday && h.description; // 只標「有名字」的假日（國定假日/補假等），週六日本來就看得出來，不特別標
     const daynumClass = isNamedHoliday ? 'holiday' : '';
-    const daynumTitle = isNamedHoliday ? ` title="${escapeAttr(h.description)}"` : '';
-    cells += `<div class="cal-cell ${isToday?'today':''}"><div class="cal-daynum ${daynumClass}"${daynumTitle}>${d}${isNamedHoliday?'<span class="cal-holiday-dot"></span>':''}</div><div class="cal-dots">${dots}</div></div>`;
+    cells += `<div class="cal-cell ${isToday?'today':''} ${isSelected?'selected':''}" onclick="selectCalDay('${dateStr}')"><div class="cal-daynum ${daynumClass}">${d}${isNamedHoliday?'<span class="cal-holiday-dot"></span>':''}</div><div class="cal-dots">${dots}</div></div>`;
   }
+  const selectedInfo = calSelectedDate && calSelectedDate.startsWith(ymPrefix) ? (()=>{
+    const dNum = parseInt(calSelectedDate.slice(8,10),10);
+    const items = dayMap[dNum]||[];
+    const h = holidays ? holidays[calSelectedDate] : null;
+    const holidayLine = (h && h.isHoliday && h.description) ? `<div class="cal-detail-holiday">🔴 ${escapeHtml(h.description)}</div>` : '';
+    const weekLabel = ['日','一','二','三','四','五','六'][new Date(calSelectedDate+'T00:00:00').getDay()];
+    const recordChips = items.length ? `<div class="cal-detail-chips">${items.map(it=>`<button type="button" class="cal-detail-chip" style="background:var(--${it.c}-soft);color:var(--${it.c});" onclick="viewLeaveDetail('${it.key}','${calSelectedDate}')">${escapeHtml(it.label)} ›</button>`).join('')}</div>` : `<div class="hint">這天沒有請假紀錄</div>`;
+    return `<div class="cal-detail-panel">
+      <div class="cal-detail-date">${toROC(calSelectedDate)}（${weekLabel}）</div>
+      ${holidayLine}
+      ${recordChips}
+    </div>`;
+  })() : '';
   return `
     <div class="block">
       <div class="cal-header">
@@ -1117,7 +1141,8 @@ function calendarPanel(){
       </div>
       <div class="cal-grid cal-weekdays"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
       <div class="cal-grid">${cells}</div>
-      <p class="hint" style="margin-top:10px;">🔴 紅字日期為政府公告國定假日／補假（點日期可看名稱），純參考用，不影響假別計算。${holidays===null ? '國定假日資料讀取中…' : (holidayCache[y]===false ? '國定假日資料讀取失敗，可能是離線中，稍後重新整理再試。' : '')}</p>
+      ${selectedInfo}
+      <p class="hint" style="margin-top:10px;">🔴 紅字日期為政府公告國定假日／補假，點日期可看名稱與當天紀錄，純參考用，不影響假別計算。${holidays===null ? '國定假日資料讀取中…' : (holidayCache[y]===false ? '國定假日資料讀取失敗，可能是離線中，稍後重新整理再試。' : '')}</p>
     </div>`;
 }
 
@@ -1220,7 +1245,7 @@ function leaveSection(t){
   const all = (state.records[t.key]||[]).filter(r=>r.date.startsWith(String(selectedYear)));
   let rows = all.filter(r=>matchesSearch(r.date, r.note, t.label));
   rows.sort((a,b)=> sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
-  const emptyMsg = all.length===0 ? `${selectedYear} 年尚無${t.label}紀錄，可以點右下角「＋」登記第一筆 👉` : '查無符合搜尋的紀錄';
+  const emptyMsg = all.length===0 ? `${selectedYear} 年尚無${t.label}紀錄，可以點上方「＋新增一筆」登記第一筆 👆` : '查無符合搜尋的紀錄';
   const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = defaultDateFor(selectedYear);
   const forceExpand = (groupRows)=> editing && editing.kind==='record' && editing.key===t.key && groupRows.some(r=>r.id===editing.id);
   const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r),0))} 天`;
@@ -1240,36 +1265,9 @@ function leaveSection(t){
       ${t.key==='sick' && remainOf('sick',selectedYear)<0 ? `<div class="reminder-bar"><strong>⚠️ 病假超額提醒</strong>${selectedYear} 年病假已超過總天數 ${fmt(-remainOf('sick',selectedYear))} 天，依規定可用事假或特別休假擇一抵銷，請自行決定後手動在事假或特休登記這幾天（本系統不會自動幫你決定要扣哪一邊）。</div>` : ''}
       ${t.key==='personal' && usedOf('familyCare',selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 併入事假提醒</strong>${selectedYear} 年家庭照顧假 ${fmt(usedOf('familyCare',selectedYear))} 天已全額自動計入事假已使用天數。</div>` : ''}
       ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>💰 有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))} 天，其中有薪 ${fmt(personalPaidUsed(selectedYear))} 天、無薪 ${fmt(personalUnpaidUsed(selectedYear))} 天（門檻：每年前 ${fmt(getPersonalPaidDays())} 天有薪，可在「設定」分頁調整）。</div>` : ''}
+      <button type="button" class="btn-${t.c}" style="margin-bottom:14px;" onclick="switchPage('addRecord')">＋ 新增一筆</button>
       <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
       ${listHtml}
-      <div id="addFormPanel" style="${addFormOpen?'':'display:none;'}margin-top:16px;">
-        <form class="entry" onsubmit="addRecord('${t.key}', event)">
-          <div class="field"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" required><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div></div>
-          <div class="field field-days">
-            <label>數量</label>
-            <div class="days-row">
-              <input type="number" id="${t.key}Amount" min="0.5" step="0.5" value="1" required>
-              <select id="${t.key}Unit" onchange="onUnitChange('${t.key}')" style="width:82px;padding:8px 4px;">
-                <option value="day">天</option>
-                <option value="hour">小時</option>
-              </select>
-              <div class="quickdays" id="${t.key}QuickDay">
-                <button type="button" onclick="setDays('${t.key}Amount',0.5)">0.5</button>
-                <button type="button" onclick="setDays('${t.key}Amount',1)">1</button>
-                <button type="button" onclick="setDays('${t.key}Amount',2)">2</button>
-              </div>
-              <div class="quickdays" id="${t.key}QuickHour" style="display:none;">
-                <button type="button" onclick="setDays('${t.key}Amount',1)">1</button>
-                <button type="button" onclick="setDays('${t.key}Amount',2)">2</button>
-                <button type="button" onclick="setDays('${t.key}Amount',4)">4</button>
-              </div>
-            </div>
-          </div>
-          <div class="field note"><label>備註</label><input type="text" id="${t.key}Note" placeholder="原因或備註"></div>
-          <button type="submit" class="btn-${t.c}">登記使用</button>
-        </form>
-      </div>
-      <button type="button" class="fab-add" style="background:var(--${t.c});" onclick="toggleAddForm()" aria-label="新增一筆">${addFormOpen?'✕':'+'}</button>
       <div class="reset-row">
         <span class="reset-label">清除紀錄：</span>
         <select id="${t.key}ResetScope">
@@ -1280,6 +1278,97 @@ function leaveSection(t){
         </select>
         <button class="danger-btn" onclick="resetRecords(document.getElementById('${t.key}ResetScope').value, '${t.key}')">重置</button>
       </div>
+    </section>`;
+}
+
+function pageAddRecord(){
+  const key = activeLeaveTab;
+  const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = defaultDateFor(selectedYear);
+  const backBtn = `<button type="button" class="ghost" style="margin-bottom:14px;" onclick="switchPage('leaves')">‹ 返回列表</button>`;
+
+  if(key==='comp' || key==='exchange'){
+    const info = COMP_CATEGORIES[key];
+    return backBtn + `
+      <section class="block">
+        <h2><span class="dot dot-${info.c}"></span>新增${info.label}</h2>
+        <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>
+        <form class="entry" onsubmit="addComp(event, '${key}')">
+          <div class="form-row">
+            <div class="field" style="flex:0 0 160px;"><label>類型</label>
+              <select id="compType">
+                <option value="earn">獲得${info.label}</option>
+                <option value="use">使用${info.label}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange('${key}')" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange('${key}');">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange('${key}');">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
+          </div>
+          <div class="form-row">
+            <div class="field field-days">
+              <label>數量</label>
+              <div class="days-row">
+                <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required>
+                <select id="compUnit" onchange="onCompUnitChange()" style="width:82px;padding:8px 4px;">
+                  <option value="day">天</option>
+                  <option value="hour">小時</option>
+                </select>
+                <div class="quickdays" id="compQuickDay">
+                  <button type="button" onclick="setDays('compAmount',0.5)">0.5</button>
+                  <button type="button" onclick="setDays('compAmount',1)">1</button>
+                  <button type="button" onclick="setDays('compAmount',2)">2</button>
+                </div>
+                <div class="quickdays" id="compQuickHour" style="display:none;">
+                  <button type="button" onclick="setDays('compAmount',1)">1</button>
+                  <button type="button" onclick="setDays('compAmount',2)">2</button>
+                  <button type="button" onclick="setDays('compAmount',4)">4</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field" style="flex:1;min-width:210px;">
+              <label>⏳ 到期日（自動預設 ${info.defaultYears} 年後，可手動修改）</label>
+              <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,info.defaultYears)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field note"><label>備註</label><input type="text" id="compNote" placeholder="例如：假日加班換休"></div>
+            <button type="submit" class="btn-${info.c}">登記</button>
+          </div>
+        </form>
+      </section>`;
+  }
+
+  const t = LEAVE_TYPES.find(tt=>tt.key===key) || LEAVE_TYPES[0];
+  return backBtn + `
+    <section class="block">
+      <h2><span class="dot dot-${t.c}"></span>新增${t.label}</h2>
+      <form class="entry" onsubmit="addRecord('${t.key}', event)">
+        <div class="field"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" required><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div></div>
+        <div class="field field-days">
+          <label>數量</label>
+          <div class="days-row">
+            <input type="number" id="${t.key}Amount" min="0.5" step="0.5" value="1" required>
+            <select id="${t.key}Unit" onchange="onUnitChange('${t.key}')" style="width:82px;padding:8px 4px;">
+              <option value="day">天</option>
+              <option value="hour">小時</option>
+            </select>
+            <div class="quickdays" id="${t.key}QuickDay">
+              <button type="button" onclick="setDays('${t.key}Amount',0.5)">0.5</button>
+              <button type="button" onclick="setDays('${t.key}Amount',1)">1</button>
+              <button type="button" onclick="setDays('${t.key}Amount',2)">2</button>
+            </div>
+            <div class="quickdays" id="${t.key}QuickHour" style="display:none;">
+              <button type="button" onclick="setDays('${t.key}Amount',1)">1</button>
+              <button type="button" onclick="setDays('${t.key}Amount',2)">2</button>
+              <button type="button" onclick="setDays('${t.key}Amount',4)">4</button>
+            </div>
+          </div>
+        </div>
+        <div class="field note"><label>備註</label><input type="text" id="${t.key}Note" placeholder="原因或備註"></div>
+        <button type="submit" class="btn-${t.c}">登記使用</button>
+      </form>
     </section>`;
 }
 
@@ -1328,7 +1417,7 @@ function compSectionHtml(category){
   const allComp = state.compRecords.filter(r=>r.date.startsWith(String(selectedYear)) && (r.category||'comp')===category);
   let compRows = allComp.filter(r=>matchesSearch(r.date, r.note, info.label, r.type==='earn'?'獲得':'使用'));
   compRows.sort((a,b)=> sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
-  const compEmptyMsg = allComp.length===0 ? `${selectedYear} 年尚無${info.label}紀錄，可以點右下角「＋」登記第一筆 👉` : '查無符合搜尋的紀錄';
+  const compEmptyMsg = allComp.length===0 ? `${selectedYear} 年尚無${info.label}紀錄，可以點上方「＋新增一筆」登記第一筆 👆` : '查無符合搜尋的紀錄';
   const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = defaultDateFor(selectedYear);
   const forceExpand = (groupRows)=> editing && editing.kind==='comp' && groupRows.some(r=>r.id===editing.id);
   const totalFn = (groupRows)=>{
@@ -1340,56 +1429,9 @@ function compSectionHtml(category){
     <section class="block">
       <h2><span class="dot dot-${info.c}"></span>${info.label}</h2>
       <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>
+      <button type="button" class="btn-${info.c}" style="margin-bottom:14px;" onclick="switchPage('addRecord')">＋ 新增一筆</button>
       <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
       ${listHtml}
-      <div id="addFormPanel" style="${addFormOpen?'':'display:none;'}margin-top:16px;">
-        <form class="entry" onsubmit="addComp(event, '${category}')">
-          <div class="form-row">
-            <div class="field" style="flex:0 0 160px;"><label>類型</label>
-              <select id="compType">
-                <option value="earn">獲得${info.label}</option>
-                <option value="use">使用${info.label}</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="field" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange('${category}')" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange('${category}');">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange('${category}');">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
-          </div>
-          <div class="form-row">
-            <div class="field field-days">
-              <label>數量</label>
-              <div class="days-row">
-                <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required>
-                <select id="compUnit" onchange="onCompUnitChange()" style="width:82px;padding:8px 4px;">
-                  <option value="day">天</option>
-                  <option value="hour">小時</option>
-                </select>
-                <div class="quickdays" id="compQuickDay">
-                  <button type="button" onclick="setDays('compAmount',0.5)">0.5</button>
-                  <button type="button" onclick="setDays('compAmount',1)">1</button>
-                  <button type="button" onclick="setDays('compAmount',2)">2</button>
-                </div>
-                <div class="quickdays" id="compQuickHour" style="display:none;">
-                  <button type="button" onclick="setDays('compAmount',1)">1</button>
-                  <button type="button" onclick="setDays('compAmount',2)">2</button>
-                  <button type="button" onclick="setDays('compAmount',4)">4</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="field" style="flex:1;min-width:210px;">
-              <label>⏳ 到期日（自動預設 ${info.defaultYears} 年後，可手動修改）</label>
-              <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,info.defaultYears)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="field note"><label>備註</label><input type="text" id="compNote" placeholder="例如：假日加班換休"></div>
-            <button type="submit" class="btn-${info.c}">登記</button>
-          </div>
-        </form>
-      </div>
-      <button type="button" class="fab-add" style="background:var(--${info.c});" onclick="toggleAddForm()" aria-label="新增一筆">${addFormOpen?'✕':'+'}</button>
       <div class="reset-row">
         <span class="reset-label">清除紀錄：</span>
         <select id="compResetScope">
@@ -1584,10 +1626,11 @@ function bottomNav(){
     {key:'leaves', icon:'📋', label:'假別'},
     {key:'data', icon:'⚙️', label:'設定'}
   ];
+  const effectiveActive = activePage==='addRecord' ? 'leaves' : activePage;
   return `
     <nav class="bottom-nav">
       ${items.map(it=>`
-        <button type="button" class="nav-item ${activePage===it.key?'active':''}" onclick="switchPage('${it.key}')">
+        <button type="button" class="nav-item ${effectiveActive===it.key?'active':''}" onclick="switchPage('${it.key}')">
           <span class="nav-icon-wrap"><span class="nav-icon">${it.icon}</span></span>
           <span class="nav-label">${it.label}</span>
         </button>`).join('')}
@@ -1604,6 +1647,7 @@ function render(){
   else if(activePage==='viz'){ pageContent = pageViz(); pageTitle = '行事曆'; }
   else if(activePage==='quick'){ pageContent = pageQuickInput(); pageTitle = '快速輸入'; }
   else if(activePage==='data'){ pageContent = pageData(); pageTitle = '資料管理'; }
+  else if(activePage==='addRecord'){ pageContent = pageAddRecord(); pageTitle = '新增紀錄'; }
 
   document.getElementById('app').innerHTML = `
     <header>
@@ -1754,6 +1798,7 @@ async function addRecord(key, e){
     state.records[key].push({ id, date, unit, amount, note });
     lastAddedId = id;
     await saveState();
+    if(activePage==='addRecord'){ activePage='leaves'; }
     render();
     setStatus('已登記使用', true);
   }catch(err){
@@ -1971,6 +2016,7 @@ async function addComp(e, category){
     state.compRecords.push(record);
     lastAddedId = id;
     await saveState();
+    if(activePage==='addRecord'){ activePage='leaves'; }
     render();
     setStatus(`已登記${info.label}`, true);
   }catch(err){
