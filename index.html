@@ -175,8 +175,10 @@
   ul.ledger .expiry{font-size:14.5px;color:var(--amber);font-weight:700;font-family:'IBM Plex Mono',monospace;flex:1 1 100%;background:var(--amber-soft, #FBEFDC);padding:5px 9px;border-radius:6px;}
   ul.ledger .ledger-actions{display:flex;gap:8px;margin-left:auto;flex:none;}
   ul.ledger .del{background:#fff;border:1.5px solid var(--line);border-radius:12px;color:var(--ink-soft);font-size:13.5px;font-weight:700;cursor:pointer;padding:8px 11px;min-height:36px;line-height:1;display:inline-flex;align-items:center;gap:4px;}
-  ul.ledger li.editrow{display:flex;flex-wrap:wrap;align-items:center;background:#fffaf0;border-radius:4px;padding:8px;gap:6px;}
-  li.editrow input,li.editrow select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:7px 10px;border:1.5px solid var(--line);border-radius:12px;}
+  ul.ledger li.editrow{display:flex;flex-wrap:wrap;align-items:flex-start;background:#fffaf0;border-radius:12px;padding:14px 12px;gap:12px;}
+  li.editrow input,li.editrow select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:8px 10px;border:1.5px solid var(--line);border-radius:12px;}
+  li.editrow > .field{flex:1 1 140px;}
+  li.editrow > .row{width:100%;gap:8px;}
   .empty{font-size:14px;color:var(--ink-soft);padding:14px 2px;line-height:1.6;text-align:center;}
 
   @keyframes stampIn{0%{transform:scale(1.5) rotate(-6deg);opacity:0;}60%{transform:scale(.96) rotate(1deg);opacity:1;}100%{transform:scale(1) rotate(0);}}
@@ -285,7 +287,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-43';
+const APP_VERSION = 'v2026.08.03-01';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1324,15 +1326,28 @@ function buildLeaveLi(t, r, dMin, dMax){
     const eu = r.unit || 'day';
     const ea = r.unit ? r.amount : r.days;
     return `<li class="editrow">
-      <span class="date-row" style="flex:none;"><input type="date" id="editDate-${t.key}-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}" style="width:130px;"><button type="button" class="date-toggle" onclick="toggleDateInputType('editDate-${t.key}-${r.id}')" title="切換手動輸入">⌨</button></span>
-      <input type="number" id="editAmount-${t.key}-${r.id}" value="${ea}" min="0.5" step="0.5" style="width:70px;">
-      <select id="editUnit-${t.key}-${r.id}" style="width:64px;">
-        <option value="day" ${eu==='day'?'selected':''}>天</option>
-        <option value="hour" ${eu==='hour'?'selected':''}>小時</option>
-      </select>
-      <input type="text" id="editNote-${t.key}-${r.id}" value="${escapeAttr(r.note||'')}" style="flex:1;min-width:100px;">
-      <button class="btn-${t.c}" onclick="saveEditRecord('${t.key}','${r.id}')">儲存</button>
-      <button class="ghost" onclick="cancelEdit()">取消</button>
+      <div class="field">
+        <label>日期</label>
+        <div class="date-row"><input type="date" id="editDate-${t.key}-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}"><button type="button" class="date-toggle" onclick="toggleDateInputType('editDate-${t.key}-${r.id}')" title="切換手動輸入">⌨</button></div>
+      </div>
+      <div class="field field-days">
+        <label>數量</label>
+        <div class="days-row">
+          <input type="number" id="editAmount-${t.key}-${r.id}" value="${ea}" min="0.5" step="0.5">
+          <select id="editUnit-${t.key}-${r.id}">
+            <option value="day" ${eu==='day'?'selected':''}>天</option>
+            <option value="hour" ${eu==='hour'?'selected':''}>小時</option>
+          </select>
+        </div>
+      </div>
+      <div class="field note">
+        <label>備註</label>
+        <input type="text" id="editNote-${t.key}-${r.id}" value="${escapeAttr(r.note||'')}">
+      </div>
+      <div class="row">
+        <button class="btn-${t.c}" onclick="saveEditRecord('${t.key}','${r.id}')">儲存</button>
+        <button class="ghost" onclick="cancelEdit()">取消</button>
+      </div>
     </li>`;
   }
   return `<li class="${r.id===lastAddedId?'stamp-in':''}">
@@ -1503,19 +1518,35 @@ function buildCompLi(r, dMin, dMax, category){
     const eu = r.unit || 'day';
     const ea = r.unit ? r.amount : r.days;
     return `<li class="editrow">
-      <select id="editCompType-${r.id}">
-        <option value="earn" ${r.type==='earn'?'selected':''}>獲得${info.label}</option>
-        <option value="use" ${r.type==='use'?'selected':''}>使用${info.label}</option>
-      </select>
-      <span class="date-row" style="flex:none;"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}" style="width:130px;"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入">⌨</button></span>
-      <input type="number" id="editCompAmount-${r.id}" value="${ea}" min="0.5" step="0.5" style="width:70px;">
-      <select id="editCompUnit-${r.id}" style="width:64px;">
-        <option value="day" ${eu==='day'?'selected':''}>天</option>
-        <option value="hour" ${eu==='hour'?'selected':''}>小時</option>
-      </select>
-      <input type="text" id="editCompNote-${r.id}" value="${escapeAttr(r.note||'')}" style="flex:1;min-width:100px;">
-      <button class="btn-${info.c}" onclick="saveEditComp('${r.id}')">儲存</button>
-      <button class="ghost" onclick="cancelEdit()">取消</button>
+      <div class="field">
+        <label>類型</label>
+        <select id="editCompType-${r.id}">
+          <option value="earn" ${r.type==='earn'?'selected':''}>獲得${info.label}</option>
+          <option value="use" ${r.type==='use'?'selected':''}>使用${info.label}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>日期</label>
+        <div class="date-row"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入">⌨</button></div>
+      </div>
+      <div class="field field-days">
+        <label>數量</label>
+        <div class="days-row">
+          <input type="number" id="editCompAmount-${r.id}" value="${ea}" min="0.5" step="0.5">
+          <select id="editCompUnit-${r.id}">
+            <option value="day" ${eu==='day'?'selected':''}>天</option>
+            <option value="hour" ${eu==='hour'?'selected':''}>小時</option>
+          </select>
+        </div>
+      </div>
+      <div class="field note">
+        <label>備註</label>
+        <input type="text" id="editCompNote-${r.id}" value="${escapeAttr(r.note||'')}">
+      </div>
+      <div class="row">
+        <button class="btn-${info.c}" onclick="saveEditComp('${r.id}')">儲存</button>
+        <button class="ghost" onclick="cancelEdit()">取消</button>
+      </div>
     </li>`;
   }
   return `<li class="${r.id===lastAddedId?'stamp-in':''}">
