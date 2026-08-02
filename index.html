@@ -181,15 +181,15 @@
   ul.ledger li.removing{animation:fadeOutRemove .2s ease-in forwards;pointer-events:none;}
 
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-  .cal-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-  .cal-weekdays{margin-bottom:4px;font-size:11px;color:var(--ink-soft);text-align:center;}
-  .cal-cell{min-height:52px;border:1px solid var(--line);border-radius:4px;padding:3px;background:#fff;}
+  .cal-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .cal-weekdays{margin-bottom:6px;font-size:12.5px;color:var(--ink-soft);text-align:center;font-weight:700;}
+  .cal-cell{min-height:70px;border:1px solid var(--line);border-radius:6px;padding:4px;background:#fff;}
   .cal-cell.empty{border:none;background:transparent;}
   .cal-cell.today{border-color:var(--jade);box-shadow:0 0 0 1px var(--jade) inset;}
   .cal-cell.selected{background:var(--blue-soft);border-color:var(--blue);}
   .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
-  .cal-daynum{font-size:10px;color:var(--ink-soft);}
+  .cal-daynum{font-size:12.5px;color:var(--ink-soft);}
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
   .cal-makeup-badge{display:inline-block;font-size:7px;font-weight:700;color:#fff;background:var(--blue);border-radius:3px;padding:0 2px;margin-left:2px;vertical-align:middle;}
@@ -212,9 +212,9 @@
   .cal-detail-chip-del{background:rgba(0,0,0,.08);border:none;border-radius:50%;width:18px;height:18px;font-size:10px;line-height:1;cursor:pointer;color:inherit;flex-shrink:0;}
   .cal-detail-add-row{display:flex;gap:8px;margin-top:12px;align-items:center;}
   .cal-detail-add-row select{flex:1;padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
-  .cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px;}
-  .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:700;color:#fff;}
-  .cal-dot-wide{width:auto;min-width:20px;padding:0 3px;border-radius:6px;font-size:7.5px;letter-spacing:-.02em;}
+  .cal-dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+  .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;font-size:9px;font-weight:700;color:#fff;}
+  .cal-dot-wide{width:auto;min-width:24px;padding:1px 4px;border-radius:6px;font-size:9px;letter-spacing:-.02em;}
 
   .chart-wrap{display:flex;gap:5px;align-items:flex-end;height:150px;padding:8px 2px 0;overflow-x:auto;}
   .chart-col{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;cursor:pointer;border-radius:8px;padding:4px 2px;transition:background .1s ease;}
@@ -279,7 +279,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-29';
+const APP_VERSION = 'v2026.07.28-30';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1134,7 +1134,7 @@ function calendarPanel(){
       if(r.date.startsWith(ymPrefix)){
         const d = parseInt(r.date.slice(8,10),10);
         if(!dayMap[d]) dayMap[d]=[];
-        dayMap[d].push({kind:'leave', key:t.key, id:r.id, seal:t.seal, c:t.c, label:`${t.label} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
+        dayMap[d].push({kind:'leave', key:t.key, id:r.id, seal:t.label.slice(0,2), wide:true, c:t.c, label:`${t.label} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
       }
     });
   });
