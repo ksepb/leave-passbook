@@ -287,7 +287,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.03-03';
+const APP_VERSION = 'v2026.08.03-04';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1403,7 +1403,7 @@ function leaveSection(t){
       <button type="button" class="btn-${t.c}" style="margin-bottom:14px;" onclick="openAddRecord('${t.key}')">＋ 新增一筆</button>
       <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
       ${listHtml}
-      <div class="quota-summary-row" style="border-top:1px dashed var(--line);padding-top:14px;margin-top:16px;">
+      <div class="quota-summary-row" style="border-bottom:none;border-top:1px dashed var(--line);padding-top:14px;margin-top:16px;margin-bottom:0;padding-bottom:0;">
         <span>${selectedYear} 年${t.label}總天數：<strong>${fmt(getQuota(t.key,selectedYear))} 天</strong>（剩餘 ${fmt(remainOf(t.key,selectedYear))} 天）</span>
         <button type="button" class="ghost" onclick="switchPage('data')">✎ 調整總天數</button>
       </div>
