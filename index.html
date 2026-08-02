@@ -181,21 +181,23 @@
   ul.ledger li.removing{animation:fadeOutRemove .2s ease-in forwards;pointer-events:none;}
 
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-  .cal-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
-  .cal-weekdays{margin-bottom:6px;font-size:12.5px;color:var(--ink-soft);text-align:center;font-weight:700;}
-  .cal-cell{min-height:70px;border:1px solid var(--line);border-radius:6px;padding:4px;background:#fff;}
+  .cal-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-weekdays{margin-bottom:4px;font-size:11px;color:var(--ink-soft);text-align:center;}
+  .cal-cell{aspect-ratio:1/1;border:1px solid var(--line);border-radius:4px;padding:3px;background:#fff;}
   .cal-cell.empty{border:none;background:transparent;}
+  .cal-cell.adjacent{background:transparent;border-color:transparent;cursor:default;}
+  .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
   .cal-cell.today{border-color:var(--jade);box-shadow:0 0 0 1px var(--jade) inset;}
   .cal-cell.selected{background:var(--blue-soft);border-color:var(--blue);}
   .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
-  .cal-daynum{font-size:12.5px;color:var(--ink-soft);}
+  .cal-daynum{font-size:10px;color:var(--ink-soft);}
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
   .cal-makeup-badge{display:inline-block;font-size:7px;font-weight:700;color:#fff;background:var(--blue);border-radius:3px;padding:0 2px;margin-left:2px;vertical-align:middle;}
   .cal-detail-makeup{font-size:13px;color:var(--blue);margin-bottom:6px;}
-  .cal-cell:not(.empty){cursor:pointer;transition:background .1s ease;}
-  .cal-cell:not(.empty):active{background:var(--paper-soft, #F4EEE2);}
+  .cal-cell:not(.empty):not(.adjacent){cursor:pointer;transition:background .1s ease;}
+  .cal-cell:not(.empty):not(.adjacent):active{background:var(--paper-soft, #F4EEE2);}
   .cal-cell.weekend, .cal-cell.holiday-bg{background:var(--rose-soft);}
   .cal-cell.weekend.selected, .cal-cell.holiday-bg.selected{background:var(--blue-soft);}
   .cal-month-summary{font-size:12.5px;color:var(--ink-soft);margin:8px 0 10px;}
@@ -212,9 +214,9 @@
   .cal-detail-chip-del{background:rgba(0,0,0,.08);border:none;border-radius:50%;width:18px;height:18px;font-size:10px;line-height:1;cursor:pointer;color:inherit;flex-shrink:0;}
   .cal-detail-add-row{display:flex;gap:8px;margin-top:12px;align-items:center;}
   .cal-detail-add-row select{flex:1;padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
-  .cal-dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
-  .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;font-size:9px;font-weight:700;color:#fff;}
-  .cal-dot-wide{width:auto;min-width:24px;padding:1px 4px;border-radius:6px;font-size:9px;letter-spacing:-.02em;}
+  .cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px;}
+  .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:700;color:#fff;}
+  .cal-dot-wide{width:auto;min-width:20px;padding:0 3px;border-radius:6px;font-size:7.5px;letter-spacing:-.02em;}
 
   .chart-wrap{display:flex;gap:5px;align-items:flex-end;height:150px;padding:8px 2px 0;overflow-x:auto;}
   .chart-col{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;cursor:pointer;border-radius:8px;padding:4px 2px;transition:background .1s ease;}
@@ -279,7 +281,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-30';
+const APP_VERSION = 'v2026.07.28-32';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1149,7 +1151,11 @@ function calendarPanel(){
     }
   });
   let cells = '';
-  for(let i=0;i<startWeekday;i++) cells += `<div class="cal-cell empty"></div>`;
+  const prevMonthDays = new Date(y, m-1, 0).getDate();
+  for(let i=0;i<startWeekday;i++){
+    const dayNum = prevMonthDays - startWeekday + 1 + i;
+    cells += `<div class="cal-cell adjacent"><div class="cal-daynum">${dayNum}</div></div>`;
+  }
   const monthUsage = {}; // key -> 天數，給月摘要用
   for(let d=1; d<=daysInMonth; d++){
     const items = dayMap[d]||[];
@@ -1167,6 +1173,10 @@ function calendarPanel(){
     const holidayBgClass = isNamedHoliday ? 'holiday-bg' : '';
     const makeupBadge = isMakeupWorkday ? `<span class="cal-makeup-badge">班</span>` : '';
     cells += `<div class="cal-cell ${isToday?'today':''} ${isSelected?'selected':''} ${weekendClass} ${holidayBgClass}" onclick="selectCalDay('${dateStr}')"><div class="cal-daynum ${daynumClass}">${d}${isNamedHoliday?'<span class="cal-holiday-dot"></span>':''}${makeupBadge}</div><div class="cal-dots">${dots}</div></div>`;
+  }
+  const trailingCount = (7 - ((startWeekday + daysInMonth) % 7)) % 7;
+  for(let i=1;i<=trailingCount;i++){
+    cells += `<div class="cal-cell adjacent"><div class="cal-daynum">${i}</div></div>`;
   }
   // 月摘要：這個月每個假別／補休換休「使用」加總了幾天
   LEAVE_TYPES.forEach(t=>{
