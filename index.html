@@ -285,7 +285,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.07.28-41';
+const APP_VERSION = 'v2026.07.28-42';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -536,7 +536,15 @@ let kwUnmatchedLines = [];
 let expandedMonths = {};
 let isComposing = false;
 let activeLeaveTab = 'annual';
-function switchLeaveTab(key){ activeLeaveTab = key; searchQuery=''; render(); }
+function switchLeaveTab(key){
+  activeLeaveTab = key;
+  searchQuery='';
+  render();
+  setTimeout(()=>{
+    const el = document.getElementById('leaveSectionContent');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 30);
+}
 let activePage = 'home';
 function switchPage(page){ activePage = page; window.scrollTo(0,0); render(); }
 function viewLeaveDetail(key, dateStr){
@@ -1594,7 +1602,9 @@ function pageLeaves(){
       </div>
     </div>
     ${leaveTabBar()}
-    ${activeLeaveTab==='comp' ? compSectionHtml('comp') : activeLeaveTab==='exchange' ? compSectionHtml('exchange') : leaveSection(LEAVE_TYPES.find(t=>t.key===activeLeaveTab) || LEAVE_TYPES[0])}
+    <div id="leaveSectionContent">
+      ${activeLeaveTab==='comp' ? compSectionHtml('comp') : activeLeaveTab==='exchange' ? compSectionHtml('exchange') : leaveSection(LEAVE_TYPES.find(t=>t.key===activeLeaveTab) || LEAVE_TYPES[0])}
+    </div>
   `;
 }
 
