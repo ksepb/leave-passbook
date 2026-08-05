@@ -22,7 +22,7 @@
     --brick:#A03B3B; --brick-soft:#F1DFDA;
     --blue:#355E7A; --blue-soft:#DCE6EC;
     --olive:#7C7530; --olive-soft:#EAE7D3;
-    --plum:#7A4B6B; --plum-soft:#EDDEE7;
+    --plum:#5B5A8C; --plum-soft:#E1E0EE;
     --rust:#A8592F; --rust-soft:#F1DDCC;
     --rose:#A8456B; --rose-soft:#F2DDE6;
     --teal:#2A7A75; --teal-soft:#DBEBE9;
@@ -297,7 +297,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.05-06';
+const APP_VERSION = 'v2026.08.05-10';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -880,7 +880,7 @@ function dashboardPanel(){
   return `
     <div class="hero-card">
       <div class="hero-label">特休＋補休＋換休　目前剩餘合計</div>
-      <div class="hero-num">${fmt(totalRemain)} 天 <span style="font-size:18px;font-weight:400;opacity:.85;">（${fmt(totalRemain*getHoursPerDay())} 小時）</span></div>
+      <div class="hero-num">${fmt(totalRemain)} 天 <span style="font-size:24px;font-weight:600;opacity:.9;">（${fmt(totalRemain*getHoursPerDay())} 小時）</span></div>
       <div class="hero-sub">僅計算特休、補休、換休，不含病假／事假等其他假別</div>
       <hr class="hero-divider">
       <div class="hero-stats">
