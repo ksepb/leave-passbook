@@ -297,7 +297,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.05-05';
+const APP_VERSION = 'v2026.08.05-06';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -604,12 +604,14 @@ function renderMonthGroups(listKey, rows, emptyMsg, liBuilder, totalFn, forceExp
     if(!groups[ym]){ groups[ym]=[]; order.push(ym); }
     groups[ym].push(r);
   });
+  const curYm = `${NOW.getFullYear()}-${String(NOW.getMonth()+1).padStart(2,'0')}`;
+  const hasCurMonth = order.includes(curYm);
   return order.map((ym, idx)=>{
     const groupRows = groups[ym];
     const stateKey = `${listKey}-${ym}`;
-    const isFirst = idx===0;
+    const isDefaultOpen = hasCurMonth ? (ym===curYm) : (idx===0);
     const forced = forceExpand ? forceExpand(groupRows) : false;
-    const expanded = forced ? true : (searchQuery ? true : (expandedMonths[stateKey] !== undefined ? expandedMonths[stateKey] : isFirst));
+    const expanded = forced ? true : (searchQuery ? true : (expandedMonths[stateKey] !== undefined ? expandedMonths[stateKey] : isDefaultOpen));
     const metaText = totalFn ? totalFn(groupRows) : `${groupRows.length} 筆`;
     return `
       <div class="month-group">
