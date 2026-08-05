@@ -105,7 +105,7 @@
 
   .hero-card{background:linear-gradient(155deg, #5C8A78, var(--jade));color:#fff;border-radius:20px;padding:22px 20px 20px;margin-bottom:16px;box-shadow:0 12px 28px -12px rgba(47,93,80,.4);}
   .hero-card .hero-label{font-size:13px;opacity:.85;}
-  .hero-card .hero-num{font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:700;margin-top:4px;line-height:1.1;}
+  .hero-card .hero-num{font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:700;margin-top:4px;line-height:1.1;color:#F0C868;}
   .hero-card .hero-sub{font-size:11.5px;opacity:.75;margin-top:6px;}
   .hero-card .hero-divider{border:none;border-top:1px solid rgba(255,255,255,.25);margin:16px 0;}
   .hero-card .hero-stats{display:flex;gap:12px;}
@@ -297,7 +297,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.05-03';
+const APP_VERSION = 'v2026.08.05-05';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -581,6 +581,10 @@ function viewLeaveDetail(key, dateStr){
     searchQuery = dateStr;
   }
   switchPage('leaves');
+  setTimeout(()=>{
+    const el = document.getElementById('leaveSectionContent');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 30);
 }
 
 function monthLabel(ym){
