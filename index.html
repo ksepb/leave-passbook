@@ -103,6 +103,16 @@
   .dash-card .label{font-size:11px;color:var(--ink-soft);}
   .dash-card .num{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;margin-top:4px;}
 
+  .hero-card{background:linear-gradient(155deg, #5C8A78, var(--jade));color:#fff;border-radius:20px;padding:22px 20px 20px;margin-bottom:16px;box-shadow:0 12px 28px -12px rgba(47,93,80,.4);}
+  .hero-card .hero-label{font-size:13px;opacity:.85;}
+  .hero-card .hero-num{font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:700;margin-top:4px;line-height:1.1;}
+  .hero-card .hero-sub{font-size:11.5px;opacity:.75;margin-top:6px;}
+  .hero-card .hero-divider{border:none;border-top:1px solid rgba(255,255,255,.25);margin:16px 0;}
+  .hero-card .hero-stats{display:flex;gap:12px;}
+  .hero-card .hero-stat{flex:1;}
+  .hero-card .hero-stat .hero-stat-label{font-size:12px;opacity:.8;}
+  .hero-card .hero-stat .hero-stat-num{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;margin-top:3px;}
+
   .toolbar{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin:10px 0 18px;}
   .toolbar-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .toolbar-row + .toolbar-row{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
@@ -242,11 +252,11 @@
   .backup.danger-zone h2{color:var(--brick);}
   .month-group{margin-bottom:10px;}
   .month-group:last-child{margin-bottom:0;}
-  .month-header{width:100%;display:flex;align-items:center;gap:8px;border-radius:10px 10px 0 0;padding:10px 12px;color:var(--ink);text-align:left;transition:background .15s ease, border-color .15s ease;}
+  .month-header{width:100%;display:flex;align-items:center;gap:8px;border-radius:10px 10px 0 0;padding:13px 12px;color:var(--ink);text-align:left;transition:background .15s ease, border-color .15s ease;}
   .month-header.month-header-closed{background:linear-gradient(135deg, #F6EAD2, var(--paper-deep));border:1px solid #E4D3A8;border-radius:10px;}
   .month-header.month-header-open{background:linear-gradient(135deg, #DCEAE4, var(--paper-deep));border:1px solid #B9D6C9;border-bottom:none;}
-  .month-header .month-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:13.5px;}
-  .month-header .month-meta{font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;margin-left:auto;}
+  .month-header .month-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;}
+  .month-header .month-meta{font-size:14.5px;font-weight:700;color:var(--ink);font-family:'IBM Plex Mono',monospace;margin-left:auto;}
   .month-header .chevron{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;flex:none;background:#fff;box-shadow:0 1px 3px rgba(43,42,40,.15);}
   .month-header .chevron svg{display:block;}
   .month-header .chevron-open{color:var(--jade);border:2px solid var(--jade);}
@@ -287,7 +297,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.03-04';
+const APP_VERSION = 'v2026.08.03-11';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -487,6 +497,10 @@ function openAddRecord(key){
   activeLeaveTab = key;
   addRecordDate = null;
   switchPage('addRecord');
+}
+function changeAddRecordType(key){
+  activeLeaveTab = key;
+  render();
 }
 function addFromCalendar(dateStr){
   const sel = document.getElementById('calAddTypeSelect');
@@ -846,10 +860,21 @@ function dashboardPanel(){
   });
   const totalRemain = remainOf('annual', CUR_YEAR) + compBalanceUpTo(CUR_YEAR,'comp') + compBalanceUpTo(CUR_YEAR,'exchange');
   return `
-    <div class="dashboard">
-      <div class="dash-card"><div class="label">本月已請假</div><div class="num">${fmt(monthTotal)}天</div></div>
-      <div class="dash-card"><div class="label">今年已請假</div><div class="num">${fmt(yearTotal)}天</div></div>
-      <div class="dash-card"><div class="label">特休＋補休＋換休合計</div><div class="num">${fmt(totalRemain)}天</div><div style="font-size:10px;color:var(--ink-soft);margin-top:4px;">僅計算特休、補休、換休，不含病假/事假等</div></div>
+    <div class="hero-card">
+      <div class="hero-label">特休＋補休＋換休　目前剩餘合計</div>
+      <div class="hero-num">${fmt(totalRemain)} 天</div>
+      <div class="hero-sub">僅計算特休、補休、換休，不含病假／事假等其他假別</div>
+      <hr class="hero-divider">
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-label">本月已請假</div>
+          <div class="hero-stat-num">${fmt(monthTotal)} 天</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">今年已請假</div>
+          <div class="hero-stat-num">${fmt(yearTotal)} 天</div>
+        </div>
+      </div>
     </div>`;
 }
 
@@ -1424,10 +1449,16 @@ function pageAddRecord(){
   const key = activeLeaveTab;
   const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = addRecordDate || defaultDateFor(selectedYear);
   const backBtn = `<button type="button" class="ghost" style="margin-bottom:14px;" onclick="switchPage('leaves')">‹ 返回列表</button>`;
+  const typeOptions = LEAVE_TYPES.map(t=>`<option value="${t.key}" ${key===t.key?'selected':''}>${t.label}</option>`).join('') + `<option value="comp" ${key==='comp'?'selected':''}>補休</option><option value="exchange" ${key==='exchange'?'selected':''}>換休</option>`;
+  const typeSelector = `
+    <div class="field" style="margin-bottom:14px;max-width:220px;">
+      <label>選擇假別</label>
+      <select onchange="changeAddRecordType(this.value)" style="width:100%;">${typeOptions}</select>
+    </div>`;
 
   if(key==='comp' || key==='exchange'){
     const info = COMP_CATEGORIES[key];
-    return backBtn + `
+    return backBtn + typeSelector + `
       <section class="block">
         <h2><span class="dot dot-${info.c}"></span>新增${info.label}</h2>
         <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>
@@ -1480,9 +1511,9 @@ function pageAddRecord(){
   }
 
   const t = LEAVE_TYPES.find(tt=>tt.key===key) || LEAVE_TYPES[0];
-  return backBtn + `
+  return backBtn + typeSelector + `
     <section class="block">
-      <h2><span class="dot dot-${t.c}"></span>新增${t.label}</h2>
+      <h2><span class="dot dot-${t.c}"></span>使用${t.label}</h2>
       <form class="entry" onsubmit="addRecord('${t.key}', event)">
         <div class="field"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" required><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div></div>
         <div class="field field-days">
@@ -1615,14 +1646,18 @@ function pageHome(){
     ${lastDeleted? `<div class="undo-bar"><span>已刪除：${escapeHtml(lastDeleted.label)}</span><button onclick="undoDelete()">復原</button></div>` : ''}
     ${reminderBanner()}
 
+    ${dashboardPanel()}
+
+    <div class="block" style="margin-bottom:16px;">
+      <button type="button" class="btn-jade" style="width:100%;" onclick="openAddRecord('annual')">＋ 新增休假／補休紀錄</button>
+    </div>
+
     <div class="stamps">
       ${stampCard(LEAVE_TYPES[0])}
       ${compStampCard('comp')}
       ${compStampCard('exchange')}
       ${LEAVE_TYPES.slice(1).map(stampCard).join('')}
     </div>
-
-    ${dashboardPanel()}
   `;
 }
 
@@ -1894,16 +1929,6 @@ function render(){
     <header>
       <div class="eyebrow">Leave Passbook · ${APP_VERSION}</div>
       <h1>${activePage==='home' ? '假期存摺' : pageTitle}</h1>
-      ${activePage==='home' ? `
-        <p class="sub-lead">快速管理你的</p>
-        <div class="home-chips">
-          <span class="chip">特休</span>
-          <span class="chip">補休</span>
-          <span class="chip">病假</span>
-          <span class="chip">事假</span>
-        </div>
-        <p class="sub-foot">支援統計 · 備份 · 分享</p>
-      ` : ''}
     </header>
 
     ${pageContent}
