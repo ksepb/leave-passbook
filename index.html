@@ -63,7 +63,7 @@
   .nav-item.active .nav-icon-wrap{background:var(--jade-soft);}
   .nav-item:active .nav-icon-wrap{transform:scale(.9);}
   header{text-align:center;margin-bottom:24px;}
-  header .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--ink-soft);text-transform:uppercase;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--ink-soft);text-transform:uppercase;}
   header h1{font-family:'Noto Serif TC',serif;font-weight:900;font-size:30px;margin:6px 0 2px;letter-spacing:.06em;}
   header p.sub{font-size:14px;color:var(--ink-soft);margin:0;}
   header p.sub-lead{font-size:14px;color:var(--ink-soft);margin:6px 0 10px;}
@@ -297,7 +297,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.03-14';
+const APP_VERSION = 'v2026.08.05-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -459,6 +459,8 @@ const DEFAULT_HOURS_PER_DAY = 8;
 function getHoursPerDay(){ return (state && state.hoursPerDay) ? Number(state.hoursPerDay) : DEFAULT_HOURS_PER_DAY; }
 const DEFAULT_PERSONAL_PAID_DAYS = 7;
 function getPersonalPaidDays(){ return (state && state.personalPaidDays !== undefined && state.personalPaidDays !== null) ? Number(state.personalPaidDays) : DEFAULT_PERSONAL_PAID_DAYS; }
+const DEFAULT_ANNUAL_MIN_DAYS = 10;
+function getAnnualMinDays(){ return (state && state.annualMinDays !== undefined && state.annualMinDays !== null) ? Number(state.annualMinDays) : DEFAULT_ANNUAL_MIN_DAYS; }
 function personalPaidUsed(year){
   year = year || selectedYear;
   return Math.min(usedOf('personal', year), getPersonalPaidDays());
@@ -639,7 +641,7 @@ function addYears(dateStr, n){
 function defaultState(){
   const records={};
   LEAVE_TYPES.forEach(t=>{ records[t.key]=[]; });
-  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1 };
+  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1, annualMinDays: DEFAULT_ANNUAL_MIN_DAYS };
 }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -695,6 +697,7 @@ async function loadState(){
       }
       if(parsed.hoursPerDay){ state.hoursPerDay = Number(parsed.hoursPerDay); }
       if(parsed.personalPaidDays !== undefined && parsed.personalPaidDays !== null){ state.personalPaidDays = Number(parsed.personalPaidDays); }
+      if(parsed.annualMinDays !== undefined && parsed.annualMinDays !== null){ state.annualMinDays = Number(parsed.annualMinDays); }
       if(parsed.uiScale){ state.uiScale = Number(parsed.uiScale); }
     }
   }catch(e){ /* 無資料，使用預設值 */ }
@@ -1185,9 +1188,14 @@ function reminderBanner(){
   })() : '';
 
   const month = NOW.getMonth()+1;
-  const annualRemain = remainOf('annual', CUR_YEAR);
-  const annualHtml = (month>=10 && annualRemain>0) ?
-    `<div class="reminder-bar"><strong>📅 特休消化提醒</strong>今年（${CUR_YEAR}）還有 ${fmt(annualRemain)} 天特休未請，建議儘早排定使用，避免年底沒排到。</div>` : '';
+  const annualUsed = usedOf('annual', CUR_YEAR);
+  const annualMin = getAnnualMinDays();
+  const shortfall = annualMin - annualUsed;
+  const daysLeftInYear = Math.round((new Date(CUR_YEAR,11,31) - new Date(TODAY+'T00:00:00')) / 86400000);
+  const annualHtml = (month>=10 && shortfall>0) ? (()=>{
+    const urgent = daysLeftInYear <= 30;
+    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>🌴 特休最低使用天數提醒</strong>今年（${CUR_YEAR}）特休已使用 ${fmt(annualUsed)} 天，未達最低要求 ${fmt(annualMin)} 天，尚需再休 ${fmt(shortfall)} 天，建議儘早排定（可在「設定」分頁調整門檻）。</div>`;
+  })() : '';
 
   return compHtml + annualHtml;
 }
@@ -1668,6 +1676,8 @@ function pageHome(){
       ${compStampCard('exchange')}
       ${LEAVE_TYPES.slice(1).map(stampCard).join('')}
     </div>
+
+    <div class="eyebrow" style="text-align:center;margin-top:20px;">Leave Passbook · ${APP_VERSION}</div>
   `;
 }
 
@@ -1782,6 +1792,22 @@ function pageData(){
             <input type="number" id="personalPaidDaysInput" value="${getPersonalPaidDays()}" min="0" max="365" step="0.5">
           </div>
           <button type="button" class="btn-jade" onclick="updatePersonalPaidDays()">更新設定</button>
+        </div>
+        ` : ''}
+      </div>
+      <div class="backup">
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('annualMin')">
+          <span>🌴 特休最低使用天數</span>
+          <span>${fmt(getAnnualMinDays())} 天　${settingsExpandedKey==='annualMin'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='annualMin' ? `
+        <p>如果貴單位規定每年特休至少要休滿一定天數，可以在這裡設定門檻。每年 10 月起，如果當年度特休已使用天數還沒達到這個數字，首頁會出現提醒（越接近年底顏色越明顯），避免年底特休沒休完。</p>
+        <div class="total-row" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">
+          <div class="field" style="max-width:140px;">
+            <label>每年至少休幾天</label>
+            <input type="number" id="annualMinDaysInput" value="${getAnnualMinDays()}" min="0" max="365" step="0.5">
+          </div>
+          <button type="button" class="btn-jade" onclick="updateAnnualMinDays()">更新設定</button>
         </div>
         ` : ''}
       </div>
@@ -1937,7 +1963,6 @@ function render(){
 
   document.getElementById('app').innerHTML = `
     <header>
-      <div class="eyebrow">Leave Passbook · ${APP_VERSION}</div>
       <h1>${activePage==='home' ? '假期存摺' : pageTitle}</h1>
     </header>
 
@@ -2053,6 +2078,19 @@ async function updatePersonalPaidDays(){
     await saveState();
     render();
     setStatus(`已更新為每年前 ${fmt(v)} 天有薪`, true);
+  }catch(err){
+    setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
+  }
+}
+
+async function updateAnnualMinDays(){
+  try{
+    const v = parseFloat(document.getElementById('annualMinDaysInput').value);
+    if(isNaN(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
+    state.annualMinDays = v;
+    await saveState();
+    render();
+    setStatus(`已更新為每年至少休 ${fmt(v)} 天特休`, true);
   }catch(err){
     setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
   }
