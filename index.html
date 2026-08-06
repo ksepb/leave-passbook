@@ -301,7 +301,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.06-02';
+const APP_VERSION = 'v2026.08.06-04';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -369,7 +369,13 @@ async function signInWithGoogle(){
 }
 
 function toggleEmailAuthForm(mode){
-  emailAuthMode = mode; // 'link' | 'pw-login' | 'pw-signup' | null
+  const emailEl = document.getElementById('emailPwEmail');
+  const pwEl = document.getElementById('emailPwPassword');
+  if(emailEl) emailPwEmailVal = emailEl.value;
+  if(pwEl) emailPwPasswordVal = pwEl.value;
+  emailAuthMode = mode;
+  forgotPasswordMode = false;
+  forgotPasswordSent = false;
   render();
 }
 
@@ -386,6 +392,8 @@ async function submitEmailPasswordAuth(mode, btnEl){
       : await fbAuth.signInWithEmailAndPassword(email, pw);
     if(result && result.user){
       emailAuthMode = null;
+      emailPwEmailVal = '';
+      emailPwPasswordVal = '';
       await pullOrPushOnSignIn();
       applyUiScale();
       render();
@@ -406,19 +414,31 @@ async function submitEmailPasswordAuth(mode, btnEl){
   }
 }
 
-async function sendPasswordReset(){
+function toggleForgotPassword(){
+  forgotPasswordMode = !forgotPasswordMode;
+  forgotPasswordSent = false;
+  render();
+}
+
+async function sendPasswordReset(btnEl){
   if(!fbAuth){ setStatus('雲端同步尚未就緒，請稍後再試', false); return; }
-  const email = (document.getElementById('emailPwEmail')||{}).value.trim() || '';
-  if(!email){ setStatus('請先在上面輸入 Email，再點忘記密碼', false); return; }
+  const emailInput = document.getElementById('forgotPwEmail');
+  const email = (emailInput && emailInput.value || '').trim();
+  if(!email){ setStatus('請輸入 Email', false); return; }
+  if(btnEl){ btnEl.disabled = true; btnEl.textContent = '寄送中…'; }
   try{
     await fbAuth.sendPasswordResetEmail(email);
+    forgotPasswordSent = true;
+    render();
     setStatus('已寄出重設密碼信，去信箱點連結設定新密碼（記得看一下垃圾郵件夾）', true);
+    window.alert('信已經寄出了！\n\n這類系統自動寄的信，很容易被信箱歸類到「垃圾郵件」或「促銷內容」等分類，不一定會直接出現在收件匣。\n\n如果過幾分鐘還是沒看到，麻煩去這幾個地方找看看：\n・垃圾郵件\n・促銷內容 / 社交網路\n・用寄件者關鍵字「firebaseapp.com」搜尋全部郵件\n\n找到後記得標記「非垃圾郵件」，下次才會直接進收件匣。');
   }catch(e){
     const msg = {
       'auth/invalid-email': 'Email 格式不對',
       'auth/user-not-found': '找不到這個帳號',
     }[e && e.code] || (e && e.message) || String(e);
     setStatus('寄送失敗：' + msg, false);
+    if(btnEl){ btnEl.disabled = false; btnEl.textContent = '寄出重設信'; }
   }
 }
 
@@ -439,6 +459,7 @@ async function sendEmailSignInLink(btnEl){
     emailAuthMode = null;
     render();
     setStatus('登入連結已寄出，請到信箱點連結完成登入（找不到的話看一下垃圾郵件夾）', true);
+    window.alert('信已經寄出了！\n\n這類系統自動寄的信，很容易被信箱歸類到「垃圾郵件」或「促銷內容」等分類，不一定會直接出現在收件匣。\n\n如果過幾分鐘還是沒看到，麻煩去這幾個地方找看看：\n・垃圾郵件\n・促銷內容 / 社交網路\n・用寄件者關鍵字「firebaseapp.com」搜尋全部郵件\n\n找到後記得標記「非垃圾郵件」，下次才會直接進收件匣。');
   }catch(e){
     console.error('寄送登入連結失敗', e);
     const msg = {
@@ -479,6 +500,8 @@ async function signOutUser(){
   try{
     await fbAuth.signOut();
     currentUser = null;
+    emailPwEmailVal = '';
+    emailPwPasswordVal = '';
     render();
     setStatus('已登出，之後資料只會存在本機', true);
   }catch(e){
@@ -606,6 +629,10 @@ let quotaExpandedKey = null;
 function toggleQuotaExpand(key){ quotaExpandedKey = (quotaExpandedKey===key) ? null : key; render(); }
 let settingsExpandedKey = null;
 let emailAuthMode = null; // null | 'login' | 'signup'
+let forgotPasswordMode = false;
+let forgotPasswordSent = false;
+let emailPwEmailVal = '';
+let emailPwPasswordVal = '';
 function toggleSettingsExpand(key){ settingsExpandedKey = (settingsExpandedKey===key) ? null : key; render(); }
 function openAddRecord(key){
   activeLeaveTab = key;
@@ -1990,14 +2017,29 @@ function pageData(){
             </div>
             <div class="field" style="margin-bottom:8px;">
               <label>Email</label>
-              <input type="email" id="emailPwEmail" placeholder="you@example.com">
+              <input type="email" id="emailPwEmail" placeholder="you@example.com" value="${escapeAttr(emailPwEmailVal)}">
             </div>
             <div class="field" style="margin-bottom:10px;">
               <label>密碼（至少 6 個字）</label>
-              <input type="password" id="emailPwPassword" placeholder="密碼">
+              <input type="password" id="emailPwPassword" placeholder="密碼" value="${escapeAttr(emailPwPasswordVal)}">
             </div>
             <button type="button" class="btn-jade" style="width:100%;" onclick="submitEmailPasswordAuth('${emailAuthMode==='pw-signup'?'signup':'login'}', this)">${emailAuthMode==='pw-signup' ? '註冊並登入' : '登入'}</button>
-            ${emailAuthMode==='pw-login' ? `<button type="button" class="ghost" style="width:100%;margin-top:8px;" onclick="sendPasswordReset()">忘記密碼？寄重設信</button>` : ''}
+            ${emailAuthMode==='pw-login' ? `
+            <button type="button" class="ghost" style="width:100%;margin-top:8px;" onclick="toggleForgotPassword()">${forgotPasswordMode? '取消' : '忘記密碼？'}</button>
+            ${forgotPasswordMode ? `
+            <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);">
+              ${forgotPasswordSent ? `
+              <p class="hint" style="color:var(--jade);font-weight:700;">✓ 已寄出重設密碼信，去信箱點連結設定新密碼（記得看一下垃圾郵件夾）</p>
+              ` : `
+              <div class="field" style="margin-bottom:10px;">
+                <label>要重設密碼的 Email</label>
+                <input type="email" id="forgotPwEmail" placeholder="you@example.com">
+              </div>
+              <button type="button" class="ghost" style="width:100%;" onclick="sendPasswordReset(this)">寄出重設信</button>
+              `}
+            </div>
+            ` : ''}
+            ` : ''}
           </div>
           ` : ''}
         </div>
