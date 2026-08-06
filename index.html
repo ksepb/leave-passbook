@@ -297,7 +297,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.05-15';
+const APP_VERSION = 'v2026.08.05-16';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -369,14 +369,17 @@ function toggleEmailAuthForm(mode){
   render();
 }
 
-async function sendEmailSignInLink(){
+async function sendEmailSignInLink(btnEl){
   if(!fbAuth){ setStatus('雲端同步尚未就緒，請稍後再試', false); return; }
-  const email = (document.getElementById('emailAuthEmail')||{}).value || '';
+  const emailInput = document.getElementById('emailAuthEmail');
+  const email = (emailInput && emailInput.value || '').trim();
   if(!email){ setStatus('請輸入 Email', false); return; }
   const actionCodeSettings = {
     url: window.location.href.split('#')[0].split('?')[0],
     handleCodeInApp: true
   };
+  if(btnEl){ btnEl.disabled = true; btnEl.textContent = '寄送中…'; }
+  setStatus('寄送中…', true);
   try{
     await fbAuth.sendSignInLinkToEmail(email, actionCodeSettings);
     try{ localStorage.setItem('emailForSignIn', email); }catch(e){}
@@ -384,11 +387,15 @@ async function sendEmailSignInLink(){
     render();
     setStatus('登入連結已寄出，請到信箱點連結完成登入（找不到的話看一下垃圾郵件夾）', true);
   }catch(e){
+    console.error('寄送登入連結失敗', e);
     const msg = {
       'auth/invalid-email': 'Email 格式不對',
       'auth/quota-exceeded': '今天寄送次數已達上限，請稍後再試',
+      'auth/unauthorized-continue-uri': '網域未授權（請通知開發者到 Firebase 主控台的 Authentication → Settings → Authorized domains 檢查）',
+      'auth/operation-not-allowed': 'Email 連結登入尚未在 Firebase 主控台啟用',
     }[e && e.code] || (e && e.message) || String(e);
-    setStatus('寄送失敗：' + msg, false);
+    setStatus('寄送失敗：' + msg + (e && e.code ? `（代碼：${e.code}）` : ''), false);
+    if(btnEl){ btnEl.disabled = false; btnEl.textContent = '寄出登入連結'; }
   }
 }
 
@@ -1920,7 +1927,7 @@ function pageData(){
             <label>Email</label>
             <input type="email" id="emailAuthEmail" placeholder="you@example.com">
           </div>
-          <button type="button" class="btn-jade" style="width:100%;" onclick="sendEmailSignInLink()">寄出登入連結</button>
+          <button type="button" class="btn-jade" style="width:100%;" onclick="sendEmailSignInLink(this)">寄出登入連結</button>
           <p class="hint" style="margin-top:8px;">寄出後到信箱點連結，會自動跳回這個網頁並完成登入，不用輸入密碼。</p>
         </div>
         ` : ''}
