@@ -301,7 +301,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.06-04';
+const APP_VERSION = 'v2026.08.06-05';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -343,6 +343,7 @@ function initFirebase(){
     fbAuth.getRedirectResult().then(async (result)=>{
       if(result && result.user){
         // 真正剛從登入跳轉回來，才需要詢問雲端/本機衝突
+        currentUser = result.user;
         await pullOrPushOnSignIn();
         applyUiScale();
         render();
@@ -359,6 +360,7 @@ async function signInWithGoogle(){
     const provider = new firebase.auth.GoogleAuthProvider();
     const result = await fbAuth.signInWithPopup(provider);
     if(result && result.user){
+      currentUser = result.user;
       await pullOrPushOnSignIn();
       applyUiScale();
       render();
@@ -391,6 +393,7 @@ async function submitEmailPasswordAuth(mode, btnEl){
       ? await fbAuth.createUserWithEmailAndPassword(email, pw)
       : await fbAuth.signInWithEmailAndPassword(email, pw);
     if(result && result.user){
+      currentUser = result.user; // 直接用剛拿到的結果，不要等 onAuthStateChanged 非同步更新，避免時機沒對上
       emailAuthMode = null;
       emailPwEmailVal = '';
       emailPwPasswordVal = '';
@@ -485,6 +488,7 @@ async function completeEmailLinkSignIn(){
     try{ localStorage.removeItem('emailForSignIn'); }catch(e){}
     window.history.replaceState({}, document.title, window.location.pathname);
     if(result && result.user){
+      currentUser = result.user;
       await pullOrPushOnSignIn();
       applyUiScale();
       render();
