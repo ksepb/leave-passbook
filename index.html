@@ -174,6 +174,8 @@
   .auth-option:last-child{margin-bottom:0;}
   .auth-option-title{font-weight:700;font-size:15px;margin-bottom:4px;}
   .auth-option .hint{margin-bottom:10px;}
+  .use-preview-box{background:var(--jade-soft);border-radius:10px;padding:10px 12px;margin:8px 0 14px;}
+  .use-preview-line{font-size:13.5px;color:var(--ink);padding:3px 0;}
   .hint{font-size:15.5px;color:var(--ink-soft);line-height:1.6;}
   .total-row .hint{flex-basis:100%;margin-top:-2px;}
 
@@ -187,6 +189,8 @@
   ul.ledger .days{font-family:'IBM Plex Mono',monospace;font-weight:700;}
   ul.ledger .note{color:var(--ink);font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
   ul.ledger .expiry{font-size:14.5px;color:var(--amber);font-weight:700;font-family:'IBM Plex Mono',monospace;flex:1 1 100%;background:var(--amber-soft, #FBEFDC);padding:5px 9px;border-radius:6px;}
+  ul.ledger .remain-tag{font-size:13.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;flex:1 1 100%;}
+  ul.ledger .remain-tag.remain-done{color:var(--jade);font-weight:700;}
   ul.ledger .ledger-actions{display:flex;gap:8px;margin-left:auto;flex:none;}
   ul.ledger .del{background:#fff;border:1.5px solid var(--line);border-radius:12px;color:var(--ink-soft);font-size:13.5px;font-weight:700;cursor:pointer;padding:8px 11px;min-height:36px;line-height:1;display:inline-flex;align-items:center;gap:4px;}
   ul.ledger li.editrow{display:flex;flex-wrap:wrap;align-items:flex-start;background:#fffaf0;border-radius:12px;padding:14px 12px;gap:12px;}
@@ -301,7 +305,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.06-08';
+const APP_VERSION = 'v2026.08.06-11';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -984,6 +988,16 @@ function compFifoRemaining(category){
       batches.push({id:r.id, date:r.date, expiry:r.expiry, note:r.note, remainDays: days});
     } else {
       let toDeduct = days;
+      // 有手動指定要優先扣哪一批的話，先扣那一批
+      if(r.sourceEarnId){
+        const pinned = batches.find(b=>b.id===r.sourceEarnId);
+        if(pinned && pinned.remainDays>0){
+          const take = Math.min(pinned.remainDays, toDeduct);
+          pinned.remainDays -= take;
+          toDeduct -= take;
+        }
+      }
+      // 指定批次扣不夠（或沒有指定）的部分，自動接回先進先出，從最早的開始補
       for(const b of batches){
         if(toDeduct<=0) break;
         if(b.remainDays<=0) continue;
@@ -995,6 +1009,71 @@ function compFifoRemaining(category){
     }
   });
   return batches;
+}
+function toggleManualSource(category){
+  const cb = document.getElementById('compManualToggle');
+  const field = document.getElementById('manualSourceField');
+  if(field) field.style.display = (cb && cb.checked) ? '' : 'none';
+  if(cb && !cb.checked){
+    const sel = document.getElementById('compSourceEarn');
+    if(sel) sel.value = '';
+  }
+  updateUsePreview(category);
+}
+
+function updateUsePreview(category){
+  const previewEl = document.getElementById('usePreview');
+  const wrapEl = document.getElementById('manualSourceWrap');
+  if(!previewEl) return;
+  const typeEl = document.getElementById('compType');
+  const isUse = typeEl && typeEl.value === 'use';
+  if(wrapEl) wrapEl.style.display = isUse ? '' : 'none';
+  if(!isUse){ previewEl.innerHTML = ''; return; }
+  const amountEl = document.getElementById('compAmount');
+  const unitEl = document.getElementById('compUnit');
+  const amount = parseFloat(amountEl && amountEl.value);
+  if(!amount || amount<=0){ previewEl.innerHTML = ''; return; }
+  const unit = unitEl ? unitEl.value : 'day';
+  const days = unit==='hour' ? amount/getHoursPerDay() : amount;
+  const info = COMP_CATEGORIES[category];
+  const batches = compFifoRemaining(category).filter(b=>b.remainDays>0.0001);
+  const sourceSel = document.getElementById('compSourceEarn');
+  const pinnedId = sourceSel ? sourceSel.value : '';
+  let toDeduct = days;
+  const consumed = [];
+  // 有手動指定的話，優先從那一批扣
+  if(pinnedId){
+    const pinned = batches.find(b=>b.id===pinnedId);
+    if(pinned){
+      const take = Math.min(pinned.remainDays, toDeduct);
+      if(take>0.0001){
+        consumed.push({date:pinned.date, note:pinned.note, take, remainAfter: pinned.remainDays-take, pinned:true});
+        pinned.remainDays -= take;
+        toDeduct -= take;
+      }
+    }
+  }
+  for(const b of batches){
+    if(toDeduct<=0.0001) break;
+    if(pinnedId && b.id===pinnedId) continue; // 已經處理過了
+    const take = Math.min(b.remainDays, toDeduct);
+    if(take>0.0001){
+      consumed.push({date:b.date, note:b.note, take, remainAfter: b.remainDays-take, pinned:false});
+      toDeduct -= take;
+    }
+  }
+  let html = '<div class="use-preview-box">';
+  if(consumed.length===0){
+    html += `<p class="hint" style="color:var(--brick);margin:0;">⚠️ 目前沒有可扣的${info.label}結餘，這筆送出後結餘會變負數。</p>`;
+  } else {
+    html += `<p class="hint" style="margin:0 0 6px;font-weight:700;color:var(--ink);">這筆會${pinnedId?'優先扣你指定的那批，不夠再':'依'}「先進先出」扣抵：</p>`;
+    html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?'⭐ ':''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''} 批次　－${fmt(c.take)} 天，扣完後該批次剩 ${fmt(c.remainAfter)} 天</div>`).join('');
+    if(toDeduct>0.0001){
+      html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">⚠️ 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
+    }
+  }
+  html += '</div>';
+  previewEl.innerHTML = html;
 }
 const COMP_CATEGORIES = {
   comp: { label:'補休', c:'brick', defaultYears:2 },
@@ -1680,35 +1759,48 @@ function pageAddRecord(){
         <form class="entry" onsubmit="addComp(event, '${key}')">
           <div class="form-row">
             <div class="field" style="flex:0 0 160px;"><label>類型</label>
-              <select id="compType">
+              <select id="compType" onchange="updateUsePreview('${key}')">
                 <option value="earn">獲得${info.label}</option>
                 <option value="use">使用${info.label}</option>
               </select>
             </div>
           </div>
           <div class="form-row">
-            <div class="field" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange('${key}')" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange('${key}');">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange('${key}');">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
+            <div class="field" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange('${key}');updateUsePreview('${key}');" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange('${key}');updateUsePreview('${key}');">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange('${key}');updateUsePreview('${key}');">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
           </div>
           <div class="form-row">
             <div class="field field-days">
               <label>數量</label>
               <div class="days-row">
-                <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required>
-                <select id="compUnit" onchange="onCompUnitChange()" style="width:82px;padding:8px 4px;">
+                <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required oninput="updateUsePreview('${key}')">
+                <select id="compUnit" onchange="onCompUnitChange();updateUsePreview('${key}');" style="width:82px;padding:8px 4px;">
                   <option value="day">天</option>
                   <option value="hour">小時</option>
                 </select>
                 <div class="quickdays" id="compQuickDay">
-                  <button type="button" onclick="setDays('compAmount',0.5)">0.5</button>
-                  <button type="button" onclick="setDays('compAmount',1)">1</button>
-                  <button type="button" onclick="setDays('compAmount',2)">2</button>
+                  <button type="button" onclick="setDays('compAmount',0.5);updateUsePreview('${key}');">0.5</button>
+                  <button type="button" onclick="setDays('compAmount',1);updateUsePreview('${key}');">1</button>
+                  <button type="button" onclick="setDays('compAmount',2);updateUsePreview('${key}');">2</button>
                 </div>
                 <div class="quickdays" id="compQuickHour" style="display:none;">
-                  <button type="button" onclick="setDays('compAmount',1)">1</button>
-                  <button type="button" onclick="setDays('compAmount',2)">2</button>
-                  <button type="button" onclick="setDays('compAmount',4)">4</button>
+                  <button type="button" onclick="setDays('compAmount',1);updateUsePreview('${key}');">1</button>
+                  <button type="button" onclick="setDays('compAmount',2);updateUsePreview('${key}');">2</button>
+                  <button type="button" onclick="setDays('compAmount',4);updateUsePreview('${key}');">4</button>
                 </div>
               </div>
+            </div>
+          </div>
+          <div id="usePreview"></div>
+          <div id="manualSourceWrap" style="display:none;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:-4px 0 8px;cursor:pointer;color:var(--ink-soft);">
+              <input type="checkbox" id="compManualToggle" onchange="toggleManualSource('${key}')"> 手動指定優先扣哪一批（預設自動先進先出）
+            </label>
+            <div class="field" id="manualSourceField" style="display:none;margin-bottom:14px;">
+              <label>優先扣這一批</label>
+              <select id="compSourceEarn" onchange="updateUsePreview('${key}')">
+                <option value="">（不指定，自動先進先出）</option>
+                ${compFifoRemaining(key).filter(b=>b.remainDays>0.0001).map(b=>`<option value="${b.id}">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</option>`).join('')}
+              </select>
             </div>
           </div>
           <div class="form-row">
@@ -1804,6 +1896,17 @@ function buildCompLi(r, dMin, dMax, category){
     </div>
     <div class="ledger-bottom">
       ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>`:'<div></div>'}
+      ${r.type==='earn' ? (()=>{
+        const batch = compFifoRemaining(category).find(b=>b.id===r.id);
+        const total = toDays(r);
+        const remain = batch ? batch.remainDays : total;
+        if(remain <= 0.0001 && total>0.0001){
+          return `<div class="remain-tag remain-done">✓ 這批已用完</div>`;
+        } else if(remain < total - 0.0001){
+          return `<div class="remain-tag">剩餘 ${fmt(remain)} 天（原本 ${fmt(total)} 天）</div>`;
+        }
+        return '';
+      })() : ''}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
         <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
@@ -2235,7 +2338,6 @@ function setStatus(msg, ok){
   if(!el) return;
   el.textContent = msg;
   el.className = 'status ' + (ok? 'ok':'err');
-  if(msg){ el.scrollIntoView({behavior:'smooth', block:'center'}); }
   setTimeout(()=>{ if(el){ el.textContent=''; el.className='status'; } }, 6000);
 }
 
@@ -2609,6 +2711,10 @@ async function addComp(e, category){
     const id = uid();
     const record = { id, type, date, unit, amount, note, category };
     if(type==='earn' && expiry) record.expiry = expiry;
+    if(type==='use'){
+      const sourceSel = document.getElementById('compSourceEarn');
+      if(sourceSel && sourceSel.value) record.sourceEarnId = sourceSel.value;
+    }
     state.compRecords.push(record);
     lastAddedId = id;
     await saveState();
