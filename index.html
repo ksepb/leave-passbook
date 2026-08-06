@@ -305,7 +305,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.06-12';
+const APP_VERSION = 'v2026.08.07-01';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -969,6 +969,47 @@ function displayAmount(r){
   const amt = r.unit==='day' ? r.amount : r.days;
   return `${fmt(amt)} 天`;
 }
+// 算出「某一筆使用」實際扣了哪幾批獲得紀錄（日期/備註/扣了多少），供歷史紀錄顯示用
+function compUsageSource(category, useId){
+  const useRecord = state.compRecords.find(r=>r.id===useId);
+  if(!useRecord || useRecord.type!=='use') return [];
+  const records = state.compRecords
+    .filter(r=>(r.category||'comp')===category)
+    .slice()
+    .sort((a,b)=> a.date.localeCompare(b.date) || (a.type==='earn'?-1:1));
+  const batches = [];
+  let result = [];
+  for(const r of records){
+    const days = toDays(r);
+    if(r.type==='earn'){
+      batches.push({id:r.id, date:r.date, note:r.note, remainDays: days});
+    } else {
+      let toDeduct = days;
+      const consumed = [];
+      if(r.sourceEarnId){
+        const pinned = batches.find(b=>b.id===r.sourceEarnId);
+        if(pinned && pinned.remainDays>0){
+          const take = Math.min(pinned.remainDays, toDeduct);
+          if(take>0.0001) consumed.push({date:pinned.date, note:pinned.note, amount:take});
+          pinned.remainDays -= take;
+          toDeduct -= take;
+        }
+      }
+      for(const b of batches){
+        if(toDeduct<=0.0001) break;
+        if(r.sourceEarnId && b.id===r.sourceEarnId) continue;
+        if(b.remainDays<=0.0001) continue;
+        const take = Math.min(b.remainDays, toDeduct);
+        if(take>0.0001) consumed.push({date:b.date, note:b.note, amount:take});
+        b.remainDays -= take;
+        toDeduct -= take;
+      }
+      if(r.id === useId){ result = consumed; break; }
+    }
+  }
+  return result;
+}
+
 function compBalanceUpTo(year, category){
   category = category || 'comp';
   return state.compRecords.filter(r=> parseInt(r.date.slice(0,4),10) <= year && (r.category||'comp')===category).reduce((s,r)=> s + (r.type==='earn'? toDays(r): -toDays(r)),0);
@@ -1954,7 +1995,12 @@ function buildCompLi(r, dMin, dMax, category){
           return `<div class="remain-tag">剩餘 ${fmt(remain)} 天（原本 ${fmt(total)} 天）</div>`;
         }
         return '';
-      })() : ''}
+      })() : (()=>{
+        const sources = compUsageSource(category, r.id);
+        if(!sources.length) return '';
+        const txt = sources.map(s=>`${toROC(s.date)}${s.note?`（${escapeHtml(s.note)}）`:''}扣${fmt(s.amount)}天`).join('、');
+        return `<div class="remain-tag">↩︎ 扣抵自：${txt}</div>`;
+      })()}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
         <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
