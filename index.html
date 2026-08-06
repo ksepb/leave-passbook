@@ -284,7 +284,7 @@
   .backup p{font-size:14px;color:var(--ink-soft);margin:0 0 12px;line-height:1.6;}
   .backup .row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
   textarea{width:100%;font-family:'IBM Plex Mono',monospace;font-size:16px;border:1px solid var(--line);border-radius:4px;padding:8px;background:#fdfcf9;color:var(--ink-soft);resize:vertical;}
-  .status{font-size:12px;margin-top:8px;min-height:16px;}
+  .status{font-size:15px;font-weight:700;margin-top:8px;min-height:20px;padding:8px 4px;}
   .status.ok{color:var(--jade);}
   .status.err{color:var(--brick);}
   .loading{text-align:center;padding:60px 0;color:var(--ink-soft);font-size:13px;}
@@ -301,7 +301,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.06-06';
+const APP_VERSION = 'v2026.08.06-08';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -366,7 +366,8 @@ async function signInWithGoogle(){
       render();
     }
   }catch(e){
-    setStatus('登入失敗：' + (e && e.message ? e.message : String(e)), false);
+    window.alert('Google 登入失敗：' + (e && e.message ? e.message : String(e)));
+    setStatus('登入失敗', false);
   }
 }
 
@@ -408,6 +409,7 @@ async function submitEmailPasswordAuth(mode, btnEl){
       applyUiScale();
       render();
       setStatus(mode==='signup' ? '註冊並登入成功' : '登入成功', true);
+      window.alert(mode==='signup' ? '✓ 註冊並登入成功！\n\n以後每次登記資料，都會自動同步到雲端。' : '✓ 登入成功！\n\n之後每次登記資料，都會自動同步到雲端。');
     }
   }catch(e){
     console.error('Email 密碼登入失敗', e);
@@ -419,6 +421,7 @@ async function submitEmailPasswordAuth(mode, btnEl){
       'auth/wrong-password': '密碼不對',
       'auth/invalid-credential': 'Email 或密碼不對',
     }[e && e.code] || (e && e.message) || String(e);
+    window.alert('❌ ' + (mode==='signup'?'註冊':'登入') + '失敗：\n\n' + msg);
     setStatus('失敗：' + msg, false);
     if(btnEl){ btnEl.disabled = false; btnEl.textContent = mode==='signup' ? '註冊並登入' : '登入'; }
   }
@@ -447,6 +450,7 @@ async function sendPasswordReset(btnEl){
       'auth/invalid-email': 'Email 格式不對',
       'auth/user-not-found': '找不到這個帳號',
     }[e && e.code] || (e && e.message) || String(e);
+    window.alert('❌ 寄送失敗：\n\n' + msg);
     setStatus('寄送失敗：' + msg, false);
     if(btnEl){ btnEl.disabled = false; btnEl.textContent = '寄出重設信'; }
   }
@@ -478,6 +482,7 @@ async function sendEmailSignInLink(btnEl){
       'auth/unauthorized-continue-uri': '網域未授權（請通知開發者到 Firebase 主控台的 Authentication → Settings → Authorized domains 檢查）',
       'auth/operation-not-allowed': 'Email 連結登入尚未在 Firebase 主控台啟用',
     }[e && e.code] || (e && e.message) || String(e);
+    window.alert('❌ 寄送失敗：\n\n' + msg + (e && e.code ? `\n\n（代碼：${e.code}）` : ''));
     setStatus('寄送失敗：' + msg + (e && e.code ? `（代碼：${e.code}）` : ''), false);
     if(btnEl){ btnEl.disabled = false; btnEl.textContent = '寄出登入連結'; }
   }
@@ -500,8 +505,10 @@ async function completeEmailLinkSignIn(){
       applyUiScale();
       render();
       setStatus('登入成功', true);
+      window.alert('✓ 登入成功！\n\n之後每次登記資料，都會自動同步到雲端。');
     }
   }catch(e){
+    window.alert('❌ 登入連結驗證失敗：\n\n' + (e && e.message ? e.message : String(e)));
     setStatus('登入連結驗證失敗：' + (e && e.message ? e.message : String(e)), false);
   }
 }
@@ -515,7 +522,9 @@ async function signOutUser(){
     emailPwPasswordVal = '';
     render();
     setStatus('已登出，之後資料只會存在本機', true);
+    window.alert('✓ 已登出\n\n之後資料只會存在這台裝置，不會再同步到雲端。');
   }catch(e){
+    window.alert('❌ 登出失敗：\n\n' + (e && e.message ? e.message : String(e)));
     setStatus('登出失敗：' + (e && e.message ? e.message : String(e)), false);
   }
 }
@@ -2226,7 +2235,8 @@ function setStatus(msg, ok){
   if(!el) return;
   el.textContent = msg;
   el.className = 'status ' + (ok? 'ok':'err');
-  setTimeout(()=>{ if(el){ el.textContent=''; el.className='status'; } }, 4000);
+  if(msg){ el.scrollIntoView({behavior:'smooth', block:'center'}); }
+  setTimeout(()=>{ if(el){ el.textContent=''; el.className='status'; } }, 6000);
 }
 
 function setDays(id,val){ const el=document.getElementById(id); if(el) el.value = val; }
