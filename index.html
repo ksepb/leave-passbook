@@ -301,7 +301,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.06-05';
+const APP_VERSION = 'v2026.08.06-06';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -388,16 +388,23 @@ async function submitEmailPasswordAuth(mode, btnEl){
   if(!email || !pw){ setStatus('請輸入 Email 跟密碼', false); return; }
   if(pw.length < 6){ setStatus('密碼至少要 6 個字', false); return; }
   if(btnEl){ btnEl.disabled = true; btnEl.textContent = '處理中…'; }
+  setStatus('處理中…（跟 Firebase 對話中，最多等 15 秒）', true);
+  const withTimeout = (p, ms, label) => Promise.race([
+    p,
+    new Promise((_, reject) => setTimeout(()=>reject(Object.assign(new Error(`${label}逾時：等了 ${ms/1000} 秒都沒回應，可能是網路問題或這個瀏覽器環境擋住了 Firebase 的連線`), {code:'timeout'})), ms))
+  ]);
   try{
-    const result = mode==='signup'
-      ? await fbAuth.createUserWithEmailAndPassword(email, pw)
-      : await fbAuth.signInWithEmailAndPassword(email, pw);
+    const result = await withTimeout(
+      mode==='signup' ? fbAuth.createUserWithEmailAndPassword(email, pw) : fbAuth.signInWithEmailAndPassword(email, pw),
+      15000, mode==='signup'?'註冊':'登入'
+    );
     if(result && result.user){
       currentUser = result.user; // 直接用剛拿到的結果，不要等 onAuthStateChanged 非同步更新，避免時機沒對上
       emailAuthMode = null;
       emailPwEmailVal = '';
       emailPwPasswordVal = '';
-      await pullOrPushOnSignIn();
+      setStatus('帳號驗證通過，同步雲端資料中…', true);
+      await withTimeout(pullOrPushOnSignIn(), 15000, '雲端同步');
       applyUiScale();
       render();
       setStatus(mode==='signup' ? '註冊並登入成功' : '登入成功', true);
