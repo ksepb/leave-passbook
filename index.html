@@ -176,6 +176,12 @@
   .auth-option .hint{margin-bottom:10px;}
   .use-preview-box{background:var(--jade-soft);border-radius:10px;padding:10px 12px;margin:8px 0 14px;}
   .use-preview-line{font-size:13.5px;color:var(--ink);padding:3px 0;}
+  .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+  .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;}
+  .avail-batch-title{font-weight:700;font-size:14.5px;margin-bottom:3px;}
+  .avail-batch-remain{font-size:14px;color:var(--ink);white-space:nowrap;overflow-x:auto;}
+  .avail-batch-hours{color:var(--ink-soft);font-weight:400;}
+  .avail-batch-expiry{font-size:12.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;}
   .hint{font-size:15.5px;color:var(--ink-soft);line-height:1.6;}
   .total-row .hint{flex-basis:100%;margin-top:-2px;}
 
@@ -305,7 +311,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-01';
+const APP_VERSION = 'v2026.08.07-05';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -650,6 +656,11 @@ function selectCalDay(dateStr){
 let addRecordDate = null;
 let addRecordFrom = 'leaves';
 let quotaExpandedKey = null;
+let balanceDetailExpanded = {}; // {comp: bool, exchange: bool}
+function toggleBalanceDetail(category){
+  balanceDetailExpanded[category] = !balanceDetailExpanded[category];
+  render();
+}
 function toggleQuotaExpand(key){ quotaExpandedKey = (quotaExpandedKey===key) ? null : key; render(); }
 let settingsExpandedKey = null;
 let emailAuthMode = null; // null | 'login' | 'signup'
@@ -1010,6 +1021,12 @@ function compUsageSource(category, useId){
   return result;
 }
 
+function compBalanceAsOf(category, date, excludeId){
+  return state.compRecords
+    .filter(r=>(r.category||'comp')===category && r.date<=date && r.id!==excludeId)
+    .reduce((s,r)=> s + (r.type==='earn'? toDays(r) : -toDays(r)), 0);
+}
+
 function compBalanceUpTo(year, category){
   category = category || 'comp';
   return state.compRecords.filter(r=> parseInt(r.date.slice(0,4),10) <= year && (r.category||'comp')===category).reduce((s,r)=> s + (r.type==='earn'? toDays(r): -toDays(r)),0);
@@ -1218,8 +1235,7 @@ function dashboardPanel(){
   return `
     <div class="hero-card">
       <div class="hero-label">特休＋補休＋換休　目前剩餘合計</div>
-      <div class="hero-num">${fmt(totalRemain)} 天</div>
-      <div style="font-size:15px;opacity:.8;margin-top:2px;white-space:nowrap;">約 ${fmt(totalRemain*getHoursPerDay())} 小時</div>
+      <div class="hero-num">${fmt(totalRemain)} 天 <span style="font-size:24px;font-weight:600;opacity:.9;white-space:nowrap;">（${fmt(totalRemain*getHoursPerDay())} 小時）</span></div>
       <div class="hero-sub">僅計算特休、補休、換休，不含病假／事假等其他假別</div>
       <hr class="hero-divider">
       <div class="hero-stats">
@@ -2009,6 +2025,32 @@ function buildCompLi(r, dMin, dMax, category){
   </li>`;
 }
 
+function renderAvailBatchList(category){
+  const info = COMP_CATEGORIES[category];
+  const todayD = new Date(TODAY);
+  const batches = compFifoRemaining(category)
+    .filter(b=>b.remainDays>0.0001)
+    .map(b=>Object.assign({}, b, {diffDays: b.expiry ? Math.round((new Date(b.expiry)-todayD)/86400000) : null}))
+    .sort((a,b)=>{
+      if(a.diffDays===null && b.diffDays===null) return a.date.localeCompare(b.date);
+      if(a.diffDays===null) return 1;
+      if(b.diffDays===null) return -1;
+      return a.diffDays-b.diffDays;
+    });
+  if(batches.length===0){
+    return `<div class="hint" style="margin-bottom:12px;">目前沒有還能使用的${info.label}批次。</div>`;
+  }
+  return `<div class="avail-batch-list">${batches.map(b=>{
+    const urgent = b.diffDays!==null && b.diffDays<=7;
+    const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期 ${Math.abs(b.diffDays)} 天` : (b.diffDays===0?'今天到期':`${b.diffDays} 天後到期`));
+    return `<div class="avail-batch-item">
+      <div class="avail-batch-title">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
+      <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
+      ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">⏳ 到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
 function compSectionHtml(category){
   category = category || 'comp';
   const info = COMP_CATEGORIES[category];
@@ -2033,11 +2075,17 @@ function compSectionHtml(category){
       <h2><span class="dot dot-${info.c}"></span>${info.label}</h2>
       <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>
       <button type="button" class="btn-${info.c}" style="margin-bottom:14px;" onclick="openAddRecord('${category}')">＋ 新增一筆</button>
+
+      <div class="section-label" style="margin-bottom:8px;">🗂️ 目前還能扣抵的批次</div>
+      ${renderAvailBatchList(category)}
+
       <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
       ${listHtml}
       <div class="quota-summary-row" style="border-bottom:none;border-top:1px dashed var(--line);padding-top:14px;margin-top:16px;margin-bottom:0;padding-bottom:0;flex-direction:column;align-items:flex-start;gap:6px;">
         <span>截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong></span>
         ${nearestExpiry ? `<span>⏳ 最近到期：<strong style="color:${nearestExpiry.diffDays<=7?'var(--brick)':'var(--amber)'};">${toROC(nearestExpiry.expiry)}（${nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`)}）</strong></span>` : ''}
+        <button type="button" class="ghost" style="margin-top:2px;" onclick="toggleBalanceDetail('${category}')">${balanceDetailExpanded[category]?'▲ 收起明細':'▼ 查看明細'}</button>
+        ${balanceDetailExpanded[category] ? renderAvailBatchList(category) : ''}
       </div>
       <div class="reset-row">
         <span class="reset-label">清除紀錄：</span>
@@ -2797,9 +2845,9 @@ async function addComp(e, category){
     if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫日期與數量', false); return; }
     const daysEquiv = unit==='hour' ? amount/getHoursPerDay() : amount;
     if(type==='use'){
-      const currentBal = compBalanceUpTo(selectedYear, category);
-      if(currentBal - daysEquiv < 0){
-        if(!window.confirm(`這筆會超過可用的${info.label}（目前結餘 ${fmt(currentBal)} 天 ≈ ${fmt(currentBal*getHoursPerDay())} 小時），仍要登記嗎？`)) return;
+      const balAsOfDate = compBalanceAsOf(category, date, null);
+      if(balAsOfDate - daysEquiv < 0){
+        if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmt(balAsOfDate)} 天（可能是因為這筆使用的日期比對應的獲得日期早），登記後會變負數，仍要登記嗎？`)) return;
       }
     }
     const id = uid();
@@ -2833,6 +2881,15 @@ async function saveEditComp(id){
     if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫正確的日期與數量', false); return; }
     const idx = state.compRecords.findIndex(r=>r.id===id);
     if(idx>-1){
+      const category = state.compRecords[idx].category || 'comp';
+      const info = COMP_CATEGORIES[category];
+      const daysEquiv = unit==='hour' ? amount/getHoursPerDay() : amount;
+      if(type==='use'){
+        const balAsOfDate = compBalanceAsOf(category, date, id);
+        if(balAsOfDate - daysEquiv < 0){
+          if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmt(balAsOfDate)} 天，儲存後會變負數，仍要儲存嗎？`)) return;
+        }
+      }
       const updated = Object.assign({}, state.compRecords[idx], {type,date,unit,amount,note});
       delete updated.days;
       if(type==='use'){
