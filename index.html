@@ -185,9 +185,12 @@
   .info-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:13px;cursor:pointer;margin-left:6px;vertical-align:middle;}
   .overview-panel{background:var(--jade-soft);border-radius:14px;padding:14px 16px;margin-bottom:16px;}
   .overview-balance{font-size:15px;font-weight:700;color:var(--ink);}
-  .overview-expiry{font-size:13.5px;margin-top:6px;}
-  .overview-panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .overview-expiry{font-size:13.5px;}
+  .overview-panel-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;}
   .overview-edit-link{flex-shrink:0;font-size:12px;color:var(--jade);background:#fff;padding:4px 10px;border-radius:20px;cursor:pointer;font-weight:600;white-space:nowrap;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(43,42,40,.45);display:flex;align-items:center;justify-content:center;z-index:300;padding:24px;}
+  .modal-box{background:#fffdf8;border-radius:16px;padding:22px 20px;width:100%;max-width:340px;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+  .modal-box h3{margin:0 0 16px;font-family:'Noto Serif TC',serif;font-size:18px;color:var(--ink);}
   .overview-panel .avail-batch-item{background:#fff;}
   .mental-model-hint{background:var(--blue-soft);color:var(--blue);font-size:13px;line-height:1.6;padding:10px 12px;border-radius:10px;margin-bottom:12px;}
   .hint{font-size:15.5px;color:var(--ink-soft);line-height:1.6;}
@@ -317,7 +320,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-20';
+const APP_VERSION = 'v2026.08.07-23';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -662,6 +665,22 @@ function selectCalDay(dateStr){
 let addRecordDate = null;
 let addRecordFrom = 'leaves';
 let quotaExpandedKey = null;
+let quotaEditModalOpen = null;
+function openQuotaEditModal(key){ quotaEditModalOpen = key; render(); }
+function closeQuotaEditModal(){ quotaEditModalOpen = null; render(); }
+async function saveQuotaModal(key){
+  try{
+    const v = parseFloat(document.getElementById('quotaModalInput').value);
+    if(isNaN(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
+    setQuota(key, selectedYear, v);
+    quotaEditModalOpen = null;
+    await saveState();
+    render();
+    setStatus('已更新總天數', true);
+  }catch(err){
+    setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
+  }
+}
 let infoHintExpanded = {};
 function toggleInfoHint(key){ infoHintExpanded[key] = !infoHintExpanded[key]; render(); }
 let resetPanelOpen = {};
@@ -1787,14 +1806,29 @@ function leaveSection(t){
       ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>💰 有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))} 天，其中有薪 ${fmt(personalPaidUsed(selectedYear))} 天、無薪 ${fmt(personalUnpaidUsed(selectedYear))} 天（門檻：每年前 ${fmt(getPersonalPaidDays())} 天有薪，可在「設定」分頁調整）。</div>` : ''}
 
       <div class="overview-panel">
-        <div class="overview-panel-header">
-          <div class="overview-balance">${selectedYear} 年${t.label}總天數：<strong>${fmt(getQuota(t.key,selectedYear))} 天</strong></div>
-          <span class="overview-edit-link" onclick="switchPage('data')">✎ 編輯總天數</span>
-        </div>
+        <div class="overview-balance">${selectedYear} 年${t.label}總天數：<strong>${fmt(getQuota(t.key,selectedYear))} 天</strong></div>
         <div class="overview-expiry">剩餘：<strong>${fmt(remainOf(t.key,selectedYear))} 天</strong></div>
       </div>
 
-      <button type="button" class="btn-${t.c}" style="margin-bottom:14px;" onclick="openAddRecord('${t.key}')">＋ 新增一筆</button>
+      <div class="row" style="margin-bottom:14px;">
+        <button type="button" class="btn-${t.c}" onclick="openAddRecord('${t.key}')">＋ 新增一筆</button>
+        <button type="button" class="ghost" onclick="openQuotaEditModal('${t.key}')">✎ 編輯總天數</button>
+      </div>
+      ${quotaEditModalOpen===t.key ? `
+      <div class="modal-overlay" onclick="closeQuotaEditModal()">
+        <div class="modal-box" onclick="event.stopPropagation()">
+          <h3>編輯${t.label}總天數</h3>
+          <div class="field" style="margin-bottom:14px;">
+            <label>${selectedYear} 年總天數</label>
+            <input type="number" id="quotaModalInput" value="${getQuota(t.key,selectedYear)}" min="0" step="0.5">
+          </div>
+          <div class="row">
+            <button type="button" class="btn-${t.c}" onclick="saveQuotaModal('${t.key}')">儲存</button>
+            <button type="button" class="ghost" onclick="closeQuotaEditModal()">取消</button>
+          </div>
+        </div>
+      </div>
+      ` : ''}
       <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
       ${listHtml}
       <div style="margin-top:16px;">
@@ -2054,7 +2088,7 @@ function compSectionHtml(category){
 
       <div class="overview-panel">
         <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong></div>
-        ${nearestExpiry ? `<div class="overview-expiry">⏳ 最近到期：<strong style="color:${nearestExpiry.diffDays<=7?'var(--brick)':'var(--amber)'};">${toROC(nearestExpiry.expiry)}（${nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`)}）</strong></div>` : ''}
+        ${nearestExpiry ? `<div class="overview-expiry" style="margin-top:6px;">⏳ 最近到期：<strong style="color:${nearestExpiry.diffDays<=7?'var(--brick)':'var(--amber)'};">${toROC(nearestExpiry.expiry)}（${nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`)}）</strong></div>` : ''}
         <div class="section-label" style="margin:10px 0 8px;">🗂️ 還沒用完的紀錄</div>
         ${renderAvailBatchList(category)}
       </div>
