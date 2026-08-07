@@ -320,7 +320,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-26';
+const APP_VERSION = 'v2026.08.07-27';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -947,6 +947,7 @@ async function loadState(){
       if(parsed.personalPaidDays !== undefined && parsed.personalPaidDays !== null){ state.personalPaidDays = Number(parsed.personalPaidDays); }
       if(parsed.annualMinDays !== undefined && parsed.annualMinDays !== null){ state.annualMinDays = Number(parsed.annualMinDays); }
       if(parsed.uiScale){ state.uiScale = Number(parsed.uiScale); }
+      if(parsed.lastUsedType){ state.lastUsedType = String(parsed.lastUsedType); }
     }
   }catch(e){ /* 無資料，使用預設值 */ }
 }
@@ -2173,7 +2174,8 @@ function pageHome(){
     ${dashboardPanel()}
 
     <div class="block" style="margin-bottom:16px;">
-      <button type="button" class="btn-jade" style="width:100%;" onclick="openAddRecordFromHome('annual')">＋ 新增休假／補休紀錄</button>
+      <button type="button" class="btn-jade" style="width:100%;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')">＋ 新增休假／補休紀錄</button>
+      ${state.lastUsedType ? `<button type="button" class="ghost" style="width:100%;margin-top:8px;" onclick="quickLogToday()">⚡ 快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
     </div>
 
     <div class="stamps">
@@ -2705,6 +2707,29 @@ function onUnitChange(key){
   else { dayQ.style.display='flex'; hourQ.style.display='none'; }
 }
 
+async function quickLogToday(){
+  const key = state.lastUsedType || 'annual';
+  const isComp = key==='comp' || key==='exchange';
+  const label = isComp ? (COMP_CATEGORIES[key]||{}).label : (LEAVE_TYPES.find(t=>t.key===key)||{}).label;
+  if(!label){ setStatus('找不到假別，請改用「＋新增」', false); return; }
+  if(!window.confirm(`快速登記：今天使用 1 天${label}，確定嗎？\n（送出後可以再進去調整細節，或用編輯修改）`)) return;
+  try{
+    const id = uid();
+    if(isComp){
+      state.compRecords.push({ id, type:'use', date:TODAY, unit:'day', amount:1, note:'', category:key });
+    } else {
+      if(!state.records[key]) state.records[key]=[];
+      state.records[key].push({ id, date:TODAY, unit:'day', amount:1, note:'' });
+    }
+    lastAddedId = id;
+    await saveState();
+    render();
+    setStatus(`已快速登記今天 1 天${label}`, true);
+  }catch(err){
+    setStatus('登記失敗：' + (err && err.message ? err.message : String(err)), false);
+  }
+}
+
 async function addRecord(key, e){
   e.preventDefault();
   try{
@@ -2723,6 +2748,7 @@ async function addRecord(key, e){
     if(!state.records[key]) state.records[key]=[];
     state.records[key].push({ id, date, unit, amount, note });
     lastAddedId = id;
+    state.lastUsedType = key;
     await saveState();
     if(activePage==='addRecord'){ activePage=addRecordFrom; }
     render();
@@ -2946,6 +2972,7 @@ async function addComp(e, category){
     }
     state.compRecords.push(record);
     lastAddedId = id;
+    state.lastUsedType = category;
     await saveState();
     if(activePage==='addRecord'){ activePage=addRecordFrom; }
     render();
