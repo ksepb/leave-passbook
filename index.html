@@ -318,7 +318,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-09';
+const APP_VERSION = 'v2026.08.07-10';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1814,22 +1814,29 @@ function leaveSection(t){
       ${t.key==='sick' && remainOf('sick',selectedYear)<0 ? `<div class="reminder-bar"><strong>⚠️ 病假超額提醒</strong>${selectedYear} 年病假已超過總天數 ${fmt(-remainOf('sick',selectedYear))} 天，依規定可用事假或特別休假擇一抵銷，請自行決定後手動在事假或特休登記這幾天（本系統不會自動幫你決定要扣哪一邊）。</div>` : ''}
       ${t.key==='personal' && usedOf('familyCare',selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 併入事假提醒</strong>${selectedYear} 年家庭照顧假 ${fmt(usedOf('familyCare',selectedYear))} 天已全額自動計入事假已使用天數。</div>` : ''}
       ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>💰 有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))} 天，其中有薪 ${fmt(personalPaidUsed(selectedYear))} 天、無薪 ${fmt(personalUnpaidUsed(selectedYear))} 天（門檻：每年前 ${fmt(getPersonalPaidDays())} 天有薪，可在「設定」分頁調整）。</div>` : ''}
+
+      <div class="overview-panel">
+        <div class="overview-balance">${selectedYear} 年${t.label}總天數：<strong>${fmt(getQuota(t.key,selectedYear))} 天</strong>（剩餘 ${fmt(remainOf(t.key,selectedYear))} 天）</div>
+        <button type="button" class="ghost" style="margin-top:8px;" onclick="switchPage('data')">✎ 調整總天數</button>
+      </div>
+
       <button type="button" class="btn-${t.c}" style="margin-bottom:14px;" onclick="openAddRecord('${t.key}')">＋ 新增一筆</button>
       <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
       ${listHtml}
-      <div class="quota-summary-row" style="border-bottom:none;border-top:1px dashed var(--line);padding-top:14px;margin-top:16px;margin-bottom:0;padding-bottom:0;">
-        <span>${selectedYear} 年${t.label}總天數：<strong>${fmt(getQuota(t.key,selectedYear))} 天</strong>（剩餘 ${fmt(remainOf(t.key,selectedYear))} 天）</span>
-        <button type="button" class="ghost" onclick="switchPage('data')">✎ 調整總天數</button>
-      </div>
-      <div class="reset-row">
-        <span class="reset-label">清除紀錄：</span>
-        <select id="${t.key}ResetScope">
-          <option value="day">指定某天</option>
-          <option value="month">指定某月</option>
-          <option value="year">指定某年</option>
-          <option value="all">全部</option>
-        </select>
-        <button class="danger-btn" onclick="resetRecords(document.getElementById('${t.key}ResetScope').value, '${t.key}')">重置</button>
+      <div style="margin-top:16px;">
+        <button type="button" class="ghost" onclick="toggleResetPanel('${t.key}')">${resetPanelOpen[t.key]?'▲ 收起':'⋯ 更多操作'}</button>
+        ${resetPanelOpen[t.key] ? `
+        <div class="reset-row">
+          <span class="reset-label">清除紀錄：</span>
+          <select id="${t.key}ResetScope">
+            <option value="day">指定某天</option>
+            <option value="month">指定某月</option>
+            <option value="year">指定某年</option>
+            <option value="all">全部</option>
+          </select>
+          <button class="danger-btn" onclick="resetRecords(document.getElementById('${t.key}ResetScope').value, '${t.key}')">重置</button>
+        </div>
+        ` : ''}
       </div>
     </section>`;
 }
