@@ -315,7 +315,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-14';
+const APP_VERSION = 'v2026.08.07-16';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -734,6 +734,7 @@ async function ensureHolidayYear(year){
 }
 let chartMode = true;
 let expiryTouched = false;
+let editExpiryTouched = false;
 let kwPendingItems = [];
 let kwUnmatchedLines = [];
 let expandedMonths = {};
@@ -806,6 +807,14 @@ function onCompDateChange(category){
   const years = (COMP_CATEGORIES[category||'comp']||COMP_CATEGORIES.comp).defaultYears;
   const dateVal = parseFlexibleDate(document.getElementById('compDate').value);
   const expiryEl = document.getElementById('compExpiry');
+  if(dateVal && expiryEl) expiryEl.value = addYears(dateVal, years);
+}
+
+function onEditCompDateChange(id, category){
+  if(editExpiryTouched) return;
+  const years = (COMP_CATEGORIES[category||'comp']||COMP_CATEGORIES.comp).defaultYears;
+  const dateVal = parseFlexibleDate(document.getElementById(`editCompDate-${id}`).value);
+  const expiryEl = document.getElementById(`editCompExpiry-${id}`);
   if(dateVal && expiryEl) expiryEl.value = addYears(dateVal, years);
 }
 
@@ -1085,10 +1094,12 @@ function toggleManualSource(category){
 function updateUsePreview(category){
   const previewEl = document.getElementById('usePreview');
   const wrapEl = document.getElementById('manualSourceWrap');
+  const expiryWrapEl = document.getElementById('compExpiryWrap');
   if(!previewEl) return;
   const typeEl = document.getElementById('compType');
   const isUse = typeEl && typeEl.value === 'use';
   if(wrapEl) wrapEl.style.display = isUse ? '' : 'none';
+  if(expiryWrapEl) expiryWrapEl.style.display = isUse ? 'none' : '';
   if(!isUse){ previewEl.innerHTML = ''; return; }
   const amountEl = document.getElementById('compAmount');
   const unitEl = document.getElementById('compUnit');
@@ -1113,10 +1124,12 @@ function toggleEditManualSource(id, category){
 function updateEditUsePreview(id, category){
   const previewEl = document.getElementById(`editUsePreview-${id}`);
   const wrapEl = document.getElementById(`editManualSourceWrap-${id}`);
+  const expiryWrapEl = document.getElementById(`editCompExpiryWrap-${id}`);
   if(!previewEl) return;
   const typeEl = document.getElementById(`editCompType-${id}`);
   const isUse = typeEl && typeEl.value === 'use';
   if(wrapEl) wrapEl.style.display = isUse ? '' : 'none';
+  if(expiryWrapEl) expiryWrapEl.style.display = isUse ? 'none' : '';
   if(!isUse){ previewEl.innerHTML = ''; return; }
   const amountEl = document.getElementById(`editCompAmount-${id}`);
   const unitEl = document.getElementById(`editCompUnit-${id}`);
@@ -1862,7 +1875,7 @@ function pageAddRecord(){
               </select>
             </div>
           </div>
-          <div class="form-row">
+          <div class="form-row" id="compExpiryWrap">
             <div class="field" style="flex:1;min-width:210px;">
               <label>⏳ 到期日（自動預設 ${info.defaultYears} 年後，可手動修改）</label>
               <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,info.defaultYears)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
@@ -1926,7 +1939,7 @@ function buildCompLi(r, dMin, dMax, category){
       </div>
       <div class="field">
         <label>日期</label>
-        <div class="date-row"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入">⌨</button></div>
+        <div class="date-row"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}" onchange="onEditCompDateChange('${r.id}','${category}')"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入">⌨</button></div>
       </div>
       <div class="field field-days">
         <label>數量</label>
@@ -1941,6 +1954,12 @@ function buildCompLi(r, dMin, dMax, category){
       <div class="field note">
         <label>備註</label>
         <input type="text" id="editCompNote-${r.id}" value="${escapeAttr(r.note||'')}">
+      </div>
+      <div id="editCompExpiryWrap-${r.id}" style="${r.type==='earn'?'':'display:none;'}width:100%;">
+        <div class="field">
+          <label>⏳ 到期日</label>
+          <div class="date-row"><input type="date" id="editCompExpiry-${r.id}" value="${r.expiry||addYears(r.date, info.defaultYears)}" oninput="editExpiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompExpiry-${r.id}')" title="切換手動輸入">⌨</button></div>
+        </div>
       </div>
       <div id="editUsePreview-${r.id}">${initialPreview}</div>
       <div id="editManualSourceWrap-${r.id}" style="${r.type==='use'?'':'display:none;'}width:100%;">
@@ -2825,7 +2844,7 @@ async function addComp(e, category){
   }
 }
 
-async function startEditComp(id){ editing = {kind:'comp', id}; render(); }
+async function startEditComp(id){ editing = {kind:'comp', id}; editExpiryTouched = false; render(); }
 
 async function saveEditComp(id){
   try{
@@ -2852,8 +2871,12 @@ async function saveEditComp(id){
         const sourceSel = document.getElementById(`editCompSourceEarn-${id}`);
         if(sourceSel && sourceSel.value){ updated.sourceEarnId = sourceSel.value; }
         else { delete updated.sourceEarnId; }
+        delete updated.expiry;
       } else {
         delete updated.sourceEarnId;
+        const expiryEl = document.getElementById(`editCompExpiry-${id}`);
+        const expiry = expiryEl ? parseFlexibleDate(expiryEl.value) : null;
+        if(expiry){ updated.expiry = expiry; } else { delete updated.expiry; }
       }
       state.compRecords[idx] = updated;
     }
