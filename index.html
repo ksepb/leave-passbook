@@ -319,7 +319,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-12';
+const APP_VERSION = 'v2026.08.07-13';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1476,7 +1476,6 @@ function keywordPanel(){
     <div class="block">
       <h2><span class="dot dot-jade"></span>關鍵字快速輸入</h2>
       <div class="mental-model-hint">💡 這裡跟「假別紀錄」「行事曆」的新增功能做的是同一件事，差別只在於：這裡可以<strong>一次貼很多筆</strong>用文字快速登記，不用一筆一筆點按鈕。只有一兩筆的話，直接用「假別紀錄」的＋新增可能更快。</div>
-      <p class="hint" style="margin-bottom:14px;">一行一筆，用關鍵字規則自動辨識（不經過 AI，純本機比對）。日期預設為目前瀏覽的 ${selectedYear} 年，也可以寫「今天／明天／昨天」「115/8/1」「2026/8/1」。</p>
       <div class="section-label" style="margin-top:4px;">支援寫法範例</div>
       <div class="kw-examples">
         <div class="kw-example" style="border-left-color:var(--brick);">
