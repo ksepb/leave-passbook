@@ -320,7 +320,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-24';
+const APP_VERSION = 'v2026.08.07-26';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1473,6 +1473,8 @@ function keywordPanel(){
             label = it.leaveLabel;
             amountText = `${fmt(it.amount)} ${it.unit==='hour'?'小時':'天'}`;
           }
+          const showSourceSelect = it.kind==='comp' && it.compType==='use';
+          const sourceOptions = showSourceSelect ? compFifoRemaining(it.category||'comp').filter(b=>b.remainDays>0.0001) : [];
           return `<li>
             <div class="ledger-top">
               <span class="d">${it.date? toROC(it.date) : '－'}</span>
@@ -1480,6 +1482,14 @@ function keywordPanel(){
               <span class="days">${escapeHtml(amountText)}</span>
               ${it.note? `<span class="note">${escapeHtml(it.note)}</span>` : ''}
             </div>
+            ${showSourceSelect ? `
+            <div style="margin-top:8px;">
+              <select onchange="kwPendingItems[${idx}].sourceEarnId=this.value" style="width:100%;padding:6px;font-size:12.5px;border:1px solid var(--line);border-radius:8px;">
+                <option value="">優先扣哪一批：不指定，自動先進先出</option>
+                ${sourceOptions.map(b=>`<option value="${b.id}">優先扣：${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</option>`).join('')}
+              </select>
+            </div>
+            ` : ''}
             <div class="ledger-bottom">
               <div></div>
               <div class="ledger-actions"><button class="del" title="移除" onclick="removeKwItem(${idx})">✕ 移除</button></div>
@@ -1833,17 +1843,21 @@ function leaveSection(t){
   const forceExpand = (groupRows)=> editing && editing.kind==='record' && editing.key===t.key && groupRows.some(r=>r.id===editing.id);
   const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r),0))} 天`;
   const listHtml = renderMonthGroups(t.key, rows, emptyMsg, r=>buildLeaveLi(t,r,dMin,dMax), totalFn, forceExpand);
+  const hasReminders = (t.key==='sick' && (menstrualExcess(selectedYear)>0 || remainOf('sick',selectedYear)<0))
+    || (t.key==='personal' && (usedOf('familyCare',selectedYear)>0 || usedOf('personal',selectedYear)>0));
   return `
     <section class="block">
-      <h2><span class="dot dot-${t.c}"></span>${t.label}</h2>
+      <h2><span class="dot dot-${t.c}"></span>${t.label}${hasReminders ? `<button type="button" class="info-icon-btn" onclick="toggleInfoHint('${t.key}')" title="說明">ⓘ</button>` : ''}</h2>
+      ${infoHintExpanded[t.key] ? `
       ${t.key==='sick' && menstrualExcess(selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 生理假併入病假提醒</strong>${selectedYear} 年生理假已使用超過 ${MENSTRUAL_FREE_DAYS} 天，超過的 ${fmt(menstrualExcess(selectedYear))} 天已自動計入病假已使用天數。</div>` : ''}
       ${t.key==='sick' && remainOf('sick',selectedYear)<0 ? `<div class="reminder-bar"><strong>⚠️ 病假超額提醒</strong>${selectedYear} 年病假已超過總天數 ${fmt(-remainOf('sick',selectedYear))} 天，依規定可用事假或特別休假擇一抵銷，請自行決定後手動在事假或特休登記這幾天（本系統不會自動幫你決定要扣哪一邊）。</div>` : ''}
       ${t.key==='personal' && usedOf('familyCare',selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 併入事假提醒</strong>${selectedYear} 年家庭照顧假 ${fmt(usedOf('familyCare',selectedYear))} 天已全額自動計入事假已使用天數。</div>` : ''}
       ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>💰 有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))} 天，其中有薪 ${fmt(personalPaidUsed(selectedYear))} 天、無薪 ${fmt(personalUnpaidUsed(selectedYear))} 天（門檻：每年前 ${fmt(getPersonalPaidDays())} 天有薪，可在「設定」分頁調整）。</div>` : ''}
+      ` : ''}
 
       <div class="overview-panel">
         <div class="overview-balance">${selectedYear} 年${t.label}總天數：<strong>${fmt(getQuota(t.key,selectedYear))} 天</strong></div>
-        <div class="overview-expiry">剩餘：<strong>${fmt(remainOf(t.key,selectedYear))} 天</strong></div>
+        <div class="overview-expiry">剩餘：<strong>${fmt(remainOf(t.key,selectedYear))} 天</strong>（${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())} 小時）</div>
       </div>
 
       <div class="row" style="margin-bottom:14px;">
@@ -2837,6 +2851,7 @@ async function applyKwItems(){
         const info = COMP_CATEGORIES[category];
         const rec = { id, type:item.compType, date:item.date, unit:item.unit, amount:Number(item.amount), note:item.note||'', category };
         if(rec.type==='earn'){ rec.expiry = addYears(item.date, info.defaultYears); }
+        else if(item.sourceEarnId){ rec.sourceEarnId = item.sourceEarnId; }
         state.compRecords.push(rec);
       } else if(item.kind==='leave'){
         if(!state.records[item.leaveKey]) state.records[item.leaveKey]=[];
