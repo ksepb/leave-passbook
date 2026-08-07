@@ -189,6 +189,7 @@
   .overview-balance{font-size:15px;font-weight:700;color:var(--ink);}
   .overview-expiry{font-size:13.5px;margin-top:6px;}
   .overview-panel .avail-batch-item{background:#fff;}
+  .mental-model-hint{background:var(--blue-soft);color:var(--blue);font-size:13px;line-height:1.6;padding:10px 12px;border-radius:10px;margin-bottom:12px;}
   .hint{font-size:15.5px;color:var(--ink-soft);line-height:1.6;}
   .total-row .hint{flex-basis:100%;margin-top:-2px;}
 
@@ -318,7 +319,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-10';
+const APP_VERSION = 'v2026.08.07-12';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1105,8 +1106,8 @@ function computeUsePreviewHtml(category, amount, unit, pinnedId, excludeId){
   if(consumed.length===0){
     html += `<p class="hint" style="color:var(--brick);margin:0;">⚠️ 目前沒有可扣的${info.label}結餘，這筆送出後結餘會變負數。</p>`;
   } else {
-    html += `<p class="hint" style="margin:0 0 6px;font-weight:700;color:var(--ink);">這筆會${pinnedId?'優先扣你指定的那批，不夠再':'依'}「先進先出」扣抵：</p>`;
-    html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?'⭐ ':''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''} 批次　－${fmt(c.take)} 天，扣完後該批次剩 ${fmt(c.remainAfter)} 天</div>`).join('');
+    html += `<p class="hint" style="margin:0 0 6px;font-weight:700;color:var(--ink);">這筆會${pinnedId?'優先扣你指定的那筆，不夠再':'自動'}扣最早獲得的那幾筆：</p>`;
+    html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?'⭐ ':''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''}　－${fmt(c.take)} 天，扣完後這筆還剩 ${fmt(c.remainAfter)} 天</div>`).join('');
     if(toDeduct>0.0001){
       html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">⚠️ 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
     }
@@ -1474,6 +1475,7 @@ function keywordPanel(){
   return `
     <div class="block">
       <h2><span class="dot dot-jade"></span>關鍵字快速輸入</h2>
+      <div class="mental-model-hint">💡 這裡跟「假別紀錄」「行事曆」的新增功能做的是同一件事，差別只在於：這裡可以<strong>一次貼很多筆</strong>用文字快速登記，不用一筆一筆點按鈕。只有一兩筆的話，直接用「假別紀錄」的＋新增可能更快。</div>
       <p class="hint" style="margin-bottom:14px;">一行一筆，用關鍵字規則自動辨識（不經過 AI，純本機比對）。日期預設為目前瀏覽的 ${selectedYear} 年，也可以寫「今天／明天／昨天」「115/8/1」「2026/8/1」。</p>
       <div class="section-label" style="margin-top:4px;">支援寫法範例</div>
       <div class="kw-examples">
@@ -1896,12 +1898,12 @@ function pageAddRecord(){
           <div id="usePreview"></div>
           <div id="manualSourceWrap" style="display:none;">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:-4px 0 8px;cursor:pointer;color:var(--ink-soft);">
-              <input type="checkbox" id="compManualToggle" onchange="toggleManualSource('${key}')"> 手動指定優先扣哪一批（預設自動先進先出）
+              <input type="checkbox" id="compManualToggle" onchange="toggleManualSource('${key}')"> 手動指定優先扣哪一筆（預設自動扣最早獲得的那筆）
             </label>
             <div class="field" id="manualSourceField" style="display:none;margin-bottom:14px;">
-              <label>優先扣這一批</label>
+              <label>優先扣這一筆</label>
               <select id="compSourceEarn" onchange="updateUsePreview('${key}')">
-                <option value="">（不指定，自動先進先出）</option>
+                <option value="">（不指定，自動扣最早獲得的那筆）</option>
                 ${compFifoRemaining(key).filter(b=>b.remainDays>0.0001).map(b=>`<option value="${b.id}">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</option>`).join('')}
               </select>
             </div>
@@ -1989,12 +1991,12 @@ function buildCompLi(r, dMin, dMax, category){
       <div id="editUsePreview-${r.id}">${initialPreview}</div>
       <div id="editManualSourceWrap-${r.id}" style="${r.type==='use'?'':'display:none;'}width:100%;">
         <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:-4px 0 8px;cursor:pointer;color:var(--ink-soft);">
-          <input type="checkbox" id="editManualToggle-${r.id}" ${r.sourceEarnId?'checked':''} onchange="toggleEditManualSource('${r.id}','${category}')"> 手動指定優先扣哪一批（預設自動先進先出）
+          <input type="checkbox" id="editManualToggle-${r.id}" ${r.sourceEarnId?'checked':''} onchange="toggleEditManualSource('${r.id}','${category}')"> 手動指定優先扣哪一筆（預設自動扣最早獲得的那筆）
         </label>
         <div class="field" id="editManualSourceField-${r.id}" style="${r.sourceEarnId?'':'display:none;'}margin-bottom:14px;">
-          <label>優先扣這一批</label>
+          <label>優先扣這一筆</label>
           <select id="editCompSourceEarn-${r.id}" onchange="updateEditUsePreview('${r.id}','${category}')">
-            <option value="">（不指定，自動先進先出）</option>
+            <option value="">（不指定，自動扣最早獲得的那筆）</option>
             ${editBatches.map(b=>`<option value="${b.id}" ${r.sourceEarnId===b.id?'selected':''}>${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</option>`).join('')}
           </select>
         </div>
@@ -2035,7 +2037,7 @@ function renderAvailBatchList(category){
       return a.diffDays-b.diffDays;
     });
   if(batches.length===0){
-    return `<div class="hint" style="margin-bottom:12px;">目前沒有還能使用的${info.label}批次。</div>`;
+    return `<div class="hint" style="margin-bottom:12px;">目前沒有還能使用的${info.label}紀錄。</div>`;
   }
   return `<div class="avail-batch-list">${batches.map(b=>{
     const urgent = b.diffDays!==null && b.diffDays<=7;
@@ -2075,7 +2077,7 @@ function compSectionHtml(category){
       <div class="overview-panel">
         <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong></div>
         ${nearestExpiry ? `<div class="overview-expiry">⏳ 最近到期：<strong style="color:${nearestExpiry.diffDays<=7?'var(--brick)':'var(--amber)'};">${toROC(nearestExpiry.expiry)}（${nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`)}）</strong></div>` : ''}
-        <div class="section-label" style="margin:10px 0 8px;">🗂️ 還能扣抵的批次</div>
+        <div class="section-label" style="margin:10px 0 8px;">🗂️ 還沒用完的紀錄</div>
         ${renderAvailBatchList(category)}
       </div>
 
