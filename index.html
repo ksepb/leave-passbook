@@ -320,7 +320,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-23';
+const APP_VERSION = 'v2026.08.07-24';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -666,6 +666,42 @@ let addRecordDate = null;
 let addRecordFrom = 'leaves';
 let quotaExpandedKey = null;
 let quotaEditModalOpen = null;
+
+// ---- 錯誤記錄：App 發生任何錯誤時，記到本機（不會傳出去、不連網），
+// 方便你之後在設定頁看到「最近發生過什麼問題」，截圖給我排查 ----
+let errorLog = [];
+function loadErrorLog(){
+  try{
+    const raw = localStorage.getItem('appErrorLog');
+    if(raw) errorLog = JSON.parse(raw);
+  }catch(e){ errorLog = []; }
+}
+function logAppError(message, extra){
+  try{
+    const entry = {
+      time: new Date().toLocaleString('zh-TW', {hour12:false}),
+      message: String(message||'').slice(0, 300),
+      extra: extra ? String(extra).slice(0, 500) : '',
+      version: APP_VERSION
+    };
+    errorLog.unshift(entry);
+    errorLog = errorLog.slice(0, 20); // 只留最近20筆，避免無限長大
+    localStorage.setItem('appErrorLog', JSON.stringify(errorLog));
+  }catch(e){ /* 記錄本身失敗就算了，不要再產生新錯誤 */ }
+}
+function clearErrorLog(){
+  errorLog = [];
+  try{ localStorage.removeItem('appErrorLog'); }catch(e){}
+  render();
+  setStatus('已清除錯誤記錄', true);
+}
+window.addEventListener('error', function(event){
+  logAppError(event.message, event.filename ? `${event.filename}:${event.lineno}` : '');
+});
+window.addEventListener('unhandledrejection', function(event){
+  const reason = event.reason;
+  logAppError(reason && reason.message ? reason.message : String(reason), reason && reason.stack ? reason.stack : '');
+});
 function openQuotaEditModal(key){ quotaEditModalOpen = key; render(); }
 function closeQuotaEditModal(){ quotaEditModalOpen = null; render(); }
 async function saveQuotaModal(key){
@@ -2422,6 +2458,28 @@ function pageData(){
         </div>
         ` : ''}
       </div>
+
+      <div class="backup">
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('errorLog')">
+          <span>🐛 錯誤記錄</span>
+          <span>${errorLog.length>0 ? `${errorLog.length} 筆` : '無'}　${settingsExpandedKey==='errorLog'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='errorLog' ? `
+        <p class="hint" style="margin-bottom:10px;">如果 App 出現異常（畫面壞掉、按鈕沒反應等），這裡會自動記下最近 20 筆錯誤訊息（只存在這台裝置，不會傳到任何地方）。遇到問題時可以來這裡截圖給開發者看，方便排查。</p>
+        ${errorLog.length===0 ? `<p class="hint" style="color:var(--jade);">✓ 目前沒有記錄到任何錯誤。</p>` : `
+        <div style="max-height:300px;overflow-y:auto;margin-bottom:10px;">
+          ${errorLog.map(e=>`
+            <div style="border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12.5px;">
+              <div style="font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);">${escapeHtml(e.time)}　${escapeHtml(e.version||'')}</div>
+              <div style="color:var(--brick);margin-top:3px;word-break:break-all;">${escapeHtml(e.message)}</div>
+              ${e.extra ? `<div style="color:var(--ink-soft);margin-top:3px;word-break:break-all;">${escapeHtml(e.extra)}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="ghost" onclick="clearErrorLog()">清除記錄</button>
+        `}
+        ` : ''}
+      </div>
     </div>
 
     <div class="backup danger-zone">
@@ -3230,6 +3288,7 @@ async function restoreBackup(){
 }
 
 (async function init(){
+  loadErrorLog();
   await loadState();
   applyUiScale();
   render();
