@@ -73,7 +73,8 @@
   .home-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 auto;max-width:320px;}
   .chip{display:inline-flex;align-items:center;gap:4px;padding:5px 13px;border-radius:20px;font-family:'Noto Sans TC',sans-serif;font-size:12px;font-weight:500;color:var(--ink-soft);background:rgba(255,255,255,.5);border:1px solid var(--line);}
 
-  .undo-bar{background:#3A2F22;color:#fff;padding:10px 14px;border-radius:6px;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .undo-bar{position:fixed;left:16px;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:250;background:#3A2F22;color:#fff;padding:12px 16px;border-radius:12px;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:fadeInPage .2s ease-out;}
+  .undo-bar + .undo-bar{bottom:calc(140px + env(safe-area-inset-bottom));}
   .undo-bar button{background:var(--amber);padding:5px 10px;font-size:12px;}
 
   .reminder-bar{background:#FDF1DC;border:1px solid var(--amber);color:#6b4a12;padding:10px 14px;border-radius:6px;font-size:14px;margin-bottom:16px;line-height:1.7;}
@@ -327,7 +328,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-38';
+const APP_VERSION = 'v2026.08.07-39';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
