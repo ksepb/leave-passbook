@@ -45,7 +45,7 @@
   .add-success-box{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;animation:fadeInPage .2s ease-out;}
   .add-success-check{width:64px;height:64px;border-radius:50%;background:var(--jade);color:#fff;font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;margin-bottom:16px;animation:stampIn .35s ease-out;}
   .add-success-text{font-size:16px;font-weight:700;color:var(--ink);}
-  .ledger-thumb{width:36px;height:36px;max-width:36px;max-height:36px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;flex-shrink:0;margin-left:auto;}
+  .ledger-thumb{width:36px;height:36px;max-width:36px;max-height:36px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;flex-shrink:0;}
   input[type="file"]{width:100%;max-width:100%;box-sizing:border-box;font-size:13px;color:var(--ink-soft);}
   .shimmer-once::after{
     content:'';
@@ -347,7 +347,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-59';
+const APP_VERSION = 'v2026.08.07-60';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2255,9 +2255,9 @@ function buildCompLi(r, dMin, dMax, category){
       <span class="tag" style="background:var(--${info.c}-soft);color:var(--${info.c});">${r.type==='earn'?'獲得':'使用'}</span>
       <span class="days">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
       ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
-      ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
     </div>
     <div class="ledger-bottom">
+      ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
       ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>`:'<div></div>'}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
