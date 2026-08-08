@@ -46,6 +46,7 @@
   .add-success-check{width:64px;height:64px;border-radius:50%;background:var(--jade);color:#fff;font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;margin-bottom:16px;animation:stampIn .35s ease-out;}
   .add-success-text{font-size:16px;font-weight:700;color:var(--ink);}
   .ledger-thumb{width:36px;height:36px;max-width:36px;max-height:36px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;flex-shrink:0;}
+  .photo-badge{display:inline-flex;align-items:center;background:var(--blue-soft);color:var(--blue);font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:20px;cursor:pointer;flex-shrink:0;}
   .photo-icon{font-size:15px;cursor:pointer;flex-shrink:0;}
   input[type="file"]{width:100%;max-width:100%;box-sizing:border-box;font-size:13px;color:var(--ink-soft);}
   .shimmer-once::after{
@@ -349,7 +350,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.09-02';
+const APP_VERSION = 'v2026.08.09-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2263,10 +2264,10 @@ function buildCompLi(r, dMin, dMax, category){
       <span class="tag" style="background:var(--${info.c}-soft);color:var(--${info.c});">${r.type==='earn'?'獲得':'使用'}</span>
       <span class="days">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
       ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
+      ${r.photoUrl? `<span class="photo-badge" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')">📷 附件</span>` : ''}
     </div>
     <div class="ledger-bottom">
       ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>`:'<div></div>'}
-      ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
         <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
@@ -2293,18 +2294,11 @@ function renderAvailBatchList(category){
   return `<div class="avail-batch-list">${batches.map(b=>{
     const urgent = b.diffDays!==null && b.diffDays<=7;
     const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期 ${Math.abs(b.diffDays)} 天` : (b.diffDays===0?'今天到期':`${b.diffDays} 天後到期`));
-    const textContent = `
-      <div class="avail-batch-title">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
+    return `<div class="avail-batch-item">
+      <div class="avail-batch-title">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}${b.photoUrl?` <span class="photo-badge" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')">📷 附件</span>`:''}</div>
       <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">⏳ 到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
-    `;
-    if(b.photoUrl){
-      return `<div class="avail-batch-item" style="display:flex;gap:12px;align-items:stretch;padding:0;overflow:hidden;">
-        <img src="${escapeAttr(b.photoUrl)}" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')" alt="附件照片" style="width:64px;flex-shrink:0;object-fit:cover;cursor:pointer;">
-        <div style="padding:10px 12px 10px 0;flex:1;min-width:0;">${textContent}</div>
-      </div>`;
-    }
-    return `<div class="avail-batch-item">${textContent}</div>`;
+    </div>`;
   }).join('')}</div>`;
 }
 
