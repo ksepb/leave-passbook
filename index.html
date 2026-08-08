@@ -247,7 +247,7 @@
   .cal-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
   .cal-weekdays{margin-bottom:4px;font-size:11px;color:var(--ink-soft);text-align:center;}
-  .cal-cell{aspect-ratio:1/1;border:1px solid var(--line);border-radius:4px;padding:3px;background:#fff;}
+  .cal-cell{aspect-ratio:1/1;min-width:0;min-height:0;overflow:hidden;border:1px solid var(--line);border-radius:4px;padding:3px;background:#fff;}
   .cal-cell.empty{border:none;background:transparent;}
   .cal-cell.adjacent{background:transparent;border-color:transparent;cursor:default;}
   .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
@@ -277,9 +277,9 @@
   .cal-detail-chip-del{background:rgba(0,0,0,.08);border:none;border-radius:50%;width:18px;height:18px;font-size:10px;line-height:1;cursor:pointer;color:inherit;flex-shrink:0;}
   .cal-detail-add-row{display:flex;gap:8px;margin-top:12px;align-items:center;}
   .cal-detail-add-row select{flex:1;padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
-  .cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px;}
-  .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:700;color:#fff;}
-  .cal-dot-wide{width:auto;min-width:20px;padding:0 3px;border-radius:6px;font-size:7.5px;letter-spacing:-.02em;}
+  .cal-dots{display:flex;flex-wrap:wrap;gap:1.5px;margin-top:2px;}
+  .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;font-size:7px;font-weight:700;color:#fff;flex-shrink:0;}
+  .cal-dot-wide{width:auto;min-width:16px;padding:0 2px;border-radius:5px;font-size:6.5px;letter-spacing:-.03em;flex-shrink:0;}
 
   .chart-wrap{display:flex;gap:5px;align-items:flex-end;height:150px;padding:8px 2px 0;overflow-x:auto;}
   .chart-col{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;cursor:pointer;border-radius:8px;padding:4px 2px;transition:background .1s ease;}
@@ -344,7 +344,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-47';
+const APP_VERSION = 'v2026.08.07-50';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2366,6 +2366,12 @@ function pageLeaves(){
 }
 
 function pageQuickInput(){
+  if(successConfirm){
+    return `<div class="add-success-box">
+      <div class="add-success-check">✓</div>
+      <div class="add-success-text">${escapeHtml(successConfirm)}</div>
+    </div>`;
+  }
   return keywordPanel();
 }
 
@@ -3076,8 +3082,10 @@ async function applyKwItems(){
     kwPendingItems = [];
     kwUnmatchedLines = [];
     await saveState();
-    render();
     setStatus('已新增解析出的紀錄', true);
+    successConfirm = `已新增 ${recordCount} 筆紀錄`;
+    render();
+    setTimeout(()=>{ successConfirm = null; render(); }, 450);
   }catch(err){
     setStatus('新增失敗：' + (err && err.message ? err.message : String(err)), false);
   }
