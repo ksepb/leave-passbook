@@ -46,7 +46,7 @@
     content:'';
     position:absolute; top:0; left:-60%; width:55%; height:100%;
     background:linear-gradient(120deg, transparent, rgba(255,255,255,.55), transparent);
-    animation:shimmerSweep .6s ease-out 1;
+    animation:shimmerSweep 1.2s ease-out 1;
     pointer-events:none;
   }
   @keyframes shimmerSweep{
@@ -341,7 +341,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-43';
+const APP_VERSION = 'v2026.08.07-45';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2319,8 +2319,8 @@ function pageHome(justEntered){
     ${dashboardPanel()}
 
     <div class="block" style="margin-bottom:16px;">
-      <button type="button" class="btn-jade${shimmerClass}" style="width:100%;font-size:16px;padding:14px 16px;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')">＋ 新增休假／補休紀錄</button>
-      ${state.lastUsedType ? `<button type="button" class="${shimmerClass.trim()}" style="width:100%;margin-top:8px;font-size:16px;padding:14px 16px;background:var(--amber-soft, #FBEFDC);color:var(--amber);border:1.5px solid var(--amber);" onclick="quickLogToday()">⚡ 快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
+      <button type="button" class="btn-jade${shimmerClass}" style="width:100%;font-size:16px;padding:14px 16px;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')">＋ 使用休假／新增補休紀錄</button>
+      ${state.lastUsedType ? `<button type="button" style="width:100%;margin-top:8px;font-size:16px;padding:14px 16px;background:var(--amber-soft, #FBEFDC);color:var(--amber);border:1.5px solid var(--amber);" onclick="quickLogToday()">⚡ 快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
     </div>
 
     <div class="stamps">
