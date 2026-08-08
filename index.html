@@ -350,7 +350,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.09-03';
+const APP_VERSION = 'v2026.08.09-04';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2264,10 +2264,10 @@ function buildCompLi(r, dMin, dMax, category){
       <span class="tag" style="background:var(--${info.c}-soft);color:var(--${info.c});">${r.type==='earn'?'獲得':'使用'}</span>
       <span class="days">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
       ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
-      ${r.photoUrl? `<span class="photo-badge" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')">📷 附件</span>` : ''}
     </div>
     <div class="ledger-bottom">
       ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>`:'<div></div>'}
+      ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
         <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
