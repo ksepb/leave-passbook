@@ -201,7 +201,8 @@
   .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
   .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;}
   .avail-batch-title{font-weight:700;font-size:14.5px;margin-bottom:3px;}
-  .avail-batch-remain{font-size:14px;color:var(--ink);white-space:nowrap;overflow-x:auto;}
+  .avail-batch-list-label{font-size:14px;font-weight:700;color:var(--jade);margin:10px 0 8px;}
+  .avail-batch-remain{font-size:14px;color:var(--jade);font-weight:700;white-space:nowrap;overflow-x:auto;}
   .avail-batch-hours{color:var(--ink-soft);font-weight:400;}
   .avail-batch-expiry{font-size:12.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;}
   .info-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:13px;cursor:pointer;margin-left:6px;vertical-align:middle;}
@@ -348,7 +349,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-61';
+const APP_VERSION = 'v2026.08.07-62';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1227,7 +1228,7 @@ function compFifoRemaining(category, excludeId){
   records.forEach(r=>{
     const days = toDays(r);
     if(r.type==='earn'){
-      batches.push({id:r.id, date:r.date, expiry:r.expiry, note:r.note, remainDays: days});
+      batches.push({id:r.id, date:r.date, expiry:r.expiry, note:r.note, photoUrl:r.photoUrl, remainDays: days});
     } else {
       let toDeduct = days;
       // 有手動指定要優先扣哪一批的話，先扣那一批
@@ -2137,7 +2138,7 @@ function pageAddRecord(){
           </div>
           <div class="form-row">
             <div class="field" style="flex:1;">
-              <label>📷 上傳照片（選填，比如加班單、調班證明）</label>
+              <label>📷 上傳照片（選填，比如加班單、請假證明）</label>
               ${currentUser ? `<input type="file" id="compPhotoInput" accept="image/*">` : `<p class="hint" style="margin:0;">需要先登入雲端帳號才能使用這個功能（見「設定」分頁）</p>`}
             </div>
           </div>
@@ -2287,7 +2288,7 @@ function renderAvailBatchList(category){
     const urgent = b.diffDays!==null && b.diffDays<=7;
     const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期 ${Math.abs(b.diffDays)} 天` : (b.diffDays===0?'今天到期':`${b.diffDays} 天後到期`));
     return `<div class="avail-batch-item">
-      <div class="avail-batch-title">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
+      <div class="avail-batch-title">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}${b.photoUrl?` <span class="photo-icon" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')" title="查看照片">📷</span>`:''}</div>
       <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">⏳ 到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
     </div>`;
@@ -2320,8 +2321,8 @@ function compSectionHtml(category){
 
       <div class="overview-panel">
         <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong></div>
-        ${nearestExpiry ? `<div class="overview-expiry" style="margin-top:6px;">⏳ 最近到期：<strong style="color:${nearestExpiry.diffDays<=7?'var(--brick)':'var(--amber)'};">${toROC(nearestExpiry.expiry)}（${nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`)}）</strong></div>` : ''}
-        <div class="section-label" style="margin:10px 0 8px;">🗂️ 還沒用完的紀錄</div>
+        ${nearestExpiry ? `<div class="overview-expiry" style="margin-top:6px;font-size:14.5px;">⏳ 最近到期：<strong style="color:${nearestExpiry.diffDays<=7?'var(--brick)':'var(--amber)'};">${toROC(nearestExpiry.expiry)}（${nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`)}）</strong></div>` : ''}
+        <div class="avail-batch-list-label">🗂️ 還沒用完的紀錄</div>
         ${renderAvailBatchList(category)}
       </div>
 
