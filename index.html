@@ -347,7 +347,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-57';
+const APP_VERSION = 'v2026.08.07-58';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -3227,7 +3227,8 @@ async function resetRecords(scope, key){
 async function uploadCompPhoto(file, recordId){
   if(!fbStorage || !currentUser){ return null; }
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-  const path = `leavePassbook/${currentUser.uid}/${recordId}.${ext}`;
+  const uniqueSuffix = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const path = `leavePassbook/${currentUser.uid}/${recordId}-${uniqueSuffix}.${ext}`;
   const ref = fbStorage.ref().child(path);
   await ref.put(file);
   return await ref.getDownloadURL();
