@@ -204,7 +204,7 @@
   .avail-batch-title{font-weight:700;font-size:14.5px;margin-bottom:3px;}
   .avail-batch-list-label{font-size:14px;font-weight:700;color:var(--jade);margin:10px 0 8px;}
   .avail-batch-remain{font-size:14px;color:var(--jade);font-weight:700;white-space:nowrap;overflow-x:auto;}
-  .avail-batch-hours{color:var(--ink-soft);font-weight:400;}
+  .avail-batch-hours{color:var(--ink-soft);font-weight:600;font-size:13px;margin-left:2px;}
   .avail-batch-expiry{font-size:12.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;}
   .info-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:13px;cursor:pointer;margin-left:6px;vertical-align:middle;}
   .overview-panel{background:var(--jade-soft);border-radius:14px;padding:14px 16px;margin-bottom:16px;}
@@ -350,7 +350,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.09-04';
+const APP_VERSION = 'v2026.08.09-05';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2327,8 +2327,13 @@ function compSectionHtml(category){
       ${infoHintExpanded[category] ? `<div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>` : ''}
 
       <div class="overview-panel">
-        <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong></div>
-        ${nearestExpiry ? `<div class="overview-expiry" style="margin-top:6px;font-size:14.5px;">⏳ 最近到期：<strong style="color:${nearestExpiry.diffDays<=7?'var(--brick)':'var(--amber)'};">${toROC(nearestExpiry.expiry)}（${nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`)}）</strong></div>` : ''}
+        <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong><span style="color:var(--ink-soft);font-weight:400;">（${fmt(curBalance*getHoursPerDay())} 小時）</span></div>
+        ${nearestExpiry ? (()=>{
+          const isUrgent = nearestExpiry.diffDays<=30;
+          const color = nearestExpiry.diffDays<=7 ? 'var(--brick)' : (isUrgent ? 'var(--amber)' : 'var(--ink)');
+          const countdown = nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`);
+          return `<div class="overview-expiry" style="margin-top:6px;font-size:14.5px;">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span style="color:var(--ink-soft);font-weight:400;margin-left:4px;">（${countdown}）</span></div>`;
+        })() : ''}
         <div class="avail-batch-list-label">🗂️ 還沒用完的紀錄</div>
         ${renderAvailBatchList(category)}
       </div>
