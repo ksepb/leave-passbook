@@ -349,7 +349,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-63';
+const APP_VERSION = 'v2026.08.09-01';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -922,7 +922,13 @@ function switchLeaveTab(key){
   }, 30);
 }
 let activePage = 'home';
-function switchPage(page){ activePage = page; window.scrollTo(0,0); render(); }
+function switchPage(page){
+  if(editing){ editing = null; editExpiryTouched = false; editPhotoRemoved = {}; }
+  deviceNameEditing = false;
+  activePage = page;
+  window.scrollTo(0,0);
+  render();
+}
 function viewLeaveDetail(key, dateStr){
   activeLeaveTab = key;
   if(dateStr){
