@@ -327,7 +327,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-35';
+const APP_VERSION = 'v2026.08.07-38';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -546,6 +546,9 @@ async function signOutUser(){
     currentUser = null;
     emailPwEmailVal = '';
     emailPwPasswordVal = '';
+    cloudSyncStatus = 'idle';
+    lastSyncTime = null;
+    try{ localStorage.removeItem('lastSyncTime'); }catch(e){}
     render();
     setStatus('已登出，之後資料只會存在本機', true);
     window.alert('✓ 已登出\n\n之後資料只會存在這台裝置，不會再同步到雲端。');
@@ -555,11 +558,66 @@ async function signOutUser(){
   }
 }
 
+// 驗證外部資料（匯入備份／雲端拉下來的資料）結構是否合理，
+// 避免壞掉或被手動改亂的資料被直接套用進來
+function validateState(parsed){
+  const errors = [];
+  if(!parsed || typeof parsed !== 'object'){ errors.push('資料不是有效的物件格式'); return {valid:false, errors}; }
+
+  if(parsed.records !== undefined){
+    if(typeof parsed.records !== 'object' || parsed.records===null){ errors.push('records 假別紀錄區塊格式不對'); }
+    else {
+      const validKeys = LEAVE_TYPES.map(t=>t.key);
+      Object.keys(parsed.records).forEach(key=>{
+        if(!validKeys.includes(key)){ errors.push(`「${key}」不是有效的假別代號`); return; }
+        const arr = parsed.records[key];
+        if(!Array.isArray(arr)){ errors.push(`「${key}」底下的紀錄不是陣列格式`); return; }
+        arr.forEach((r,i)=>{
+          if(!r || typeof r !== 'object'){ errors.push(`${key} 第 ${i+1} 筆不是有效的紀錄物件`); return; }
+          if(!r.date || !/^\d{4}-\d{1,2}-\d{1,2}$/.test(r.date) || isNaN(new Date(r.date).getTime())){ errors.push(`${key} 第 ${i+1} 筆日期不合法（${r.date}）`); }
+          const amt = r.unit==='hour' ? r.amount : (r.unit==='day' ? r.amount : r.days);
+          if(typeof amt !== 'number' || isNaN(amt) || amt<=0){ errors.push(`${key} 第 ${i+1} 筆的天數／小時數不合法`); }
+        });
+      });
+    }
+  }
+
+  if(parsed.compRecords !== undefined){
+    if(!Array.isArray(parsed.compRecords)){ errors.push('compRecords 補休／換休紀錄不是陣列格式'); }
+    else {
+      parsed.compRecords.forEach((r,i)=>{
+        if(!r || typeof r !== 'object'){ errors.push(`補休／換休第 ${i+1} 筆不是有效的紀錄物件`); return; }
+        if(!['comp','exchange'].includes(r.category||'comp')){ errors.push(`補休／換休第 ${i+1} 筆的類別不合法`); }
+        if(!['earn','use'].includes(r.type)){ errors.push(`補休／換休第 ${i+1} 筆的類型不合法`); }
+        if(!r.date || !/^\d{4}-\d{1,2}-\d{1,2}$/.test(r.date) || isNaN(new Date(r.date).getTime())){ errors.push(`補休／換休第 ${i+1} 筆日期不合法`); }
+        if(typeof r.amount !== 'number' || isNaN(r.amount) || r.amount<=0){ errors.push(`補休／換休第 ${i+1} 筆數量不合法`); }
+      });
+    }
+  }
+
+  if(parsed.quotaByYear !== undefined && (typeof parsed.quotaByYear !== 'object' || parsed.quotaByYear===null)){
+    errors.push('quotaByYear 總天數設定格式不對');
+  }
+
+  return { valid: errors.length===0, errors };
+}
+
 function applyCloudData(jsonStr){
   try{
     const parsed = JSON.parse(jsonStr);
+    const check = validateState(parsed);
+    if(!check.valid){
+      console.error('雲端資料驗證失敗，保留本機資料', check.errors);
+      logAppError('雲端資料驗證失敗，已保留本機資料', check.errors.slice(0,5).join('；'));
+      setStatus('雲端資料格式異常，已保留本機資料（詳情見設定頁錯誤記錄）', false);
+      return;
+    }
     state = Object.assign(defaultState(), parsed);
-  }catch(e){ console.error('雲端資料格式錯誤', e); }
+  }catch(e){
+    console.error('雲端資料格式錯誤', e);
+    logAppError('雲端資料格式錯誤', e && e.message ? e.message : String(e));
+    setStatus('雲端資料格式異常，已保留本機資料', false);
+  }
 }
 
 function countAllRecords(s){
@@ -612,6 +670,12 @@ async function pullOrPushOnSignIn(){
 
 let cloudSyncStatus = 'idle'; // idle | syncing | synced | error
 let lastSyncTime = null;
+function loadLastSyncTime(){
+  try{
+    const raw = localStorage.getItem('lastSyncTime');
+    if(raw){ lastSyncTime = new Date(Number(raw)); cloudSyncStatus = 'synced'; }
+  }catch(e){}
+}
 async function syncToCloud(){
   if(!fbDb || !currentUser || cloudSyncing) return;
   cloudSyncing = true;
@@ -621,6 +685,7 @@ async function syncToCloud(){
     await fbDb.collection('leavePassbook').doc(currentUser.uid).set({ data: JSON.stringify(state), updatedAt: Date.now(), deviceId: getDeviceId(), deviceName: getDeviceName() });
     cloudSyncStatus = 'synced';
     lastSyncTime = new Date();
+    try{ localStorage.setItem('lastSyncTime', String(lastSyncTime.getTime())); }catch(e){}
   }catch(e){
     console.error('雲端同步失敗', e);
     cloudSyncStatus = 'error';
@@ -928,9 +993,22 @@ function getDeviceId(){
     return id;
   }catch(e){ return 'unknown'; }
 }
+function detectDeviceTypeLabel(){
+  try{
+    const ua = (navigator && navigator.userAgent) || '';
+    if(/iPad/.test(ua)) return 'iPad';
+    if(/iPhone/.test(ua)) return 'iPhone';
+    if(/Android/.test(ua)) return /Mobile/.test(ua) ? 'Android 手機' : 'Android 平板';
+    if(/Macintosh/.test(ua)) return 'Mac';
+    if(/Windows/.test(ua)) return 'Windows 電腦';
+    return '這台裝置';
+  }catch(e){ return '這台裝置'; }
+}
 function getDeviceName(){
-  try{ return localStorage.getItem('deviceFriendlyName') || '未命名裝置'; }
-  catch(e){ return '未命名裝置'; }
+  try{
+    const saved = localStorage.getItem('deviceFriendlyName');
+    return saved || detectDeviceTypeLabel();
+  }catch(e){ return detectDeviceTypeLabel(); }
 }
 function setDeviceName(name){
   try{ localStorage.setItem('deviceFriendlyName', name); }catch(e){}
@@ -3425,6 +3503,14 @@ async function restoreBackup(){
   try{
     const parsed = JSON.parse(raw);
     if(!parsed.records){ throw new Error('格式不符'); }
+    const check = validateState(parsed);
+    if(!check.valid){
+      const preview = check.errors.slice(0,5).join('\n');
+      const more = check.errors.length>5 ? `\n…等共 ${check.errors.length} 個問題` : '';
+      window.alert(`⚠️ 這份備份資料有問題，沒有匯入：\n\n${preview}${more}\n\n請確認貼上的是完整、沒有被修改過的備份內容。`);
+      setStatus('匯入失敗：資料內容有問題', false);
+      return;
+    }
     state = Object.assign(defaultState(), parsed);
     lastDeleted = null; editing = null; searchQuery=''; sortAsc=false; expandedMonths={};
     selectedYear = CUR_YEAR; calendarMode=false; chartMode=false;
@@ -3436,6 +3522,7 @@ async function restoreBackup(){
 
 (async function init(){
   loadErrorLog();
+  loadLastSyncTime();
   await loadState();
   applyUiScale();
   render();
