@@ -344,7 +344,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-50';
+const APP_VERSION = 'v2026.08.07-51';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2321,6 +2321,12 @@ function compSectionHtml(category){
 }
 
 function pageHome(justEntered){
+  if(successConfirm){
+    return `<div class="add-success-box">
+      <div class="add-success-check">✓</div>
+      <div class="add-success-text">${escapeHtml(successConfirm)}</div>
+    </div>`;
+  }
   const shimmerClass = justEntered ? ' shimmer-once' : '';
   return `
     ${reminderBanner()}
@@ -2907,8 +2913,10 @@ async function quickLogToday(){
     }
     lastAddedId = id;
     await saveState();
-    render();
     setStatus(`已快速登記今天 1 天${label}`, true);
+    successConfirm = `已新增 1 天${label}`;
+    render();
+    setTimeout(()=>{ successConfirm = null; render(); }, 450);
   }catch(err){
     setStatus('登記失敗：' + (err && err.message ? err.message : String(err)), false);
   }
