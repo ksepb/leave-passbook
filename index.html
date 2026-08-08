@@ -349,7 +349,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-62';
+const APP_VERSION = 'v2026.08.07-63';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2257,10 +2257,10 @@ function buildCompLi(r, dMin, dMax, category){
       <span class="tag" style="background:var(--${info.c}-soft);color:var(--${info.c});">${r.type==='earn'?'獲得':'使用'}</span>
       <span class="days">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
       ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
-      ${r.photoUrl? `<span class="photo-icon" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" title="查看照片">📷</span>` : ''}
     </div>
     <div class="ledger-bottom">
       ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>`:'<div></div>'}
+      ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
         <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
@@ -2288,7 +2288,10 @@ function renderAvailBatchList(category){
     const urgent = b.diffDays!==null && b.diffDays<=7;
     const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期 ${Math.abs(b.diffDays)} 天` : (b.diffDays===0?'今天到期':`${b.diffDays} 天後到期`));
     return `<div class="avail-batch-item">
-      <div class="avail-batch-title">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}${b.photoUrl?` <span class="photo-icon" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')" title="查看照片">📷</span>`:''}</div>
+      <div class="avail-batch-title" style="display:flex;align-items:center;gap:6px;">
+        <span style="flex:1;">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</span>
+        ${b.photoUrl? `<img src="${escapeAttr(b.photoUrl)}" class="ledger-thumb" style="width:28px;height:28px;max-width:28px;max-height:28px;" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')" alt="附件照片">` : ''}
+      </div>
       <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">⏳ 到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
     </div>`;
