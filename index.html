@@ -46,6 +46,7 @@
   .add-success-check{width:64px;height:64px;border-radius:50%;background:var(--jade);color:#fff;font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;margin-bottom:16px;animation:stampIn .35s ease-out;}
   .add-success-text{font-size:16px;font-weight:700;color:var(--ink);}
   .ledger-thumb{width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;flex-shrink:0;}
+  input[type="file"]{width:100%;max-width:100%;box-sizing:border-box;font-size:13px;color:var(--ink-soft);}
   .shimmer-once::after{
     content:'';
     position:absolute; top:0; left:-60%; width:55%; height:100%;
@@ -346,7 +347,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.07-54';
+const APP_VERSION = 'v2026.08.07-57';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2243,7 +2244,7 @@ function buildCompLi(r, dMin, dMax, category){
         </div>
       </div>
       <div class="row">
-        <button class="btn-${info.c}" onclick="saveEditComp('${r.id}')">儲存</button>
+        <button class="btn-${info.c}" onclick="saveEditComp('${r.id}', this)">儲存</button>
         <button class="ghost" onclick="cancelEdit()">取消</button>
       </div>
     </li>`;
@@ -2607,7 +2608,7 @@ function pageData(){
         <p>把目前各假別剩餘天數與「最新 10 筆」紀錄整理成一段文字，方便貼到 iPhone 備忘錄快速看現況（不是完整備份）。</p>
         <div class="row">
           <button class="ghost" onclick="shareSummary()">分享…（可選備忘錄）</button>
-          <button class="ghost" onclick="copySummary()">複製摘要文字</button>
+          <button class="ghost" onclick="copySummary(this)">複製摘要文字</button>
         </div>
         <div id="summaryArea" style="display:none;margin-top:6px;">
           <textarea id="summaryText" rows="6" readonly></textarea>
@@ -2652,7 +2653,7 @@ function pageData(){
         <div class="row">
           <button class="ghost" onclick="downloadFullReport()">下載完整報表（.txt）</button>
           <button class="ghost" onclick="downloadExcelBackup()">下載 Excel 檔（.xlsx）</button>
-          <button class="ghost" onclick="copyFullReport()">複製完整文字</button>
+          <button class="ghost" onclick="copyFullReport(this)">複製完整文字</button>
         </div>
         <div id="fullReportArea" style="display:none;margin-top:6px;">
           <textarea id="fullReportText" rows="8" readonly></textarea>
@@ -2669,7 +2670,7 @@ function pageData(){
         <p>資料目前會自動存到雲端（僅此存摺可見）。若想額外備份一份，或換到新的存摺網頁時匯入資料，可使用下方功能。</p>
         <div class="row">
           <button class="ghost" onclick="downloadBackup()">下載備份檔（.json）</button>
-          <button class="ghost" onclick="copyBackup()">複製備份文字</button>
+          <button class="ghost" onclick="copyBackup(this)">複製備份文字</button>
           <button class="ghost" onclick="emailBackup()">📧 Email 備份給自己</button>
           <button class="ghost" onclick="toggleImport()">還原備份</button>
         </div>
@@ -3264,12 +3265,13 @@ async function addComp(e, category){
     }
     const photoInput = document.getElementById('compPhotoInput');
     const photoFile = photoInput && photoInput.files && photoInput.files[0];
+    const submitBtn = e.submitter || (e.target && e.target.querySelector('button[type="submit"]'));
     if(photoFile){
       if(!currentUser){
         setStatus('未登入雲端帳號，這筆已存但無法上傳照片（登入後才能使用照片功能）', false);
       } else {
+        if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = '📤 照片上傳中…'; }
         try{
-          setStatus('照片上傳中…', true);
           record.photoUrl = await uploadCompPhoto(photoFile, id);
         }catch(err){
           console.error('照片上傳失敗', err);
@@ -3292,7 +3294,7 @@ async function addComp(e, category){
 
 async function startEditComp(id){ editing = {kind:'comp', id}; editExpiryTouched = false; delete editPhotoRemoved[id]; render(); }
 
-async function saveEditComp(id){
+async function saveEditComp(id, btnEl){
   try{
     const type = document.getElementById(`editCompType-${id}`).value;
     const date = parseFlexibleDate(document.getElementById(`editCompDate-${id}`).value);
@@ -3332,8 +3334,8 @@ async function saveEditComp(id){
         if(!currentUser){
           setStatus('未登入雲端帳號，無法上傳照片，其他修改已存', false);
         } else {
+          if(btnEl){ btnEl.disabled = true; btnEl.textContent = '📤 照片上傳中…'; }
           try{
-            setStatus('照片上傳中…', true);
             updated.photoUrl = await uploadCompPhoto(newPhotoFile, id);
             if(oldPhotoUrl) deleteCompPhoto(oldPhotoUrl); // 換照片，舊的不用留著
           }catch(err){
@@ -3495,11 +3497,12 @@ function buildFullReportText(){
   return lines.join('\n');
 }
 
-async function copyFullReport(){
+async function copyFullReport(btnEl){
   const text = buildFullReportText();
   try{
     await navigator.clipboard.writeText(text);
     setStatus('已複製完整文字紀錄', true);
+    if(btnEl){ const orig = btnEl.textContent; btnEl.textContent = '✓ 已複製'; setTimeout(()=>{ btnEl.textContent = orig; }, 1500); }
   }catch(err){
     document.getElementById('fullReportText').value = text;
     document.getElementById('fullReportArea').style.display = 'block';
@@ -3571,11 +3574,12 @@ async function shareSummary(){
   }
 }
 
-async function copySummary(){
+async function copySummary(btnEl){
   const text = buildSummaryText();
   try{
     await navigator.clipboard.writeText(text);
     setStatus('已複製摘要文字，可貼到備忘錄', true);
+    if(btnEl){ const orig = btnEl.textContent; btnEl.textContent = '✓ 已複製'; setTimeout(()=>{ btnEl.textContent = orig; }, 1500); }
   }catch(err){
     document.getElementById('summaryText').value = text;
     document.getElementById('summaryArea').style.display = 'block';
@@ -3627,11 +3631,12 @@ function downloadBackup(){
   }catch(e){ setStatus('下載失敗，請改用「複製備份文字」', false); }
 }
 
-async function copyBackup(){
+async function copyBackup(btnEl){
   const text = backupJson();
   try{
     await navigator.clipboard.writeText(text);
     setStatus('已複製備份文字，可貼到記事本或雲端筆記保存', true);
+    if(btnEl){ const orig = btnEl.textContent; btnEl.textContent = '✓ 已複製'; setTimeout(()=>{ btnEl.textContent = orig; }, 1500); }
   }catch(e){
     const ta = document.getElementById('importText');
     document.getElementById('importArea').style.display = 'block';
