@@ -222,12 +222,12 @@
   .home-detail-group{margin-bottom:14px;}
   .home-detail-group:last-child{margin-bottom:0;}
   .home-detail-group-title{font-size:14px;font-weight:700;margin-bottom:4px;}
-  .home-detail-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);padding:6px 0;border-top:1px dashed var(--line);}
+  .home-detail-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);padding:7px 0;border-top:1px solid color-mix(in srgb, var(--line) 45%, transparent);}
   .home-detail-group .home-detail-row:first-of-type{border-top:none;}
   .home-detail-date{font-family:'IBM Plex Mono',monospace;color:var(--ink);flex-shrink:0;}
   .home-detail-tag{font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.05);flex-shrink:0;}
   .home-detail-amt{font-weight:600;color:var(--ink);flex-shrink:0;}
-  .home-detail-note{color:var(--ink-soft);font-size:12.5px;width:100%;}
+  .home-detail-note{color:var(--ink-soft);font-size:12px;opacity:.8;width:100%;}
   .overview-panel .avail-batch-item{background:#fff;}
   .mental-model-hint{background:var(--blue-soft);color:var(--blue);font-size:13px;line-height:1.6;padding:10px 12px;border-radius:10px;margin-bottom:12px;}
   .hint{font-size:15.5px;color:var(--ink-soft);line-height:1.6;}
@@ -261,7 +261,7 @@
   .cal-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
   .cal-weekdays{margin-bottom:4px;font-size:11px;color:var(--ink-soft);text-align:center;}
-  .cal-cell{aspect-ratio:1/1;min-width:0;min-height:0;overflow:hidden;border:1px solid var(--line);border-radius:4px;padding:3px;background:#fff;}
+  .cal-cell{aspect-ratio:1/1;min-width:44px;min-height:44px;overflow:hidden;border:1px solid var(--line);border-radius:4px;padding:3px;background:#fff;}
   .cal-cell.empty{border:none;background:transparent;}
   .cal-cell.adjacent{background:transparent;border-color:transparent;cursor:default;}
   .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
@@ -359,7 +359,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.09-17';
+const APP_VERSION = 'v2026.08.09-21';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -374,8 +374,6 @@ const firebaseConfig = {
 };
 window.firebaseConfig = firebaseConfig;
 
-// Gemini API 呼叫改由 Firebase AI Logic（見本檔案後面的 type="module" 區塊）處理，
-// 前端不再持有任何 AI 金鑰，額度濫用防護交給 App Check。
 let currentUser = null;
 let fbAuth = null;
 let fbDb = null;
@@ -1524,13 +1522,17 @@ function dashboardPanel(){
     const annualQuota = getQuota('annual', CUR_YEAR);
     const compBatches = compFifoRemaining('comp').filter(b=>b.remainDays>0.0001).sort((a,b)=>a.date.localeCompare(b.date));
     const exchangeBatches = compFifoRemaining('exchange').filter(b=>b.remainDays>0.0001).sort((a,b)=>a.date.localeCompare(b.date));
-    const batchRowHtml = (b)=>`
+    const batchRowHtml = (b)=>{
+      const metaParts = [];
+      if(b.expiry) metaParts.push(`效期至 ${toROC(b.expiry)}`);
+      if(b.note) metaParts.push(escapeHtml(b.note));
+      return `
       <div class="home-detail-row">
         <span class="home-detail-date">${toROC(b.date)}</span>
         <span class="home-detail-amt">剩 ${fmt(b.remainDays)} 天</span>
-        ${b.expiry ? `<span class="home-detail-note">效期至 ${toROC(b.expiry)}</span>` : ''}
-        ${b.note ? `<span class="home-detail-note">${escapeHtml(b.note)}</span>` : ''}
+        ${metaParts.length ? `<span class="home-detail-note">${metaParts.join('　・　')}</span>` : ''}
       </div>`;
+    };
     return `
       <p class="hint" style="margin:0 0 10px;">只顯示目前還有效(沒過期、沒用完)。</p>
       <div class="home-detail-group">
@@ -3182,7 +3184,11 @@ function registerUndo(info){
 }
 
 async function removeRecord(btnEl, key, id){
-  if(!window.confirm('確定要刪除這筆紀錄嗎？')) return;
+  const arr0 = state.records[key] || [];
+  const target = arr0.find(r=>r.id===id);
+  const label0 = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || key;
+  const confirmText = target ? `確定刪除這筆 ${toROC(target.date)} ${label0} ${displayAmount(target)}？` : '確定要刪除這筆紀錄嗎？';
+  if(!window.confirm(confirmText)) return;
   try{
     await playRemoveAnimation(btnEl);
     const arr = state.records[key] || [];
@@ -3583,7 +3589,9 @@ async function saveEditComp(id, btnEl){
 }
 
 async function removeComp(btnEl, id){
-  if(!window.confirm('確定要刪除這筆紀錄嗎？')) return;
+  const target0 = state.compRecords.find(r=>r.id===id);
+  const confirmText = target0 ? `確定刪除這筆 ${toROC(target0.date)} ${COMP_CATEGORIES[target0.category||'comp'].label} ${displayAmount(target0)}？` : '確定要刪除這筆紀錄嗎？';
+  if(!window.confirm(confirmText)) return;
   try{
     await playRemoveAnimation(btnEl);
     const idx = state.compRecords.findIndex(r=>r.id===id);
