@@ -359,7 +359,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.09-15';
+const APP_VERSION = 'v2026.08.09-17';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1532,7 +1532,7 @@ function dashboardPanel(){
         ${b.note ? `<span class="home-detail-note">${escapeHtml(b.note)}</span>` : ''}
       </div>`;
     return `
-      <p class="hint" style="margin:0 0 10px;">只顯示目前還有效（沒過期、沒用完）的部分。</p>
+      <p class="hint" style="margin:0 0 10px;">只顯示目前還有效(沒過期、沒用完)。</p>
       <div class="home-detail-group">
         <div class="home-detail-group-title c-jade">🌴 特休　剩 ${fmt(annualRemain)} 天</div>
         <p class="hint" style="margin:2px 0 0;">今年度額度共 ${fmt(annualQuota)} 天</p>
