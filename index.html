@@ -350,7 +350,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.09-11';
+const APP_VERSION = 'v2026.08.09-12';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2571,27 +2571,33 @@ function pageData(){
           <span>${currentUser?'已登入':'未登入'}　${settingsExpandedKey==='cloud'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='cloud' ? (currentUser ? `
-        <p>已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。</p>
-        <div class="sync-status-box ${!isOnline ? 'sync-status-syncing' : `sync-status-${cloudSyncStatus}`}">
-          ${!isOnline ? `<span>📴 離線中，已在本機排隊，恢復網路後自動同步</span>` :
-            cloudSyncStatus==='syncing' ? `<span>🔄 同步中…</span>` : ''}
-          ${isOnline && cloudSyncStatus==='synced' ? `<span>☁️ 已同步${lastSyncTime? `　最後同步：${lastSyncTime.toLocaleTimeString('zh-TW',{hour12:false})}` : ''}</span>` : ''}
-          ${isOnline && cloudSyncStatus==='error' ? `<span>⚠️ 尚未同步成功，本機資料已安全保留，不會遺失</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即重試</button>` : ''}
-          ${isOnline && cloudSyncStatus==='idle' ? `<span>☁️ 尚未有同步紀錄</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即同步</button>` : ''}
+        <div class="auth-option">
+          <p style="margin:0 0 10px;">已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。</p>
+          <div class="sync-status-box ${!isOnline ? 'sync-status-syncing' : `sync-status-${cloudSyncStatus}`}" style="margin:0;">
+            ${!isOnline ? `<span>📴 離線中，已在本機排隊，恢復網路後自動同步</span>` :
+              cloudSyncStatus==='syncing' ? `<span>🔄 同步中…</span>` : ''}
+            ${isOnline && cloudSyncStatus==='synced' ? `<span>☁️ 已同步${lastSyncTime? `　最後同步：${lastSyncTime.toLocaleTimeString('zh-TW',{hour12:false})}` : ''}</span>` : ''}
+            ${isOnline && cloudSyncStatus==='error' ? `<span>⚠️ 尚未同步成功，本機資料已安全保留，不會遺失</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即重試</button>` : ''}
+            ${isOnline && cloudSyncStatus==='idle' ? `<span>☁️ 尚未有同步紀錄</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即同步</button>` : ''}
+          </div>
         </div>
-        <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">
-          📱 這台裝置目前叫做：<strong style="color:var(--ink);">${escapeHtml(getDeviceName())}</strong>
-          ${deviceNameEditing ? `
-            <div class="row" style="margin-top:8px;">
-              <input type="text" id="deviceNameInput" value="${escapeAttr(getDeviceName())}" placeholder="例如：阿水的 iPhone" style="flex:1;">
-              <button type="button" class="ghost" onclick="saveDeviceName()">儲存</button>
-            </div>
-          ` : `<span class="overview-edit-link" style="margin-left:6px;" onclick="toggleDeviceNameEdit()">✎ 改名</span>`}
-          <p class="hint" style="margin-top:4px;">如果你在多台裝置用同一個帳號，取個好記的名字，之後遇到雲端／本機資料衝突時比較好判斷是哪一台存的。</p>
+        <div class="auth-option">
+          <div style="font-size:13px;color:var(--ink-soft);">
+            📱 這台裝置目前叫做：<strong style="color:var(--ink);">${escapeHtml(getDeviceName())}</strong>
+            ${deviceNameEditing ? `
+              <div class="row" style="margin-top:8px;">
+                <input type="text" id="deviceNameInput" value="${escapeAttr(getDeviceName())}" placeholder="例如：阿水的 iPhone" style="flex:1;">
+                <button type="button" class="ghost" onclick="saveDeviceName()">儲存</button>
+              </div>
+            ` : `<span class="overview-edit-link" style="margin-left:6px;" onclick="toggleDeviceNameEdit()">✎ 改名</span>`}
+            <p class="hint" style="margin-top:4px;margin-bottom:0;">如果你在多台裝置用同一個帳號，取個好記的名字，之後遇到雲端／本機資料衝突時比較好判斷是哪一台存的。</p>
+          </div>
         </div>
-        <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-          <span>🗑️ 補休／換休過期後，自動清除附件照片<br><span class="hint" style="margin:0;">只清照片，紀錄本身不會被刪除，省雲端空間用</span></span>
-          <label style="flex-shrink:0;"><input type="checkbox" ${state.autoDeleteExpiredPhotos?'checked':''} onchange="toggleAutoDeleteExpiredPhotos(this.checked)"></label>
+        <div class="auth-option">
+          <div style="font-size:13px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <span>🗑️ 補休／換休過期後，自動清除附件照片<br><span class="hint" style="margin:0;">只清照片，紀錄本身不會被刪除，省雲端空間用</span></span>
+            <label style="flex-shrink:0;"><input type="checkbox" ${state.autoDeleteExpiredPhotos?'checked':''} onchange="toggleAutoDeleteExpiredPhotos(this.checked)"></label>
+          </div>
         </div>
         <div class="row"><button class="ghost" onclick="signOutUser()">登出</button></div>
         ` : `
