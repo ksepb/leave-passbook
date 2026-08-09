@@ -350,7 +350,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.09-10';
+const APP_VERSION = 'v2026.08.09-11';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -380,6 +380,14 @@ function initFirebase(){
     fbAuth = firebase.auth();
     fbDb = firebase.firestore();
     fbStorage = firebase.storage();
+    // 開啟離線持久化：離線時的寫入會自動存進手機本機（IndexedDB），
+    // 就算 App 中途被關掉、離線很久才重開，網路恢復後 Firestore SDK 會自己補送出去，不會遺失。
+    // synchronizeTabs 讓同一台裝置如果同時開多個分頁/視窗也能正確運作。
+    fbDb.enablePersistence({ synchronizeTabs: true }).catch(e=>{
+      // failed-precondition：瀏覽器不支援多分頁同步持久化（例如已開好幾個分頁）
+      // unimplemented：瀏覽器本身不支援（例如 Safari 無痕模式），這兩種都不影響基本功能，只是離線時不會自動排隊
+      console.warn('離線持久化未能啟用（不影響基本功能）', e && e.code);
+    });
     fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.error('設定登入保存方式失敗', e));
     let firstAuthCheck = true;
     fbAuth.onAuthStateChanged(async (user)=>{
@@ -696,18 +704,36 @@ async function pullOrPushOnSignIn(){
 
 let cloudSyncStatus = 'idle'; // idle | syncing | synced | error
 let lastSyncTime = null;
+let isOnline = (typeof navigator!=='undefined' && navigator.onLine!==undefined) ? navigator.onLine : true;
+let pendingSync = false; // 離線或同步進行中時又有新變更，記著等這輪結束要再送一次最新的
 function loadLastSyncTime(){
   try{
     const raw = localStorage.getItem('lastSyncTime');
     if(raw){ lastSyncTime = new Date(Number(raw)); cloudSyncStatus = 'synced'; }
   }catch(e){}
 }
+function initOnlineDetection(){
+  try{
+    window.addEventListener('online', ()=>{
+      isOnline = true;
+      render();
+      syncToCloud(); // 恢復網路，主動補送一次，確保離線期間排隊的資料真的送出去
+    });
+    window.addEventListener('offline', ()=>{
+      isOnline = false;
+      render();
+    });
+  }catch(e){}
+}
 async function syncToCloud(){
-  if(!fbDb || !currentUser || cloudSyncing) return;
+  if(!fbDb || !currentUser) return;
+  if(cloudSyncing){ pendingSync = true; return; } // 上一輪還沒結束（可能離線中卡住），先記住，等它結束再補送最新的
   cloudSyncing = true;
   cloudSyncStatus = 'syncing';
   render();
   try{
+    // Firestore 已開啟離線持久化：離線時這個 set() 會先存進本機排隊，
+    // 要等網路恢復、伺服器真的收到確認後這裡才會 resolve，所以離線時這個 await 會一直卡著是正常的。
     await fbDb.collection('leavePassbook').doc(currentUser.uid).set({ data: JSON.stringify(state), updatedAt: Date.now(), deviceId: getDeviceId(), deviceName: getDeviceName() });
     cloudSyncStatus = 'synced';
     lastSyncTime = new Date();
@@ -719,6 +745,10 @@ async function syncToCloud(){
   }finally{
     cloudSyncing = false;
     render();
+    if(pendingSync){
+      pendingSync = false;
+      syncToCloud(); // 這段期間又有新變更，用目前最新的 state 再送一次
+    }
   }
 }
 async function retrySyncNow(){
@@ -726,6 +756,7 @@ async function retrySyncNow(){
   setStatus('正在重新同步…', true);
   await syncToCloud();
   if(cloudSyncStatus==='synced'){ setStatus('已同步到雲端', true); }
+  else if(!isOnline){ setStatus('目前離線，資料已存本機，恢復網路後會自動同步', false); }
   else { setStatus('同步失敗，請檢查網路連線後再試一次', false); }
 }
 
@@ -2541,11 +2572,12 @@ function pageData(){
         </button>
         ${settingsExpandedKey==='cloud' ? (currentUser ? `
         <p>已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。</p>
-        <div class="sync-status-box sync-status-${cloudSyncStatus}">
-          ${cloudSyncStatus==='syncing' ? `<span>🔄 同步中…</span>` : ''}
-          ${cloudSyncStatus==='synced' ? `<span>☁️ 已同步${lastSyncTime? `　最後同步：${lastSyncTime.toLocaleTimeString('zh-TW',{hour12:false})}` : ''}</span>` : ''}
-          ${cloudSyncStatus==='error' ? `<span>⚠️ 尚未同步成功，本機資料已安全保留，不會遺失</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即重試</button>` : ''}
-          ${cloudSyncStatus==='idle' ? `<span>☁️ 尚未有同步紀錄</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即同步</button>` : ''}
+        <div class="sync-status-box ${!isOnline ? 'sync-status-syncing' : `sync-status-${cloudSyncStatus}`}">
+          ${!isOnline ? `<span>📴 離線中，已在本機排隊，恢復網路後自動同步</span>` :
+            cloudSyncStatus==='syncing' ? `<span>🔄 同步中…</span>` : ''}
+          ${isOnline && cloudSyncStatus==='synced' ? `<span>☁️ 已同步${lastSyncTime? `　最後同步：${lastSyncTime.toLocaleTimeString('zh-TW',{hour12:false})}` : ''}</span>` : ''}
+          ${isOnline && cloudSyncStatus==='error' ? `<span>⚠️ 尚未同步成功，本機資料已安全保留，不會遺失</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即重試</button>` : ''}
+          ${isOnline && cloudSyncStatus==='idle' ? `<span>☁️ 尚未有同步紀錄</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即同步</button>` : ''}
         </div>
         <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">
           📱 這台裝置目前叫做：<strong style="color:var(--ink);">${escapeHtml(getDeviceName())}</strong>
@@ -3768,6 +3800,7 @@ async function restoreBackup(){
 (async function init(){
   loadErrorLog();
   loadLastSyncTime();
+  initOnlineDetection();
   await loadState();
   applyUiScale();
   render();
