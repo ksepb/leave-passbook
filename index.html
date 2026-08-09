@@ -350,7 +350,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.09-05';
+const APP_VERSION = 'v2026.08.09-08';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -385,6 +385,7 @@ function initFirebase(){
     fbAuth.onAuthStateChanged(async (user)=>{
       currentUser = user;
       render();
+      if(user){ cleanupExpiredCompPhotos(); }
       if(firstAuthCheck){
         firstAuthCheck = false;
         if(user){ setStatus('✓ 偵測到已登入：' + (user.email||user.displayName||''), true); }
@@ -1007,11 +1008,18 @@ function addYears(dateStr, n){
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }catch(e){ return ''; }
 }
+function addMonths(dateStr, n){
+  try{
+    const d = new Date(dateStr+'T00:00:00');
+    d.setMonth(d.getMonth()+n);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }catch(e){ return ''; }
+}
 
 function defaultState(){
   const records={};
   LEAVE_TYPES.forEach(t=>{ records[t.key]=[]; });
-  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1, annualMinDays: DEFAULT_ANNUAL_MIN_DAYS };
+  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1, annualMinDays: DEFAULT_ANNUAL_MIN_DAYS, autoDeleteExpiredPhotos: true };
 }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -1111,6 +1119,7 @@ async function loadState(){
       if(parsed.annualMinDays !== undefined && parsed.annualMinDays !== null){ state.annualMinDays = Number(parsed.annualMinDays); }
       if(parsed.uiScale){ state.uiScale = Number(parsed.uiScale); }
       if(parsed.lastUsedType){ state.lastUsedType = String(parsed.lastUsedType); }
+      if(parsed.autoDeleteExpiredPhotos !== undefined){ state.autoDeleteExpiredPhotos = !!parsed.autoDeleteExpiredPhotos; }
     }
   }catch(e){ /* 無資料，使用預設值 */ }
 }
@@ -2021,7 +2030,7 @@ function leaveSection(t){
 
       <div class="overview-panel">
         <div class="overview-balance">${selectedYear} 年${t.label}總天數：<strong>${fmt(getQuota(t.key,selectedYear))} 天</strong></div>
-        <div class="overview-expiry">剩餘：<strong>${fmt(remainOf(t.key,selectedYear))} 天</strong>（${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())} 小時）</div>
+        <div class="overview-expiry">剩餘：<strong>${fmt(remainOf(t.key,selectedYear))} 天</strong><span class="avail-batch-hours">（${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())} 小時）</span></div>
       </div>
 
       <div class="row" style="margin-bottom:14px;">
@@ -2327,12 +2336,12 @@ function compSectionHtml(category){
       ${infoHintExpanded[category] ? `<div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>` : ''}
 
       <div class="overview-panel">
-        <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong><span style="color:var(--ink-soft);font-weight:400;">（${fmt(curBalance*getHoursPerDay())} 小時）</span></div>
+        <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong><span class="avail-batch-hours">（${fmt(curBalance*getHoursPerDay())} 小時）</span></div>
         ${nearestExpiry ? (()=>{
           const isUrgent = nearestExpiry.diffDays<=30;
           const color = nearestExpiry.diffDays<=7 ? 'var(--brick)' : (isUrgent ? 'var(--amber)' : 'var(--ink)');
           const countdown = nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`);
-          return `<div class="overview-expiry" style="margin-top:6px;font-size:14.5px;">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span style="color:var(--ink-soft);font-weight:400;margin-left:4px;">（${countdown}）</span></div>`;
+          return `<div class="overview-expiry" style="margin-top:6px;font-size:14.5px;">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
         })() : ''}
         <div class="avail-batch-list-label">🗂️ 還沒用完的紀錄</div>
         ${renderAvailBatchList(category)}
@@ -2547,6 +2556,10 @@ function pageData(){
             </div>
           ` : `<span class="overview-edit-link" style="margin-left:6px;" onclick="toggleDeviceNameEdit()">✎ 改名</span>`}
           <p class="hint" style="margin-top:4px;">如果你在多台裝置用同一個帳號，取個好記的名字，之後遇到雲端／本機資料衝突時比較好判斷是哪一台存的。</p>
+        </div>
+        <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <span>🗑️ 補休／換休過期後，自動清除附件照片<br><span class="hint" style="margin:0;">只清照片，紀錄本身不會被刪除，省雲端空間用</span></span>
+          <label style="flex-shrink:0;"><input type="checkbox" ${state.autoDeleteExpiredPhotos?'checked':''} onchange="toggleAutoDeleteExpiredPhotos(this.checked)"></label>
         </div>
         <div class="row"><button class="ghost" onclick="signOutUser()">登出</button></div>
         ` : `
@@ -3247,9 +3260,35 @@ async function uploadCompPhoto(file, recordId){
   await ref.put(file);
   return await ref.getDownloadURL();
 }
+async function toggleAutoDeleteExpiredPhotos(checked){
+  state.autoDeleteExpiredPhotos = checked;
+  await saveState();
+  if(checked){ cleanupExpiredCompPhotos(); }
+  setStatus(checked ? '已開啟：過期照片會自動清除' : '已關閉：過期照片不會自動清除', true);
+}
+
 async function deleteCompPhoto(photoUrl){
   if(!fbStorage || !photoUrl) return;
   try{ await fbStorage.refFromURL(photoUrl).delete(); }catch(e){ console.error('刪除照片失敗', e); }
+}
+
+// 到期自動清照片：只清「已經過期的補休/換休獲得紀錄」的照片，
+// 紀錄本身不會被刪除，只有附件照片會被清掉（因為證明文件過期後通常不用留了）
+async function cleanupExpiredCompPhotos(){
+  if(!state.autoDeleteExpiredPhotos || !currentUser) return;
+  const today = TODAY;
+  const GRACE_MONTHS = 6; // 到期後再留6個月緩衝，補休(2年到期)實際會存到2.5年，換休(1年到期)存到1.5年
+  const expired = state.compRecords.filter(r=> r.type==='earn' && r.photoUrl && r.expiry && addMonths(r.expiry, GRACE_MONTHS) < today);
+  if(expired.length===0) return;
+  let cleaned = 0;
+  for(const r of expired){
+    try{
+      await deleteCompPhoto(r.photoUrl);
+      delete r.photoUrl;
+      cleaned++;
+    }catch(e){ console.error('清除到期照片失敗', e); }
+  }
+  if(cleaned>0){ await saveState(); render(); }
 }
 
 async function addComp(e, category){
