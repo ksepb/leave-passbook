@@ -360,7 +360,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.10-01';
+const APP_VERSION = 'v2026.08.10-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -953,6 +953,7 @@ let editExpiryTouched = false;
 let editPhotoRemoved = {}; // {recordId: true} 編輯時使用者按了「移除照片」但還沒存檔
 let kwPendingItems = [];
 let kwUnmatchedLines = [];
+let kwUnmatchedModalOpen = false;
 let expandedMonths = {};
 let isComposing = false;
 let activeLeaveTab = 'annual';
@@ -1220,11 +1221,20 @@ function isoDate(y,m,d){
   if(!y||!m||!d) return '';
   return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
+function isValidCalendarDate(y,m,d){
+  if(!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
+  if(y < 1900 || y > 2200) return false;
+  if(m < 1 || m > 12) return false;
+  const lastDay = new Date(y, m, 0).getDate(); // 該月實際天數（含閏年2月自動處理）
+  if(d < 1 || d > lastDay) return false;
+  return true;
+}
 function parseFlexibleDate(raw){
   if(!raw) return '';
   raw = String(raw).trim();
   if(/^\d{4}-\d{1,2}-\d{1,2}$/.test(raw)){
     const [y,m,d] = raw.split('-').map(Number);
+    if(!isValidCalendarDate(y,m,d)) return '';
     return isoDate(y,m,d);
   }
   if(raw.includes('/')){
@@ -1234,15 +1244,18 @@ function parseFlexibleDate(raw){
       const m = parseInt(parts[1],10);
       const d = parseInt(parts[2],10);
       if(!isNaN(y) && y < 200) y += 1911; // 兩三位數視為民國年
+      if(!isValidCalendarDate(y,m,d)) return '';
       return isoDate(y,m,d);
     }
     if(parts.length===2){
       const m = parseInt(parts[0],10);
       const d = parseInt(parts[1],10);
-      return isoDate(CUR_YEAR, m, d); // 沒填年份，預設今年
+      if(!isValidCalendarDate(CUR_YEAR,m,d)) return ''; // 沒填年份，預設今年
+      return isoDate(CUR_YEAR, m, d);
     }
   }
-  return raw;
+  // 其餘格式（例如打錯字、不支援的分隔符號）一律視為解析失敗，不要把原始文字當日期存進去
+  return '';
 }
 
 function toROC(dateStr){
@@ -1861,7 +1874,18 @@ function keywordPanel(){
       </div>
       ${previewHtml}
       ${unmatchedHtml}
-    </div>`;
+    </div>
+    ${kwUnmatchedModalOpen ? `
+    <div class="modal-overlay" onclick="closeKwUnmatchedModal()">
+      <div class="modal-box" style="max-width:380px;max-height:75vh;overflow-y:auto;" onclick="event.stopPropagation()">
+        <h3>⚠️ 有 ${kwUnmatchedLines.length} 行看不懂</h3>
+        <p class="hint" style="margin:0 0 10px;">可能是格式不符，這幾行不會被登記，可以自行手動新增：</p>
+        <div style="background:var(--brick-soft);border-radius:10px;padding:10px 12px;color:var(--brick);font-size:14px;line-height:1.8;">
+          ${kwUnmatchedLines.map(l=>escapeHtml(l)).join('<br>')}
+        </div>
+        <div class="row" style="margin-top:16px;"><button type="button" class="ghost" style="width:100%;" onclick="closeKwUnmatchedModal()">知道了</button></div>
+      </div>
+    </div>` : ''}`;
 }
 
 function compExpiryReminders(){
@@ -3235,8 +3259,10 @@ function kwParseInput(){
   else { setStatus(`辨識出 ${items.length} 筆，請確認後新增`, true); }
   kwPendingItems = items;
   kwUnmatchedLines = unmatched;
+  kwUnmatchedModalOpen = unmatched.length > 0; // 有看不懂的行，直接跳出來講，不用等使用者滑到最下面才發現
   render();
 }
+function closeKwUnmatchedModal(){ kwUnmatchedModalOpen = false; render(); }
 
 function kwClearInput(){
   const ta = document.getElementById('kwInputText');
@@ -3248,7 +3274,7 @@ function kwClearInput(){
 }
 
 function removeKwItem(idx){ kwPendingItems.splice(idx,1); render(); }
-function cancelKwItems(){ kwPendingItems = []; kwUnmatchedLines = []; render(); }
+function cancelKwItems(){ kwPendingItems = []; kwUnmatchedLines = []; kwUnmatchedModalOpen = false; render(); }
 
 async function applyKwItems(){
   const recordCount = kwPendingItems.filter(it=>it.kind!=='quota').length;
@@ -3357,6 +3383,7 @@ async function resetRecords(scope, key){
     if(!d) return;
     if(!/^\d{4}-\d{1,2}-\d{1,2}$/.test(d.trim())){ alert('日期格式不對，請用 YYYY-MM-DD'); return; }
     const iso = parseFlexibleDate(d.trim());
+    if(!iso){ alert('這不是一個真實存在的日期，請確認月份與日期'); return; }
     matcher = ds => ds===iso;
     scopeLabel = `${toROC(iso)} 當天`;
   } else if(scope==='month'){
