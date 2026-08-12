@@ -199,8 +199,8 @@
   .auth-option .hint{margin-bottom:10px;}
   .use-preview-box{background:var(--jade-soft);border-radius:10px;padding:10px 12px;margin:8px 0 14px;}
   .use-preview-line{font-size:13.5px;color:var(--ink);padding:3px 0;}
-  .src-batch-list{border:1px solid var(--line);border-radius:10px;padding:6px 12px 10px;overflow:hidden;box-sizing:border-box;width:100%;}
-  .src-batch-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:9px 0;border-top:1px solid var(--line);width:100%;box-sizing:border-box;}
+  .src-batch-list{border:1px solid var(--line);border-radius:10px;padding:6px 12px 10px;overflow:hidden;box-sizing:border-box;max-width:100%;}
+  .src-batch-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:9px 0;border-top:1px solid var(--line);max-width:100%;box-sizing:border-box;}
   .src-batch-row:first-child{border-top:none;}
   .src-batch-check{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink);cursor:pointer;flex:0 1 auto;min-width:0;max-width:100%;}
   .src-batch-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto;}
@@ -374,7 +374,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-18';
+const APP_VERSION = 'v2026.08.12-19';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2409,7 +2409,7 @@ function pageAddRecord(){
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:-4px 0 8px;cursor:pointer;color:var(--ink-soft);">
               <input type="checkbox" id="compManualToggle" onchange="toggleManualSource('${key}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
             </label>
-            <div class="field" id="manualSourceField" style="display:none;margin-bottom:14px;">
+            <div class="field" id="manualSourceField" style="display:none;margin-bottom:14px;max-width:100%;overflow:hidden;">
               <label>指定批次（可複選，各自填小時數；沒填就盡量扣到滿足需求）</label>
               <div id="compSrcBatchList" class="src-batch-list">
                 ${compFifoRemaining(key).filter(b=>b.remainDays>0.0001).map(b=>`
@@ -2542,7 +2542,7 @@ function buildCompLi(r, dMin, dMax, category){
         <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:-4px 0 8px;cursor:pointer;color:var(--ink-soft);">
           <input type="checkbox" id="editManualToggle-${r.id}" ${hasManual?'checked':''} onchange="toggleEditManualSource('${r.id}','${category}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
         </label>
-        <div class="field" id="editManualSourceField-${r.id}" style="${hasManual?'':'display:none;'}margin-bottom:14px;">
+        <div class="field" id="editManualSourceField-${r.id}" style="${hasManual?'':'display:none;'}margin-bottom:14px;max-width:100%;overflow:hidden;">
           <label>指定批次（可複選，各自填小時數；沒填就盡量扣到滿足需求）</label>
           <div id="editCompSrcBatchList-${r.id}" class="src-batch-list">
             ${editBatches.map(b=>{
