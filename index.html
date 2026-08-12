@@ -379,7 +379,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-27';
+const APP_VERSION = 'v2026.08.13-01';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -694,7 +694,9 @@ async function pullOrPushOnSignIn(){
     const docRef = fbDb.collection('leavePassbook').doc(currentUser.uid);
     const snap = await docRef.get();
     if(!snap.exists){
-      await docRef.set({ data: JSON.stringify(state), updatedAt: Date.now(), deviceId: getDeviceId(), deviceName: getDeviceName() });
+      const pushedAt = Date.now();
+      await docRef.set({ data: JSON.stringify(state), updatedAt: pushedAt, deviceId: getDeviceId(), deviceName: getDeviceName() });
+      lastCloudUpdatedAt = pushedAt;
       setStatus('已將目前資料上傳到雲端', true);
     } else {
       const cloudData = snap.data();
@@ -717,12 +719,18 @@ async function pullOrPushOnSignIn(){
           `按「確定」→ 用雲端資料覆蓋這台裝置畫面\n` +
           `按「取消」→ 用這台裝置的資料覆蓋雲端`
         );
-        if(useCloud){ applyCloudData(cloudData.data); }
-        else { await docRef.set({ data: JSON.stringify(state), updatedAt: Date.now(), deviceId: getDeviceId(), deviceName: getDeviceName() }); }
+        if(useCloud){ applyCloudData(cloudData.data); lastCloudUpdatedAt = cloudData.updatedAt||Date.now(); }
+        else {
+          const pushedAt = Date.now();
+          await docRef.set({ data: JSON.stringify(state), updatedAt: pushedAt, deviceId: getDeviceId(), deviceName: getDeviceName() });
+          lastCloudUpdatedAt = pushedAt;
+        }
       } else {
         applyCloudData(cloudData.data);
+        lastCloudUpdatedAt = cloudData.updatedAt||Date.now();
       }
     }
+    try{ localStorage.setItem('lastCloudUpdatedAt', String(lastCloudUpdatedAt)); }catch(e){}
     await saveState();
   }catch(e){
     setStatus('雲端同步失敗：' + (e && e.message ? e.message : String(e)), false);
@@ -731,12 +739,15 @@ async function pullOrPushOnSignIn(){
 
 let cloudSyncStatus = 'idle'; // idle | syncing | synced | error
 let lastSyncTime = null;
+let lastCloudUpdatedAt = 0; // 記住我們最後一次知道的雲端資料時間戳，用來判斷之後拉到的雲端資料是不是別台裝置更新的
 let isOnline = (typeof navigator!=='undefined' && navigator.onLine!==undefined) ? navigator.onLine : true;
 let pendingSync = false; // 離線或同步進行中時又有新變更，記著等這輪結束要再送一次最新的
 function loadLastSyncTime(){
   try{
     const raw = localStorage.getItem('lastSyncTime');
     if(raw){ lastSyncTime = new Date(Number(raw)); cloudSyncStatus = 'synced'; }
+    const rawCloud = localStorage.getItem('lastCloudUpdatedAt');
+    if(rawCloud){ lastCloudUpdatedAt = Number(rawCloud); }
   }catch(e){}
 }
 function initOnlineDetection(){
@@ -745,12 +756,46 @@ function initOnlineDetection(){
       isOnline = true;
       render();
       syncToCloud(); // 恢復網路，主動補送一次，確保離線期間排隊的資料真的送出去
+      checkForCloudUpdates(); // 順便看看離線這段期間，別的裝置有沒有更新過雲端資料
     });
     window.addEventListener('offline', ()=>{
       isOnline = false;
       render();
     });
+    // App 從背景切回前景時，順便安靜檢查一次雲端有沒有其他裝置的新資料
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.visibilityState === 'visible'){ checkForCloudUpdates(); }
+    });
   }catch(e){}
+}
+// 安靜檢查雲端有沒有「別台裝置」更新過的新資料，有的話悄悄套用（不跳確認視窗，只在狀態列小提示一下）。
+// 刻意避開兩種情況：(1) 這台裝置還有未送出的變更排隊中，避免蓋掉自己還沒送出的東西
+//                   (2) 雲端最後更新的裝置就是自己，避免自己剛推上去又把自己觸發一次
+async function checkForCloudUpdates(){
+  if(!fbDb || !currentUser || !isOnline) return;
+  if(cloudSyncing || pendingSync) return;
+  try{
+    const docRef = fbDb.collection('leavePassbook').doc(currentUser.uid);
+    const snap = await docRef.get();
+    if(!snap.exists) return;
+    const cloudData = snap.data();
+    if(!cloudData.updatedAt) return;
+    if(cloudData.deviceId === getDeviceId()){
+      // 是自己這台推上去的，只更新我們記住的時間戳，不用套用、不用提示
+      lastCloudUpdatedAt = cloudData.updatedAt;
+      try{ localStorage.setItem('lastCloudUpdatedAt', String(lastCloudUpdatedAt)); }catch(e){}
+      return;
+    }
+    if(cloudData.updatedAt > lastCloudUpdatedAt){
+      applyCloudData(cloudData.data);
+      lastCloudUpdatedAt = cloudData.updatedAt;
+      try{ localStorage.setItem('lastCloudUpdatedAt', String(lastCloudUpdatedAt)); }catch(e){}
+      render();
+      setStatus(`☁️ 已同步「${cloudData.deviceName||'其他裝置'}」的最新資料`, true);
+    }
+  }catch(e){
+    console.error('檢查雲端更新失敗', e);
+  }
 }
 async function syncToCloud(){
   if(!fbDb || !currentUser) return;
@@ -761,10 +806,12 @@ async function syncToCloud(){
   try{
     // Firestore 已開啟離線持久化：離線時這個 set() 會先存進本機排隊，
     // 要等網路恢復、伺服器真的收到確認後這裡才會 resolve，所以離線時這個 await 會一直卡著是正常的。
-    await fbDb.collection('leavePassbook').doc(currentUser.uid).set({ data: JSON.stringify(state), updatedAt: Date.now(), deviceId: getDeviceId(), deviceName: getDeviceName() });
+    const pushedAt = Date.now();
+    await fbDb.collection('leavePassbook').doc(currentUser.uid).set({ data: JSON.stringify(state), updatedAt: pushedAt, deviceId: getDeviceId(), deviceName: getDeviceName() });
     cloudSyncStatus = 'synced';
     lastSyncTime = new Date();
-    try{ localStorage.setItem('lastSyncTime', String(lastSyncTime.getTime())); }catch(e){}
+    lastCloudUpdatedAt = pushedAt;
+    try{ localStorage.setItem('lastSyncTime', String(lastSyncTime.getTime())); localStorage.setItem('lastCloudUpdatedAt', String(pushedAt)); }catch(e){}
   }catch(e){
     console.error('雲端同步失敗', e);
     cloudSyncStatus = 'error';
