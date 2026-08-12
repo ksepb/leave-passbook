@@ -375,7 +375,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-23';
+const APP_VERSION = 'v2026.08.12-24';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1316,14 +1316,16 @@ function compBalanceUpTo(year, category){
   return state.compRecords.filter(r=> parseInt(r.date.slice(0,4),10) <= year && (r.category||'comp')===category).reduce((s,r)=> s + (r.type==='earn'? toDays(r): -toDays(r)),0);
 }
 
-// 先進先出：算出每一筆「獲得」紀錄實際還剩多少沒被用掉（用掉的部分依時間順序，優先扣最早獲得的那筆）
-// 這樣到期提醒才會準確，不會把已經用掉的補休/換休還當成「快到期」來提醒
-function compFifoRemaining(category, excludeId){
+// 先進先出核心運算：算出每一筆「獲得」紀錄實際還剩多少沒被用掉，
+// 同時記錄每一筆「使用」紀錄實際扣了哪些批次各多少天（不管是手動指定還是自動判斷），
+// 這樣歷史紀錄畫面才能不管是不是手動指定，都能顯示「這筆實際扣了哪幾批」。
+function _compFifoCore(category, excludeId){
   const records = state.compRecords
     .filter(r=>(r.category||'comp')===category && r.id!==excludeId)
     .slice()
     .sort((a,b)=> a.date.localeCompare(b.date) || (a.type==='earn'?-1:1));
   const batches = [];
+  const breakdown = {}; // useRecordId -> [{date, note, take, batchId}]
   records.forEach(r=>{
     const days = toDays(r);
     if(r.type==='earn'){
@@ -1331,6 +1333,12 @@ function compFifoRemaining(category, excludeId){
     } else {
       let toDeduct = days;
       const pinnedIds = new Set();
+      const useLog = [];
+      const takeFrom = (b, amt) => {
+        if(amt<=0.0001) return;
+        b.remainDays -= amt;
+        useLog.push({date:b.date, note:b.note, take:amt, batchId:b.id});
+      };
       // 新版：手動指定多筆批次各自的天數
       if(Array.isArray(r.sourceAllocations) && r.sourceAllocations.length){
         r.sourceAllocations.forEach(alloc=>{
@@ -1340,7 +1348,7 @@ function compFifoRemaining(category, excludeId){
           const pinned = batches.find(b=>b.id===alloc.id);
           if(pinned && pinned.remainDays>0){
             const want = (alloc.days!=null && alloc.days>0) ? Math.min(alloc.days, pinned.remainDays, toDeduct) : Math.min(pinned.remainDays, toDeduct);
-            pinned.remainDays -= want;
+            takeFrom(pinned, want);
             toDeduct -= want;
           }
         });
@@ -1351,7 +1359,7 @@ function compFifoRemaining(category, excludeId){
         const pinned = batches.find(b=>b.id===r.sourceEarnId);
         if(pinned && pinned.remainDays>0){
           const take = Math.min(pinned.remainDays, toDeduct);
-          pinned.remainDays -= take;
+          takeFrom(pinned, take);
           toDeduct -= take;
         }
       }
@@ -1362,7 +1370,7 @@ function compFifoRemaining(category, excludeId){
         if(pinnedIds.has(b.id)) continue;
         if(b.remainDays<=0) continue;
         const take = Math.min(b.remainDays, toDeduct);
-        b.remainDays -= take;
+        takeFrom(b, take);
         toDeduct -= take;
       }
       // 第二階段：如果沒被指定的批次全部用完還是不夠，代表真的需要動用「已指定但還有剩」的批次，
@@ -1372,14 +1380,22 @@ function compFifoRemaining(category, excludeId){
           if(toDeduct<=0) break;
           if(b.remainDays<=0) continue;
           const take = Math.min(b.remainDays, toDeduct);
-          b.remainDays -= take;
+          takeFrom(b, take);
           toDeduct -= take;
         }
       }
       // 若扣抵量超過目前所有獲得批次總和（理論上不該發生），超出的部分忽略，不影響到期提醒
+      if(useLog.length) breakdown[r.id] = useLog;
     }
   });
-  return batches;
+  return { batches, breakdown };
+}
+function compFifoRemaining(category, excludeId){
+  return _compFifoCore(category, excludeId).batches;
+}
+// 給歷史紀錄畫面用：查某一筆使用紀錄實際扣了哪幾批、各扣多少（不管是手動指定還是自動判斷）
+function compUsageBreakdown(category, useRecordId){
+  return _compFifoCore(category, null).breakdown[useRecordId] || [];
 }
 
 // ---- 補休/換休一致性檢查 ----
@@ -2594,17 +2610,12 @@ function buildCompLi(r, dMin, dMax, category){
     <div class="ledger-bottom">
       ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>` : (() => {
         if(r.type!=='use') return '<div></div>';
-        const allocs = Array.isArray(r.sourceAllocations) && r.sourceAllocations.length ? r.sourceAllocations
-          : (r.sourceEarnId ? [{id:r.sourceEarnId, days:null}] : []);
-        if(!allocs.length) return '<div></div>';
-        const parts = allocs.map(a=>{
-          const src = state.compRecords.find(x=>x.id===a.id && x.type==='earn');
-          if(!src) return null;
-          const label = `${toROC(src.date)}${src.note?`（${escapeHtml(src.note)}）`:''}`;
-          return a.days!=null ? `${label} ${fmt(a.days*getHoursPerDay())}小時` : label;
-        }).filter(Boolean);
-        if(!parts.length) return '<div></div>';
-        return `<div class="expiry alloc-list">🗂️ 指定扣：${parts.map(p=>`<div class="alloc-line">${p}</div>`).join('')}</div>`;
+        const usage = compUsageBreakdown(category, r.id);
+        if(!usage.length) return '<div></div>';
+        const isManual = (Array.isArray(r.sourceAllocations) && r.sourceAllocations.length) || !!r.sourceEarnId;
+        const label = isManual ? '🗂️ 指定扣：' : '🗂️ 扣自：';
+        const parts = usage.map(u=> `${toROC(u.date)}${u.note?`（${escapeHtml(u.note)}）`:''} ${fmt(u.take*getHoursPerDay())}小時`);
+        return `<div class="expiry alloc-list">${label}${parts.map(p=>`<div class="alloc-line">${p}</div>`).join('')}</div>`;
       })()}
       ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
       <div class="ledger-actions">
