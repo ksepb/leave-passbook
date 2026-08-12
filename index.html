@@ -95,6 +95,9 @@
   .undo-bar{position:fixed;left:16px;right:16px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:250;background:#3A2F22;color:#fff;padding:14px 18px;border-radius:12px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:fadeInPage .2s ease-out;}
   .undo-bar button{font-size:15px;padding:8px 14px;}
   .undo-bar + .undo-bar{bottom:calc(160px + env(safe-area-inset-bottom));}
+  .select-summary-bar{position:fixed;left:16px;right:16px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:240;background:var(--ink);color:#fff;padding:11px 16px;border-radius:12px;font-size:14.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.3);animation:fadeInPage .15s ease-out;}
+  .select-summary-bar .ssb-need{opacity:.75;font-weight:500;}
+  .select-summary-bar.ssb-ok{background:var(--jade);}
   .undo-bar button{background:var(--amber);padding:5px 10px;font-size:12px;}
 
   .reminder-bar{background:#FDF1DC;border:1px solid var(--amber);color:#6b4a12;padding:10px 14px;border-radius:6px;font-size:14px;margin-bottom:16px;line-height:1.7;}
@@ -375,7 +378,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-24';
+const APP_VERSION = 'v2026.08.12-25';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1547,6 +1550,17 @@ function toggleManualSource(category){
   updateUsePreview(category);
 }
 
+function updateSelectSummaryBar(barId, manualOn, pins, amount, unit){
+  const bar = document.getElementById(barId);
+  if(!bar) return;
+  if(!manualOn || !amount || amount<=0){ bar.style.display = 'none'; return; }
+  const hpd = getHoursPerDay();
+  const neededHours = unit==='hour' ? amount : amount*hpd;
+  const selectedHours = pins.reduce((s,p)=> s + (p.days!=null ? p.days*hpd : 0), 0);
+  bar.style.display = 'flex';
+  bar.classList.toggle('ssb-ok', selectedHours >= neededHours - 0.001);
+  bar.innerHTML = `<span>已選 ${fmt(selectedHours)} 小時</span><span class="ssb-need">需要 ${fmt(neededHours)} 小時</span>`;
+}
 function updateUsePreview(category){
   const previewEl = document.getElementById('usePreview');
   const wrapEl = document.getElementById('manualSourceWrap');
@@ -1556,14 +1570,16 @@ function updateUsePreview(category){
   const isUse = typeEl && typeEl.value === 'use';
   if(wrapEl) wrapEl.style.display = isUse ? '' : 'none';
   if(expiryWrapEl) expiryWrapEl.style.display = isUse ? 'none' : '';
-  if(!isUse){ previewEl.innerHTML = ''; return; }
+  if(!isUse){ previewEl.innerHTML = ''; updateSelectSummaryBar('compSelectSummary', false, [], 0, 'day'); return; }
   const amountEl = document.getElementById('compAmount');
   const unitEl = document.getElementById('compUnit');
   const amount = parseFloat(amountEl && amountEl.value);
   const unit = unitEl ? unitEl.value : 'day';
   const manualOn = document.getElementById('compManualToggle');
-  const pins = (manualOn && manualOn.checked) ? gatherCompSrcPins('compSrcBatchList') : [];
+  const isManualOn = !!(manualOn && manualOn.checked);
+  const pins = isManualOn ? gatherCompSrcPins('compSrcBatchList') : [];
   previewEl.innerHTML = computeUsePreviewHtml(category, amount, unit, pins, null);
+  updateSelectSummaryBar('compSelectSummary', isManualOn, pins, amount, unit);
 }
 
 function toggleEditManualSource(id, category){
@@ -1583,14 +1599,16 @@ function updateEditUsePreview(id, category){
   const isUse = typeEl && typeEl.value === 'use';
   if(wrapEl) wrapEl.style.display = isUse ? '' : 'none';
   if(expiryWrapEl) expiryWrapEl.style.display = isUse ? 'none' : '';
-  if(!isUse){ previewEl.innerHTML = ''; return; }
+  if(!isUse){ previewEl.innerHTML = ''; updateSelectSummaryBar(`editCompSelectSummary-${id}`, false, [], 0, 'day'); return; }
   const amountEl = document.getElementById(`editCompAmount-${id}`);
   const unitEl = document.getElementById(`editCompUnit-${id}`);
   const amount = parseFloat(amountEl && amountEl.value);
   const unit = unitEl ? unitEl.value : 'day';
   const manualOn = document.getElementById(`editManualToggle-${id}`);
-  const pins = (manualOn && manualOn.checked) ? gatherCompSrcPins(`editCompSrcBatchList-${id}`) : [];
+  const isManualOn = !!(manualOn && manualOn.checked);
+  const pins = isManualOn ? gatherCompSrcPins(`editCompSrcBatchList-${id}`) : [];
   previewEl.innerHTML = computeUsePreviewHtml(category, amount, unit, pins, id);
+  updateSelectSummaryBar(`editCompSelectSummary-${id}`, isManualOn, pins, amount, unit);
 }
 
 
@@ -2439,8 +2457,7 @@ function pageAddRecord(){
               <input type="checkbox" id="compManualToggle" onchange="toggleManualSource('${key}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
             </label>
             <div class="field" id="manualSourceField" style="display:none;margin-bottom:14px;max-width:100%;overflow:hidden;">
-              <p class="hint" style="margin:0 0 6px;">指定批次（可複選，各自填小時數；沒填就盡量扣到滿足需求）</p>
-              <div id="compSrcBatchList" class="src-batch-list">
+                            <div id="compSrcBatchList" class="src-batch-list">
                 ${compFifoRemaining(key).filter(b=>b.remainDays>0.0001).map(b=>`
                   <div class="src-batch-row" data-batch-id="${b.id}" data-batch-remain="${b.remainDays}">
                     <label class="src-batch-check">
@@ -2456,6 +2473,7 @@ function pageAddRecord(){
               </div>
             </div>
           </div>
+          <div id="compSelectSummary" class="select-summary-bar" style="display:none;"></div>
           <div class="form-row" id="compExpiryWrap">
             <div class="field" style="flex:1;min-width:210px;">
               <label>⏳ 到期日（自動預設 ${info.defaultYears} 年後，可手動修改）</label>
@@ -2523,6 +2541,10 @@ function buildCompLi(r, dMin, dMax, category){
     const initialPinMap = new Map(initialPins.map(p=>[p.id, p.days]));
     const hasManual = initialPins.length > 0;
     const initialPreview = r.type==='use' ? computeUsePreviewHtml(category, ea, eu, initialPins, r.id) : '';
+    const initialSelectedHours = initialPins.reduce((s,p)=> s + (p.days!=null ? p.days*getHoursPerDay() : 0), 0);
+    const initialNeededHours = eu==='hour' ? ea : ea*getHoursPerDay();
+    const showInitialBar = r.type==='use' && hasManual;
+    const initialBarHtml = showInitialBar ? `<span>已選 ${fmt(initialSelectedHours)} 小時</span><span class="ssb-need">需要 ${fmt(initialNeededHours)} 小時</span>` : '';
     return `<li class="editrow">
       <div class="field">
         <label>類型</label>
@@ -2572,8 +2594,7 @@ function buildCompLi(r, dMin, dMax, category){
           <input type="checkbox" id="editManualToggle-${r.id}" ${hasManual?'checked':''} onchange="toggleEditManualSource('${r.id}','${category}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
         </label>
         <div class="field" id="editManualSourceField-${r.id}" style="${hasManual?'':'display:none;'}margin-bottom:14px;max-width:100%;overflow:hidden;">
-          <p class="hint" style="margin:0 0 6px;">指定批次（可複選，各自填小時數；沒填就盡量扣到滿足需求）</p>
-          <div id="editCompSrcBatchList-${r.id}" class="src-batch-list">
+                    <div id="editCompSrcBatchList-${r.id}" class="src-batch-list">
             ${editBatches.map(b=>{
               const pinDaysRaw = initialPinMap.has(b.id) ? initialPinMap.get(b.id) : null;
               const isChecked = initialPinMap.has(b.id);
@@ -2594,6 +2615,7 @@ function buildCompLi(r, dMin, dMax, category){
           </div>
         </div>
       </div>
+      <div id="editCompSelectSummary-${r.id}" class="select-summary-bar${initialSelectedHours>=initialNeededHours-0.001?' ssb-ok':''}" style="${showInitialBar?'':'display:none;'}">${initialBarHtml}</div>
       <div class="row">
         <button class="btn-${info.c}" onclick="saveEditComp('${r.id}', this)">儲存</button>
         <button class="ghost" onclick="cancelEdit()">取消</button>
