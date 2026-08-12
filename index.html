@@ -379,7 +379,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.13-07';
+const APP_VERSION = 'v2026.08.13-08';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -817,6 +817,8 @@ async function checkForCloudUpdates(){
         lastCloudUpdatedAt = cloudData.updatedAt;
         try{ localStorage.setItem('lastCloudUpdatedAt', String(lastCloudUpdatedAt)); }catch(e){}
         render();
+        // 一定要存回本機，不然只是記憶體裡暫時對了、畫面看起來對，重新整理後又會讀回本機舊資料
+        await saveState();
         setStatus(`☁️ 已同步「${cloudData.deviceName||'其他裝置'}」的最新資料`, true);
       } else {
         // 套用失敗（例如資料驗證沒過）：這是真正的問題，值得留下紀錄。
