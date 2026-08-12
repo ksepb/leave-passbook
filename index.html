@@ -379,7 +379,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.13-01';
+const APP_VERSION = 'v2026.08.13-02';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -420,7 +420,10 @@ function initFirebase(){
     fbAuth.onAuthStateChanged(async (user)=>{
       currentUser = user;
       render();
-      if(user){ cleanupExpiredCompPhotos(); }
+      if(user){
+        cleanupExpiredCompPhotos();
+        checkForCloudUpdates(); // App剛開啟就已經是登入狀態時，順便安靜檢查一次雲端有沒有更新（例如剛用別台裝置/瀏覽器新增過資料）
+      }
       if(firstAuthCheck){
         firstAuthCheck = false;
         if(user){ setStatus('✓ 偵測到已登入：' + (user.email||user.displayName||''), true); }
@@ -430,6 +433,7 @@ function initFirebase(){
     fbAuth.getRedirectResult().then(async (result)=>{
       if(result && result.user){
         // 真正剛從登入跳轉回來，才需要詢問雲端/本機衝突
+        signInFlowInProgress = true;
         currentUser = result.user;
         await pullOrPushOnSignIn();
         applyUiScale();
@@ -447,6 +451,7 @@ async function signInWithGoogle(){
     const provider = new firebase.auth.GoogleAuthProvider();
     const result = await fbAuth.signInWithPopup(provider);
     if(result && result.user){
+      signInFlowInProgress = true;
       currentUser = result.user;
       await pullOrPushOnSignIn();
       applyUiScale();
@@ -492,6 +497,7 @@ async function submitEmailPasswordAuth(mode, btnEl){
       emailPwEmailVal = '';
       emailPwPasswordVal = '';
       setStatus('帳號驗證通過，同步雲端資料中…', true);
+      signInFlowInProgress = true;
       await withTimeout(pullOrPushOnSignIn(), 15000, '雲端同步');
       applyUiScale();
       render();
@@ -587,6 +593,7 @@ async function completeEmailLinkSignIn(){
     try{ localStorage.removeItem('emailForSignIn'); }catch(e){}
     window.history.replaceState({}, document.title, window.location.pathname);
     if(result && result.user){
+      signInFlowInProgress = true;
       currentUser = result.user;
       await pullOrPushOnSignIn();
       applyUiScale();
@@ -688,8 +695,10 @@ function countAllRecords(s){
   return n;
 }
 
+let signInFlowInProgress = false; // pullOrPushOnSignIn正在跑（可能正要跳出雲端/本機選擇視窗）時鎖住，避免checkForCloudUpdates搶跑蓋過去
 async function pullOrPushOnSignIn(){
   if(!fbDb || !currentUser) return;
+  signInFlowInProgress = true;
   try{
     const docRef = fbDb.collection('leavePassbook').doc(currentUser.uid);
     const snap = await docRef.get();
@@ -734,6 +743,8 @@ async function pullOrPushOnSignIn(){
     await saveState();
   }catch(e){
     setStatus('雲端同步失敗：' + (e && e.message ? e.message : String(e)), false);
+  }finally{
+    signInFlowInProgress = false;
   }
 }
 
@@ -773,7 +784,7 @@ function initOnlineDetection(){
 //                   (2) 雲端最後更新的裝置就是自己，避免自己剛推上去又把自己觸發一次
 async function checkForCloudUpdates(){
   if(!fbDb || !currentUser || !isOnline) return;
-  if(cloudSyncing || pendingSync) return;
+  if(cloudSyncing || pendingSync || signInFlowInProgress) return;
   try{
     const docRef = fbDb.collection('leavePassbook').doc(currentUser.uid);
     const snap = await docRef.get();
