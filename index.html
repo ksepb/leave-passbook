@@ -379,7 +379,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.13-04';
+const APP_VERSION = 'v2026.08.13-05';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -800,9 +800,9 @@ async function checkForCloudUpdates(){
   }
   try{
     const docRef = fbDb.collection('leavePassbook').doc(currentUser.uid);
-    // 明確指定一定要問伺服器拿最新的，不要讓 Firestore 偷懶用本機快取回答
-    // （這個功能存在的目的就是要抓「別人剛更新的」，用快取回答完全沒意義）
-    const snap = await docRef.get({ source: 'server' });
+    // 改回預設行為：線上時 Firestore 本來就會優先問伺服器；
+    // 之前強制指定 source:'server' 在網路稍微不穩時會直接丟出錯誤中斷檢查，弊大於利，先復原掉
+    const snap = await docRef.get();
     if(!snap.exists){
       logAppError('雲端更新檢查：雲端還沒有任何資料', '');
       return;
