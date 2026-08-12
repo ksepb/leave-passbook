@@ -327,9 +327,11 @@
   .month-body ul.ledger{margin:0;}
   .month-group .ledger{margin-top:8px;}
   .reset-row{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);flex-wrap:wrap;}
-  .history-divider{display:flex;align-items:center;text-align:center;color:var(--ink-soft);font-size:12px;font-weight:600;margin:20px 0 14px;}
+  .history-divider{display:flex;align-items:center;text-align:center;color:var(--ink-soft);font-size:13.5px;font-weight:600;margin:20px 0 14px;}
   .history-divider::before,.history-divider::after{content:'';flex:1;border-top:1px dashed var(--line);}
-  .history-divider span{padding:0 10px;white-space:nowrap;}
+  .history-divider span{padding:0 10px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;}
+  .divider-year-btn{width:30px;height:30px;padding:0;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--jade);background:var(--jade-soft);border:none;border-radius:50%;cursor:pointer;}
+  .history-divider .divider-year-num{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14.5px;color:var(--ink);padding:0 3px;min-width:48px;text-align:center;}
   .kw-examples{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
   .kw-example{border-left:3px solid var(--line);background:rgba(255,255,255,.55);border-radius:0 10px 10px 0;padding:9px 12px;}
   .kw-example-code{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:5px;}
@@ -360,7 +362,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-02';
+const APP_VERSION = 'v2026.08.12-06';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2198,7 +2200,7 @@ function leaveSection(t){
         </div>
       </div>
       ` : ''}
-      <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
+      <div class="history-divider"><span>📖 以下是 <button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button> 年的歷史紀錄</span></div>
       ${listHtml}
       <div style="margin-top:16px;">
         <button type="button" class="ghost" onclick="toggleResetPanel('${t.key}')">${resetPanelOpen[t.key]?'▲ 收起':'⋯ 更多操作'}</button>
@@ -2506,7 +2508,7 @@ function compSectionHtml(category){
       </div>
 
       <button type="button" class="btn-${info.c}" style="margin-bottom:14px;" onclick="openAddRecord('${category}')">＋ 新增一筆</button>
-      <div class="history-divider"><span>📖 以下是 ${selectedYear} 年的歷史紀錄</span></div>
+      <div class="history-divider"><span>📖 以下是 <button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button> 年的歷史紀錄</span></div>
       ${listHtml}
       <div style="margin-top:16px;">
         <button type="button" class="ghost" onclick="toggleResetPanel('${category}')">${resetPanelOpen[category]?'▲ 收起':'⋯ 更多操作'}</button>
