@@ -201,6 +201,7 @@
   .auth-option-title{font-weight:700;font-size:15px;margin-bottom:4px;}
   .auth-option .hint{margin-bottom:10px;}
   .use-preview-box{background:var(--jade-soft);border-radius:10px;padding:10px 12px;margin:8px 0 14px;}
+  .skip-preview-box{background:var(--amber-soft, #FBEFDC);color:var(--amber);border-radius:10px;padding:10px 12px;margin:-6px 0 14px;font-size:13.5px;font-weight:600;}
   .use-preview-line{font-size:13.5px;color:var(--ink);padding:3px 0;}
   .src-batch-list{border:1px solid var(--line);border-radius:10px;padding:6px 12px 10px;overflow:hidden;box-sizing:border-box;max-width:100%;}
   .src-batch-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:9px 0;border-top:1px solid var(--line);max-width:100%;box-sizing:border-box;}
@@ -378,7 +379,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-25';
+const APP_VERSION = 'v2026.08.12-26';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1487,10 +1488,11 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
       html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">⚠️ 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
     }
   }
-  if(skippedPins.length){
-    html += `<p class="hint" style="color:var(--amber);margin:8px 0 0;">⚠️ 你勾選並填了天數的以下批次，因為前面已經滿足這筆的使用數量，實際上沒有被用到：<br>${skippedPins.map(b=>`${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}`).join('、')}<br>如果這幾筆也要扣到，請把上面「數量」欄位改大一點。</p>`;
-  }
   html += '</div>';
+  if(skippedPins.length){
+    const skippedList = skippedPins.map(b=>`${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}`).join('、');
+    html += `<div class="skip-preview-box">⚠️ 已選超過需求，未用到：${skippedList}</div>`;
+  }
   return html;
 }
 
