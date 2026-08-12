@@ -205,6 +205,7 @@
   .src-batch-check{display:flex;align-items:center;gap:6px;font-size:15.5px;color:var(--ink);cursor:pointer;flex:0 1 auto;min-width:0;max-width:100%;}
   .src-batch-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto;}
   .src-batch-remain{color:var(--jade);font-weight:700;font-size:14px;flex-shrink:0;white-space:nowrap;}
+  .src-batch-row:has(input[type="checkbox"]:checked) .src-batch-remain{display:none;}
   .src-batch-check input[type="checkbox"]{flex-shrink:0;width:18px;height:18px;}
   .src-batch-days{width:60px;box-sizing:border-box;padding:6px 4px;font-size:15px;text-align:center;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
   .src-batch-input-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;}
@@ -374,7 +375,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-21';
+const APP_VERSION = 'v2026.08.12-23';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1122,6 +1123,18 @@ function saveDeviceName(){
   setStatus('已更新裝置名稱', true);
 }
 function fmt(n){ return (Math.round(n*10)/10).toString(); }
+function compHourOptions(maxHours, selectedVal){
+  selectedVal = selectedVal || '';
+  let opts = `<option value="" ${selectedVal===''?'selected':''}>不指定（盡量扣）</option>`;
+  const max = Math.max(0, Math.round(maxHours*2)/2);
+  const values = [];
+  for(let h=0.5; h<=max+0.0001; h+=0.5){ values.push(fmt(h)); }
+  // 極少數舊資料的天數不是0.5的整數倍，這裡確保原本選定的值一定會出現在選項裡，不會編輯時選取狀態默默消失
+  if(selectedVal && !values.includes(selectedVal)) values.push(selectedVal);
+  values.sort((a,b)=>parseFloat(a)-parseFloat(b));
+  values.forEach(v=>{ opts += `<option value="${v}" ${selectedVal===v?'selected':''}>${v} 小時</option>`; });
+  return opts;
+}
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 function matchesSearch(...parts){
@@ -2420,7 +2433,7 @@ function pageAddRecord(){
                       <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}時</span>
                     </label>
                     <div class="src-batch-input-wrap" style="display:none;">
-                      <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="時數" oninput="updateUsePreview('${key}')">
+                      <select class="src-batch-days" onchange="updateUsePreview('${key}')">${compHourOptions(b.remainDays*getHoursPerDay(), '')}</select>
                       <span class="src-batch-unit">時</span>
                     </div>
                   </div>`).join('') || `<p class="hint" style="margin:0;">目前沒有還有效的批次可以指定。</p>`}
@@ -2557,7 +2570,7 @@ function buildCompLi(r, dMin, dMax, category){
                   <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}時</span>
                 </label>
                 <div class="src-batch-input-wrap" style="${isChecked?'':'display:none;'}">
-                  <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="時數" value="${pinDisplayVal}" oninput="updateEditUsePreview('${r.id}','${category}')">
+                  <select class="src-batch-days" onchange="updateEditUsePreview('${r.id}','${category}')">${compHourOptions(b.remainDays*getHoursPerDay(), pinDisplayVal)}</select>
                   <span class="src-batch-unit">時</span>
                 </div>
               </div>`;
