@@ -202,8 +202,8 @@
   .src-batch-list{border:1px solid var(--line);border-radius:10px;padding:4px 10px;}
   .src-batch-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);}
   .src-batch-row:first-child{border-top:none;}
-  .src-batch-check{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);cursor:pointer;flex:0 1 auto;min-width:0;max-width:70%;}
-  .src-batch-check span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .src-batch-check{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);cursor:pointer;flex:1 1 auto;min-width:0;}
+  .src-batch-check span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;}
   .src-batch-check input[type="checkbox"]{flex-shrink:0;width:18px;height:18px;}
   .src-batch-days{width:56px;box-sizing:border-box;padding:6px 4px;font-size:13.5px;text-align:center;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
   .src-batch-input-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;}
@@ -371,7 +371,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-12';
+const APP_VERSION = 'v2026.08.12-13';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2546,7 +2546,20 @@ function buildCompLi(r, dMin, dMax, category){
       ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
     </div>
     <div class="ledger-bottom">
-      ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>`:'<div></div>'}
+      ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>` : (() => {
+        if(r.type!=='use') return '<div></div>';
+        const allocs = Array.isArray(r.sourceAllocations) && r.sourceAllocations.length ? r.sourceAllocations
+          : (r.sourceEarnId ? [{id:r.sourceEarnId, days:null}] : []);
+        if(!allocs.length) return '<div></div>';
+        const parts = allocs.map(a=>{
+          const src = state.compRecords.find(x=>x.id===a.id && x.type==='earn');
+          if(!src) return null;
+          const label = `${toROC(src.date)}${src.note?`（${escapeHtml(src.note)}）`:''}`;
+          return a.days!=null ? `${label} ${fmt(a.days*getHoursPerDay())}小時` : label;
+        }).filter(Boolean);
+        if(!parts.length) return '<div></div>';
+        return `<div class="expiry">🗂️ 指定扣：${parts.join('、')}</div>`;
+      })()}
       ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
