@@ -379,7 +379,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.13-05';
+const APP_VERSION = 'v2026.08.13-07';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -678,13 +678,15 @@ function applyCloudData(jsonStr){
       console.error('雲端資料驗證失敗，保留本機資料', check.errors);
       logAppError('雲端資料驗證失敗，已保留本機資料', check.errors.slice(0,5).join('；'));
       setStatus('雲端資料格式異常，已保留本機資料（詳情見設定頁錯誤記錄）', false);
-      return;
+      return false;
     }
     state = Object.assign(defaultState(), parsed);
+    return true;
   }catch(e){
     console.error('雲端資料格式錯誤', e);
     logAppError('雲端資料格式錯誤', e && e.message ? e.message : String(e));
     setStatus('雲端資料格式異常，已保留本機資料', false);
+    return false;
   }
 }
 
@@ -728,15 +730,19 @@ async function pullOrPushOnSignIn(){
           `按「確定」→ 用雲端資料覆蓋這台裝置畫面\n` +
           `按「取消」→ 用這台裝置的資料覆蓋雲端`
         );
-        if(useCloud){ applyCloudData(cloudData.data); lastCloudUpdatedAt = cloudData.updatedAt||Date.now(); }
+        if(useCloud){
+          const applied = applyCloudData(cloudData.data);
+          if(applied){ lastCloudUpdatedAt = cloudData.updatedAt||Date.now(); }
+          // 如果套用失敗，代表本機資料沒被換掉，時間戳記維持原樣，不要亂推進
+        }
         else {
           const pushedAt = Date.now();
           await docRef.set({ data: JSON.stringify(state), updatedAt: pushedAt, deviceId: getDeviceId(), deviceName: getDeviceName() });
           lastCloudUpdatedAt = pushedAt;
         }
       } else {
-        applyCloudData(cloudData.data);
-        lastCloudUpdatedAt = cloudData.updatedAt||Date.now();
+        const applied = applyCloudData(cloudData.data);
+        if(applied){ lastCloudUpdatedAt = cloudData.updatedAt||Date.now(); }
       }
     }
     try{ localStorage.setItem('lastCloudUpdatedAt', String(lastCloudUpdatedAt)); }catch(e){}
@@ -788,47 +794,35 @@ function initOnlineDetection(){
 // 安靜檢查雲端有沒有「別台裝置」更新過的新資料，有的話悄悄套用（不跳確認視窗，只在狀態列小提示一下）。
 // 刻意避開兩種情況：(1) 這台裝置還有未送出的變更排隊中，避免蓋掉自己還沒送出的東西
 //                   (2) 雲端最後更新的裝置就是自己，避免自己剛推上去又把自己觸發一次
-// 【暫時加了診斷紀錄，方便排查目前抓不到更新的問題，之後穩定了會拿掉】
 async function checkForCloudUpdates(){
-  if(!fbDb || !currentUser || !isOnline){
-    logAppError('雲端更新檢查：一開始就跳過', `fbDb=${!!fbDb} currentUser=${!!currentUser} isOnline=${isOnline}`);
-    return;
-  }
-  if(cloudSyncing || pendingSync || signInFlowInProgress){
-    logAppError('雲端更新檢查：因為有其他同步動作進行中而跳過', `cloudSyncing=${cloudSyncing} pendingSync=${pendingSync} signInFlowInProgress=${signInFlowInProgress}`);
-    return;
-  }
+  if(!fbDb || !currentUser || !isOnline) return;
+  if(cloudSyncing || pendingSync || signInFlowInProgress) return;
   try{
     const docRef = fbDb.collection('leavePassbook').doc(currentUser.uid);
-    // 改回預設行為：線上時 Firestore 本來就會優先問伺服器；
-    // 之前強制指定 source:'server' 在網路稍微不穩時會直接丟出錯誤中斷檢查，弊大於利，先復原掉
     const snap = await docRef.get();
-    if(!snap.exists){
-      logAppError('雲端更新檢查：雲端還沒有任何資料', '');
-      return;
-    }
+    if(!snap.exists) return;
     const cloudData = snap.data();
-    if(!cloudData.updatedAt){
-      logAppError('雲端更新檢查：雲端資料沒有updatedAt欄位', JSON.stringify(cloudData).slice(0,200));
-      return;
-    }
+    if(!cloudData.updatedAt) return;
     const myId = getDeviceId();
     if(cloudData.deviceId === myId){
       // 是自己這台推上去的，只更新我們記住的時間戳，不用套用、不用提示
-      logAppError('雲端更新檢查：雲端最後更新的是自己這台，不套用', `我的id=${myId}　雲端記錄的id=${cloudData.deviceId}　雲端updatedAt=${cloudData.updatedAt}`);
       lastCloudUpdatedAt = cloudData.updatedAt;
       try{ localStorage.setItem('lastCloudUpdatedAt', String(lastCloudUpdatedAt)); }catch(e){}
       return;
     }
     if(cloudData.updatedAt > lastCloudUpdatedAt){
-      logAppError('雲端更新檢查：偵測到別台裝置的新資料，套用中', `我的id=${myId}　雲端裝置id=${cloudData.deviceId}（${cloudData.deviceName}）　雲端updatedAt=${cloudData.updatedAt}　我記得的lastCloudUpdatedAt=${lastCloudUpdatedAt}`);
-      applyCloudData(cloudData.data);
-      lastCloudUpdatedAt = cloudData.updatedAt;
-      try{ localStorage.setItem('lastCloudUpdatedAt', String(lastCloudUpdatedAt)); }catch(e){}
-      render();
-      setStatus(`☁️ 已同步「${cloudData.deviceName||'其他裝置'}」的最新資料`, true);
-    } else {
-      logAppError('雲端更新檢查：雲端資料沒有比較新，不套用', `我的id=${myId}　雲端裝置id=${cloudData.deviceId}（${cloudData.deviceName}）　雲端updatedAt=${cloudData.updatedAt}　我記得的lastCloudUpdatedAt=${lastCloudUpdatedAt}`);
+      const applied = applyCloudData(cloudData.data);
+      if(applied){
+        // 真的套用成功，才推進時間戳記、才算數，不然下次檢查還是要能再試一次
+        lastCloudUpdatedAt = cloudData.updatedAt;
+        try{ localStorage.setItem('lastCloudUpdatedAt', String(lastCloudUpdatedAt)); }catch(e){}
+        render();
+        setStatus(`☁️ 已同步「${cloudData.deviceName||'其他裝置'}」的最新資料`, true);
+      } else {
+        // 套用失敗（例如資料驗證沒過）：這是真正的問題，值得留下紀錄。
+        // 時間戳記刻意不推進，讓下次檢查還會再試一次，不會被誤判成「已處理過」
+        logAppError('雲端更新檢查：套用失敗，時間戳記不推進，下次會再試一次', `雲端updatedAt=${cloudData.updatedAt}`);
+      }
     }
   }catch(e){
     console.error('檢查雲端更新失敗', e);
