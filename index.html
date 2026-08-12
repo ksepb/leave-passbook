@@ -200,11 +200,14 @@
   .use-preview-box{background:var(--jade-soft);border-radius:10px;padding:10px 12px;margin:8px 0 14px;}
   .use-preview-line{font-size:13.5px;color:var(--ink);padding:3px 0;}
   .src-batch-list{border:1px solid var(--line);border-radius:10px;padding:4px 10px;}
-  .src-batch-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap;}
+  .src-batch-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-top:1px solid var(--line);}
   .src-batch-row:first-child{border-top:none;}
   .src-batch-check{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);cursor:pointer;flex:1;min-width:0;}
+  .src-batch-check span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .src-batch-check input[type="checkbox"]{flex-shrink:0;width:18px;height:18px;}
-  .src-batch-days{width:76px;padding:6px 8px;font-size:13.5px;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
+  .src-batch-days{width:56px;box-sizing:border-box;padding:6px 4px;font-size:13.5px;text-align:center;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
+  .src-batch-input-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+  .src-batch-unit{font-size:12.5px;color:var(--ink-soft);flex-shrink:0;}
   .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
   .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;}
   .avail-batch-title{font-weight:700;font-size:14.5px;margin-bottom:3px;}
@@ -368,7 +371,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-08';
+const APP_VERSION = 'v2026.08.12-11';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1386,9 +1389,14 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
   let toDeduct = days;
   const consumed = [];
   const pinnedIds = new Set(pins.map(p=>p.id));
+  const skippedPins = []; // 記錄「有勾選、有填天數，但因為前面已經滿足需求而完全沒用到」的批次，之後要明確警告使用者
   pins.forEach(pin=>{
     const pinned = batches.find(b=>b.id===pin.id);
-    if(!pinned || pinned.remainDays<=0.0001 || toDeduct<=0.0001) return;
+    if(toDeduct<=0.0001){
+      if(pinned && pin.days!=null && pin.days>0) skippedPins.push(pinned);
+      return;
+    }
+    if(!pinned || pinned.remainDays<=0.0001) return;
     // 有明確指定天數的話用指定的（但不能超過該批剩餘量、也不能超過還需要的量）；沒指定天數則沿用舊邏輯：這批盡量扣、扣到滿足需求為止
     const want = (pin.days!=null && pin.days>0) ? Math.min(pin.days, pinned.remainDays, toDeduct) : Math.min(pinned.remainDays, toDeduct);
     if(want>0.0001){
@@ -1416,20 +1424,26 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
       html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">⚠️ 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
     }
   }
+  if(skippedPins.length){
+    html += `<p class="hint" style="color:var(--amber);margin:8px 0 0;">⚠️ 你勾選並填了天數的以下批次，因為前面已經滿足這筆的使用數量，實際上沒有被用到：<br>${skippedPins.map(b=>`${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}`).join('、')}<br>如果這幾筆也要扣到，請把上面「數量」欄位改大一點。</p>`;
+  }
   html += '</div>';
   return html;
 }
 
-function gatherCompSrcPins(listElId){
+function gatherCompSrcPins(listElId, hoursPerDay){
   const pins = [];
   const listEl = document.getElementById(listElId);
   if(!listEl) return pins;
+  const hpd = hoursPerDay || getHoursPerDay();
   listEl.querySelectorAll('.src-batch-row').forEach(row=>{
     const cb = row.querySelector('input[type="checkbox"]');
     if(cb && cb.checked){
-      const daysInput = row.querySelector('.src-batch-days');
-      const days = daysInput && daysInput.value !== '' ? parseFloat(daysInput.value) : null;
-      pins.push({ id: row.dataset.batchId, days: (days!=null && days>0) ? days : null });
+      const hoursInput = row.querySelector('.src-batch-days');
+      const raw = hoursInput && hoursInput.value !== '' ? parseFloat(hoursInput.value) : null;
+      // 批次清單一律用「小時」輸入，這裡統一換算回天數存起來，內部一律用天數運算
+      const days = (raw!=null && raw>0) ? raw/hpd : null;
+      pins.push({ id: row.dataset.batchId, days });
     }
   });
   return pins;
@@ -1437,26 +1451,32 @@ function gatherCompSrcPins(listElId){
 function onCompSrcRowToggle(checkboxEl, category){
   const row = checkboxEl.closest('.src-batch-row');
   if(!row) return;
-  const daysInput = row.querySelector('.src-batch-days');
-  if(checkboxEl.checked){
-    if(daysInput){
-      daysInput.style.display = '';
-      if(!daysInput.value){
-        const remain = parseFloat(row.dataset.batchRemain)||0;
-        if(remain>0) daysInput.value = remain;
-      }
-    }
-  } else if(daysInput){
-    daysInput.style.display = 'none';
-    daysInput.value = '';
+  const wrap = row.querySelector('.src-batch-input-wrap');
+  const hoursInput = row.querySelector('.src-batch-days');
+  const listEl = row.closest('.src-batch-list');
+  let isEdit = false, editId = null;
+  if(listEl && listEl.id.indexOf('editCompSrcBatchList-')===0){
+    isEdit = true;
+    editId = listEl.id.slice('editCompSrcBatchList-'.length);
   }
-  updateUsePreview(category);
+  if(checkboxEl.checked){
+    if(wrap) wrap.style.display = '';
+    if(hoursInput && !hoursInput.value){
+      const remainDays = parseFloat(row.dataset.batchRemain)||0; // 這個一律是天數，換算成小時填入預設值
+      if(remainDays>0) hoursInput.value = fmt(remainDays*getHoursPerDay());
+    }
+  } else {
+    if(wrap) wrap.style.display = 'none';
+    if(hoursInput) hoursInput.value = '';
+  }
+  if(isEdit){ updateEditUsePreview(editId, category); } else { updateUsePreview(category); }
 }
 function resetCompSrcBatchList(listElId){
   const listEl = document.getElementById(listElId);
   if(!listEl) return;
   listEl.querySelectorAll('input[type="checkbox"]').forEach(c=>{ c.checked = false; });
-  listEl.querySelectorAll('.src-batch-days').forEach(d=>{ d.style.display='none'; d.value=''; });
+  listEl.querySelectorAll('.src-batch-input-wrap').forEach(w=>{ w.style.display='none'; });
+  listEl.querySelectorAll('.src-batch-days').forEach(d=>{ d.value=''; });
 }
 
 function toggleManualSource(category){
@@ -2359,7 +2379,7 @@ function pageAddRecord(){
               <input type="checkbox" id="compManualToggle" onchange="toggleManualSource('${key}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
             </label>
             <div class="field" id="manualSourceField" style="display:none;margin-bottom:14px;">
-              <label>指定批次（可複選，各自填天數；沒填就盡量扣到滿足需求）</label>
+              <label>指定批次（可複選，各自填小時數；沒填就盡量扣到滿足需求）</label>
               <div id="compSrcBatchList" class="src-batch-list">
                 ${compFifoRemaining(key).filter(b=>b.remainDays>0.0001).map(b=>`
                   <div class="src-batch-row" data-batch-id="${b.id}" data-batch-remain="${b.remainDays}">
@@ -2367,7 +2387,10 @@ function pageAddRecord(){
                       <input type="checkbox" onchange="onCompSrcRowToggle(this,'${key}')">
                       <span>${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</span>
                     </label>
-                    <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="天數" style="display:none;" oninput="updateUsePreview('${key}')">
+                    <div class="src-batch-input-wrap" style="display:none;">
+                      <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="小時" oninput="updateUsePreview('${key}')">
+                      <span class="src-batch-unit">小時</span>
+                    </div>
                   </div>`).join('') || `<p class="hint" style="margin:0;">目前沒有還有效的批次可以指定。</p>`}
               </div>
             </div>
@@ -2488,18 +2511,22 @@ function buildCompLi(r, dMin, dMax, category){
           <input type="checkbox" id="editManualToggle-${r.id}" ${hasManual?'checked':''} onchange="toggleEditManualSource('${r.id}','${category}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
         </label>
         <div class="field" id="editManualSourceField-${r.id}" style="${hasManual?'':'display:none;'}margin-bottom:14px;">
-          <label>指定批次（可複選，各自填天數；沒填就盡量扣到滿足需求）</label>
+          <label>指定批次（可複選，各自填小時數；沒填就盡量扣到滿足需求）</label>
           <div id="editCompSrcBatchList-${r.id}" class="src-batch-list">
             ${editBatches.map(b=>{
-              const pinDays = initialPinMap.has(b.id) ? initialPinMap.get(b.id) : null;
+              const pinDaysRaw = initialPinMap.has(b.id) ? initialPinMap.get(b.id) : null;
               const isChecked = initialPinMap.has(b.id);
+              const pinDisplayVal = pinDaysRaw!=null ? fmt(pinDaysRaw*getHoursPerDay()) : '';
               return `
               <div class="src-batch-row" data-batch-id="${b.id}" data-batch-remain="${b.remainDays}">
                 <label class="src-batch-check">
                   <input type="checkbox" ${isChecked?'checked':''} onchange="onCompSrcRowToggle(this,'${category}')">
                   <span>${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</span>
                 </label>
-                <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="天數" value="${pinDays!=null?pinDays:''}" style="${isChecked?'':'display:none;'}" oninput="updateEditUsePreview('${r.id}','${category}')">
+                <div class="src-batch-input-wrap" style="${isChecked?'':'display:none;'}">
+                  <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="小時" value="${pinDisplayVal}" oninput="updateEditUsePreview('${r.id}','${category}')">
+                  <span class="src-batch-unit">小時</span>
+                </div>
               </div>`;
             }).join('') || `<p class="hint" style="margin:0;">目前沒有還有效的批次可以指定。</p>`}
           </div>
