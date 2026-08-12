@@ -199,6 +199,12 @@
   .auth-option .hint{margin-bottom:10px;}
   .use-preview-box{background:var(--jade-soft);border-radius:10px;padding:10px 12px;margin:8px 0 14px;}
   .use-preview-line{font-size:13.5px;color:var(--ink);padding:3px 0;}
+  .src-batch-list{border:1px solid var(--line);border-radius:10px;padding:4px 10px;}
+  .src-batch-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap;}
+  .src-batch-row:first-child{border-top:none;}
+  .src-batch-check{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);cursor:pointer;flex:1;min-width:0;}
+  .src-batch-check input[type="checkbox"]{flex-shrink:0;width:18px;height:18px;}
+  .src-batch-days{width:76px;padding:6px 8px;font-size:13.5px;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
   .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
   .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;}
   .avail-batch-title{font-weight:700;font-size:14.5px;margin-bottom:3px;}
@@ -362,7 +368,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-06';
+const APP_VERSION = 'v2026.08.12-08';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1305,8 +1311,24 @@ function compFifoRemaining(category, excludeId){
       batches.push({id:r.id, date:r.date, expiry:r.expiry, note:r.note, photoUrl:r.photoUrl, remainDays: days});
     } else {
       let toDeduct = days;
-      // 有手動指定要優先扣哪一批的話，先扣那一批
-      if(r.sourceEarnId){
+      const pinnedIds = new Set();
+      // 新版：手動指定多筆批次各自的天數
+      if(Array.isArray(r.sourceAllocations) && r.sourceAllocations.length){
+        r.sourceAllocations.forEach(alloc=>{
+          if(!alloc || !alloc.id) return;
+          pinnedIds.add(alloc.id);
+          if(toDeduct<=0) return;
+          const pinned = batches.find(b=>b.id===alloc.id);
+          if(pinned && pinned.remainDays>0){
+            const want = (alloc.days!=null && alloc.days>0) ? Math.min(alloc.days, pinned.remainDays, toDeduct) : Math.min(pinned.remainDays, toDeduct);
+            pinned.remainDays -= want;
+            toDeduct -= want;
+          }
+        });
+      }
+      // 舊版：手動指定單一批次優先扣（相容舊資料）
+      else if(r.sourceEarnId){
+        pinnedIds.add(r.sourceEarnId);
         const pinned = batches.find(b=>b.id===r.sourceEarnId);
         if(pinned && pinned.remainDays>0){
           const take = Math.min(pinned.remainDays, toDeduct);
@@ -1315,8 +1337,10 @@ function compFifoRemaining(category, excludeId){
         }
       }
       // 指定批次扣不夠（或沒有指定）的部分，自動接回先進先出，從最早的開始補
+      // 已經被明確指定過的批次要排除，不然「只指定扣一部分、故意留一部分」的狀況會被這裡誤扣光
       for(const b of batches){
         if(toDeduct<=0) break;
+        if(pinnedIds.has(b.id)) continue;
         if(b.remainDays<=0) continue;
         const take = Math.min(b.remainDays, toDeduct);
         b.remainDays -= take;
@@ -1350,27 +1374,32 @@ function checkCompLedgerConsistency(){
     });
   }catch(e){ console.error('一致性檢查本身發生錯誤', e); }
 }
-function computeUsePreviewHtml(category, amount, unit, pinnedId, excludeId){
+function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
   if(!amount || amount<=0) return '';
+  // 向下相容：舊呼叫方式傳入單一字串id（代表「優先扣這批，不夠自動接續」），統一轉成陣列格式處理
+  if(typeof pins === 'string'){ pins = pins ? [{id:pins, days:null}] : []; }
+  if(!Array.isArray(pins)) pins = [];
+  pins = pins.filter(p=>p && p.id);
   const days = unit==='hour' ? amount/getHoursPerDay() : amount;
   const info = COMP_CATEGORIES[category];
   const batches = compFifoRemaining(category, excludeId).filter(b=>b.remainDays>0.0001);
   let toDeduct = days;
   const consumed = [];
-  if(pinnedId){
-    const pinned = batches.find(b=>b.id===pinnedId);
-    if(pinned){
-      const take = Math.min(pinned.remainDays, toDeduct);
-      if(take>0.0001){
-        consumed.push({date:pinned.date, note:pinned.note, take, remainAfter: pinned.remainDays-take, pinned:true});
-        pinned.remainDays -= take;
-        toDeduct -= take;
-      }
+  const pinnedIds = new Set(pins.map(p=>p.id));
+  pins.forEach(pin=>{
+    const pinned = batches.find(b=>b.id===pin.id);
+    if(!pinned || pinned.remainDays<=0.0001 || toDeduct<=0.0001) return;
+    // 有明確指定天數的話用指定的（但不能超過該批剩餘量、也不能超過還需要的量）；沒指定天數則沿用舊邏輯：這批盡量扣、扣到滿足需求為止
+    const want = (pin.days!=null && pin.days>0) ? Math.min(pin.days, pinned.remainDays, toDeduct) : Math.min(pinned.remainDays, toDeduct);
+    if(want>0.0001){
+      consumed.push({date:pinned.date, note:pinned.note, take:want, remainAfter: pinned.remainDays-want, pinned:true});
+      pinned.remainDays -= want;
+      toDeduct -= want;
     }
-  }
+  });
   for(const b of batches){
     if(toDeduct<=0.0001) break;
-    if(pinnedId && b.id===pinnedId) continue;
+    if(pinnedIds.has(b.id)) continue;
     const take = Math.min(b.remainDays, toDeduct);
     if(take>0.0001){
       consumed.push({date:b.date, note:b.note, take, remainAfter: b.remainDays-take, pinned:false});
@@ -1381,7 +1410,7 @@ function computeUsePreviewHtml(category, amount, unit, pinnedId, excludeId){
   if(consumed.length===0){
     html += `<p class="hint" style="color:var(--brick);margin:0;">⚠️ 目前沒有可扣的${info.label}結餘，這筆送出後結餘會變負數。</p>`;
   } else {
-    html += `<p class="hint" style="margin:0 0 6px;font-weight:700;color:var(--ink);">這筆會${pinnedId?'優先扣你指定的那筆，不夠再':'自動'}扣最早獲得的那幾筆：</p>`;
+    html += `<p class="hint" style="margin:0 0 6px;font-weight:700;color:var(--ink);">這筆會${pins.length?'先扣你指定的那幾筆，不夠再':'自動'}扣最早獲得的那幾筆：</p>`;
     html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?'⭐ ':''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''}　－${fmt(c.take)} 天，扣完後這筆還剩 ${fmt(c.remainAfter)} 天</div>`).join('');
     if(toDeduct>0.0001){
       html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">⚠️ 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
@@ -1391,14 +1420,50 @@ function computeUsePreviewHtml(category, amount, unit, pinnedId, excludeId){
   return html;
 }
 
+function gatherCompSrcPins(listElId){
+  const pins = [];
+  const listEl = document.getElementById(listElId);
+  if(!listEl) return pins;
+  listEl.querySelectorAll('.src-batch-row').forEach(row=>{
+    const cb = row.querySelector('input[type="checkbox"]');
+    if(cb && cb.checked){
+      const daysInput = row.querySelector('.src-batch-days');
+      const days = daysInput && daysInput.value !== '' ? parseFloat(daysInput.value) : null;
+      pins.push({ id: row.dataset.batchId, days: (days!=null && days>0) ? days : null });
+    }
+  });
+  return pins;
+}
+function onCompSrcRowToggle(checkboxEl, category){
+  const row = checkboxEl.closest('.src-batch-row');
+  if(!row) return;
+  const daysInput = row.querySelector('.src-batch-days');
+  if(checkboxEl.checked){
+    if(daysInput){
+      daysInput.style.display = '';
+      if(!daysInput.value){
+        const remain = parseFloat(row.dataset.batchRemain)||0;
+        if(remain>0) daysInput.value = remain;
+      }
+    }
+  } else if(daysInput){
+    daysInput.style.display = 'none';
+    daysInput.value = '';
+  }
+  updateUsePreview(category);
+}
+function resetCompSrcBatchList(listElId){
+  const listEl = document.getElementById(listElId);
+  if(!listEl) return;
+  listEl.querySelectorAll('input[type="checkbox"]').forEach(c=>{ c.checked = false; });
+  listEl.querySelectorAll('.src-batch-days').forEach(d=>{ d.style.display='none'; d.value=''; });
+}
+
 function toggleManualSource(category){
   const cb = document.getElementById('compManualToggle');
   const field = document.getElementById('manualSourceField');
   if(field) field.style.display = (cb && cb.checked) ? '' : 'none';
-  if(cb && !cb.checked){
-    const sel = document.getElementById('compSourceEarn');
-    if(sel) sel.value = '';
-  }
+  if(cb && !cb.checked) resetCompSrcBatchList('compSrcBatchList');
   updateUsePreview(category);
 }
 
@@ -1416,19 +1481,16 @@ function updateUsePreview(category){
   const unitEl = document.getElementById('compUnit');
   const amount = parseFloat(amountEl && amountEl.value);
   const unit = unitEl ? unitEl.value : 'day';
-  const sourceSel = document.getElementById('compSourceEarn');
-  const pinnedId = sourceSel ? sourceSel.value : '';
-  previewEl.innerHTML = computeUsePreviewHtml(category, amount, unit, pinnedId, null);
+  const manualOn = document.getElementById('compManualToggle');
+  const pins = (manualOn && manualOn.checked) ? gatherCompSrcPins('compSrcBatchList') : [];
+  previewEl.innerHTML = computeUsePreviewHtml(category, amount, unit, pins, null);
 }
 
 function toggleEditManualSource(id, category){
   const cb = document.getElementById(`editManualToggle-${id}`);
   const field = document.getElementById(`editManualSourceField-${id}`);
   if(field) field.style.display = (cb && cb.checked) ? '' : 'none';
-  if(cb && !cb.checked){
-    const sel = document.getElementById(`editCompSourceEarn-${id}`);
-    if(sel) sel.value = '';
-  }
+  if(cb && !cb.checked) resetCompSrcBatchList(`editCompSrcBatchList-${id}`);
   updateEditUsePreview(id, category);
 }
 
@@ -1446,10 +1508,11 @@ function updateEditUsePreview(id, category){
   const unitEl = document.getElementById(`editCompUnit-${id}`);
   const amount = parseFloat(amountEl && amountEl.value);
   const unit = unitEl ? unitEl.value : 'day';
-  const sourceSel = document.getElementById(`editCompSourceEarn-${id}`);
-  const pinnedId = sourceSel ? sourceSel.value : '';
-  previewEl.innerHTML = computeUsePreviewHtml(category, amount, unit, pinnedId, id);
+  const manualOn = document.getElementById(`editManualToggle-${id}`);
+  const pins = (manualOn && manualOn.checked) ? gatherCompSrcPins(`editCompSrcBatchList-${id}`) : [];
+  previewEl.innerHTML = computeUsePreviewHtml(category, amount, unit, pins, id);
 }
+
 
 
 const COMP_CATEGORIES = {
@@ -1897,7 +1960,7 @@ function compExpiryReminders(){
     compFifoRemaining(category).forEach(b=>{
       if(!b.expiry || b.remainDays<=0.001) return; // 沒有到期日、或這筆已經被用完了，不用提醒
       const diffDays = Math.round((new Date(b.expiry) - todayD)/86400000);
-      if(diffDays <= 30) result.push(Object.assign({}, b, {category, diffDays}));
+      if(diffDays <= 90) result.push(Object.assign({}, b, {category, diffDays}));
     });
   });
   return result.sort((a,b)=> a.diffDays-b.diffDays);
@@ -2293,14 +2356,20 @@ function pageAddRecord(){
           <div id="usePreview"></div>
           <div id="manualSourceWrap" style="display:none;">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:-4px 0 8px;cursor:pointer;color:var(--ink-soft);">
-              <input type="checkbox" id="compManualToggle" onchange="toggleManualSource('${key}')"> 手動指定優先扣哪一筆（預設自動扣最早獲得的那筆）
+              <input type="checkbox" id="compManualToggle" onchange="toggleManualSource('${key}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
             </label>
             <div class="field" id="manualSourceField" style="display:none;margin-bottom:14px;">
-              <label>優先扣這一筆</label>
-              <select id="compSourceEarn" onchange="updateUsePreview('${key}')">
-                <option value="">（不指定，自動扣最早獲得的那筆）</option>
-                ${compFifoRemaining(key).filter(b=>b.remainDays>0.0001).map(b=>`<option value="${b.id}">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</option>`).join('')}
-              </select>
+              <label>指定批次（可複選，各自填天數；沒填就盡量扣到滿足需求）</label>
+              <div id="compSrcBatchList" class="src-batch-list">
+                ${compFifoRemaining(key).filter(b=>b.remainDays>0.0001).map(b=>`
+                  <div class="src-batch-row" data-batch-id="${b.id}" data-batch-remain="${b.remainDays}">
+                    <label class="src-batch-check">
+                      <input type="checkbox" onchange="onCompSrcRowToggle(this,'${key}')">
+                      <span>${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</span>
+                    </label>
+                    <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="天數" style="display:none;" oninput="updateUsePreview('${key}')">
+                  </div>`).join('') || `<p class="hint" style="margin:0;">目前沒有還有效的批次可以指定。</p>`}
+              </div>
             </div>
           </div>
           <div class="form-row" id="compExpiryWrap">
@@ -2364,7 +2433,12 @@ function buildCompLi(r, dMin, dMax, category){
     const eu = r.unit || 'day';
     const ea = r.unit ? r.amount : r.days;
     const editBatches = compFifoRemaining(category, r.id).filter(b=>b.remainDays>0.0001);
-    const initialPreview = r.type==='use' ? computeUsePreviewHtml(category, ea, eu, r.sourceEarnId||'', r.id) : '';
+    // 相容舊資料：舊版只有單一 sourceEarnId，新版是 sourceAllocations 陣列，統一轉成陣列處理
+    const initialPins = Array.isArray(r.sourceAllocations) && r.sourceAllocations.length ? r.sourceAllocations
+      : (r.sourceEarnId ? [{id:r.sourceEarnId, days:null}] : []);
+    const initialPinMap = new Map(initialPins.map(p=>[p.id, p.days]));
+    const hasManual = initialPins.length > 0;
+    const initialPreview = r.type==='use' ? computeUsePreviewHtml(category, ea, eu, initialPins, r.id) : '';
     return `<li class="editrow">
       <div class="field">
         <label>類型</label>
@@ -2411,14 +2485,24 @@ function buildCompLi(r, dMin, dMax, category){
       <div id="editUsePreview-${r.id}">${initialPreview}</div>
       <div id="editManualSourceWrap-${r.id}" style="${r.type==='use'?'':'display:none;'}width:100%;">
         <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:-4px 0 8px;cursor:pointer;color:var(--ink-soft);">
-          <input type="checkbox" id="editManualToggle-${r.id}" ${r.sourceEarnId?'checked':''} onchange="toggleEditManualSource('${r.id}','${category}')"> 手動指定優先扣哪一筆（預設自動扣最早獲得的那筆）
+          <input type="checkbox" id="editManualToggle-${r.id}" ${hasManual?'checked':''} onchange="toggleEditManualSource('${r.id}','${category}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
         </label>
-        <div class="field" id="editManualSourceField-${r.id}" style="${r.sourceEarnId?'':'display:none;'}margin-bottom:14px;">
-          <label>優先扣這一筆</label>
-          <select id="editCompSourceEarn-${r.id}" onchange="updateEditUsePreview('${r.id}','${category}')">
-            <option value="">（不指定，自動扣最早獲得的那筆）</option>
-            ${editBatches.map(b=>`<option value="${b.id}" ${r.sourceEarnId===b.id?'selected':''}>${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</option>`).join('')}
-          </select>
+        <div class="field" id="editManualSourceField-${r.id}" style="${hasManual?'':'display:none;'}margin-bottom:14px;">
+          <label>指定批次（可複選，各自填天數；沒填就盡量扣到滿足需求）</label>
+          <div id="editCompSrcBatchList-${r.id}" class="src-batch-list">
+            ${editBatches.map(b=>{
+              const pinDays = initialPinMap.has(b.id) ? initialPinMap.get(b.id) : null;
+              const isChecked = initialPinMap.has(b.id);
+              return `
+              <div class="src-batch-row" data-batch-id="${b.id}" data-batch-remain="${b.remainDays}">
+                <label class="src-batch-check">
+                  <input type="checkbox" ${isChecked?'checked':''} onchange="onCompSrcRowToggle(this,'${category}')">
+                  <span>${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</span>
+                </label>
+                <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="天數" value="${pinDays!=null?pinDays:''}" style="${isChecked?'':'display:none;'}" oninput="updateEditUsePreview('${r.id}','${category}')">
+              </div>`;
+            }).join('') || `<p class="hint" style="margin:0;">目前沒有還有效的批次可以指定。</p>`}
+          </div>
         </div>
       </div>
       <div class="row">
@@ -2498,7 +2582,7 @@ function compSectionHtml(category){
       <div class="overview-panel">
         <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong><span class="avail-batch-hours">（${fmt(curBalance*getHoursPerDay())} 小時）</span></div>
         ${nearestExpiry ? (()=>{
-          const isUrgent = nearestExpiry.diffDays<=30;
+          const isUrgent = nearestExpiry.diffDays<=90;
           const color = nearestExpiry.diffDays<=7 ? 'var(--brick)' : (isUrgent ? 'var(--amber)' : 'var(--ink)');
           const countdown = nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`);
           return `<div class="overview-expiry" style="margin-top:6px;font-size:14.5px;">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
@@ -3520,8 +3604,11 @@ async function addComp(e, category){
     const record = { id, type, date, unit, amount, note, category };
     if(type==='earn' && expiry) record.expiry = expiry;
     if(type==='use'){
-      const sourceSel = document.getElementById('compSourceEarn');
-      if(sourceSel && sourceSel.value) record.sourceEarnId = sourceSel.value;
+      const manualOn = document.getElementById('compManualToggle');
+      if(manualOn && manualOn.checked){
+        const pins = gatherCompSrcPins('compSrcBatchList');
+        if(pins.length) record.sourceAllocations = pins;
+      }
     }
     const photoInput = document.getElementById('compPhotoInput');
     const photoFile = photoInput && photoInput.files && photoInput.files[0];
@@ -3579,12 +3666,18 @@ async function saveEditComp(id, btnEl){
       const updated = Object.assign({}, state.compRecords[idx], {type,date,unit,amount,note});
       delete updated.days;
       if(type==='use'){
-        const sourceSel = document.getElementById(`editCompSourceEarn-${id}`);
-        if(sourceSel && sourceSel.value){ updated.sourceEarnId = sourceSel.value; }
-        else { delete updated.sourceEarnId; }
+        delete updated.sourceEarnId; // 舊欄位一律清掉，改用sourceAllocations
+        const manualOn = document.getElementById(`editManualToggle-${id}`);
+        if(manualOn && manualOn.checked){
+          const pins = gatherCompSrcPins(`editCompSrcBatchList-${id}`);
+          if(pins.length){ updated.sourceAllocations = pins; } else { delete updated.sourceAllocations; }
+        } else {
+          delete updated.sourceAllocations;
+        }
         delete updated.expiry;
       } else {
         delete updated.sourceEarnId;
+        delete updated.sourceAllocations;
         const expiryEl = document.getElementById(`editCompExpiry-${id}`);
         const expiry = expiryEl ? parseFlexibleDate(expiryEl.value) : null;
         if(expiry){ updated.expiry = expiry; } else { delete updated.expiry; }
