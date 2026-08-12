@@ -202,8 +202,9 @@
   .src-batch-list{border:1px solid var(--line);border-radius:10px;padding:4px 10px;}
   .src-batch-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);}
   .src-batch-row:first-child{border-top:none;}
-  .src-batch-check{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);cursor:pointer;flex:1 1 auto;min-width:0;}
-  .src-batch-check span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;}
+  .src-batch-check{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink);cursor:pointer;flex:1 1 auto;min-width:0;}
+  .src-batch-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto;}
+  .src-batch-remain{color:var(--jade);font-weight:700;font-size:12px;flex-shrink:0;white-space:nowrap;}
   .src-batch-check input[type="checkbox"]{flex-shrink:0;width:18px;height:18px;}
   .src-batch-days{width:56px;box-sizing:border-box;padding:6px 4px;font-size:13.5px;text-align:center;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
   .src-batch-input-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;}
@@ -253,6 +254,8 @@
   ul.ledger .days{font-family:'IBM Plex Mono',monospace;font-weight:700;}
   ul.ledger .note{color:var(--ink);font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
   ul.ledger .expiry{font-size:14.5px;color:var(--amber);font-weight:700;font-family:'IBM Plex Mono',monospace;flex:1 1 100%;background:var(--amber-soft, #FBEFDC);padding:5px 9px;border-radius:6px;}
+  ul.ledger .alloc-list{font-family:'Noto Sans TC', sans-serif;}
+  ul.ledger .alloc-line{padding:2px 0;font-size:13.5px;}
   ul.ledger .ledger-actions{display:flex;gap:8px;margin-left:auto;flex:none;}
   ul.ledger .del{background:#fff;border:1.5px solid var(--line);border-radius:12px;color:var(--ink-soft);font-size:13.5px;font-weight:700;cursor:pointer;padding:8px 11px;min-height:44px;line-height:1;display:inline-flex;align-items:center;gap:4px;}
   ul.ledger li.editrow{display:flex;flex-wrap:wrap;align-items:flex-start;background:#fffaf0;border-radius:12px;padding:14px 12px;gap:12px;}
@@ -371,7 +374,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.12-13';
+const APP_VERSION = 'v2026.08.12-15';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1340,7 +1343,7 @@ function compFifoRemaining(category, excludeId){
         }
       }
       // 指定批次扣不夠（或沒有指定）的部分，自動接回先進先出，從最早的開始補
-      // 已經被明確指定過的批次要排除，不然「只指定扣一部分、故意留一部分」的狀況會被這裡誤扣光
+      // 第一階段：優先從「沒被指定過」的批次補，這樣才符合「只指定扣一部分、故意留一部分」的預期
       for(const b of batches){
         if(toDeduct<=0) break;
         if(pinnedIds.has(b.id)) continue;
@@ -1348,6 +1351,17 @@ function compFifoRemaining(category, excludeId){
         const take = Math.min(b.remainDays, toDeduct);
         b.remainDays -= take;
         toDeduct -= take;
+      }
+      // 第二階段：如果沒被指定的批次全部用完還是不夠，代表真的需要動用「已指定但還有剩」的批次，
+      // 這時候不該再放著不用害系統誤判成餘額不足，改回去繼續照日期先後補（不然總量會對不起來，參見一致性檢查）
+      if(toDeduct>0){
+        for(const b of batches){
+          if(toDeduct<=0) break;
+          if(b.remainDays<=0) continue;
+          const take = Math.min(b.remainDays, toDeduct);
+          b.remainDays -= take;
+          toDeduct -= take;
+        }
       }
       // 若扣抵量超過目前所有獲得批次總和（理論上不該發生），超出的部分忽略，不影響到期提醒
     }
@@ -1400,7 +1414,7 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
     // 有明確指定天數的話用指定的（但不能超過該批剩餘量、也不能超過還需要的量）；沒指定天數則沿用舊邏輯：這批盡量扣、扣到滿足需求為止
     const want = (pin.days!=null && pin.days>0) ? Math.min(pin.days, pinned.remainDays, toDeduct) : Math.min(pinned.remainDays, toDeduct);
     if(want>0.0001){
-      consumed.push({date:pinned.date, note:pinned.note, take:want, remainAfter: pinned.remainDays-want, pinned:true});
+      consumed.push({date:pinned.date, note:pinned.note, take:want, remainAfter: pinned.remainDays-want, pinned:true, _id:pinned.id});
       pinned.remainDays -= want;
       toDeduct -= want;
     }
@@ -1411,7 +1425,24 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
     const take = Math.min(b.remainDays, toDeduct);
     if(take>0.0001){
       consumed.push({date:b.date, note:b.note, take, remainAfter: b.remainDays-take, pinned:false});
+      b.remainDays -= take;
       toDeduct -= take;
+    }
+  }
+  // 第二階段：沒被指定的批次都不夠補的話，回頭動用「已指定但還有剩」的批次繼續補，
+  // 邏輯要跟compFifoRemaining一致，不然預覽畫面看到的結果會跟實際存檔後不一樣
+  if(toDeduct>0.0001){
+    for(const b of batches){
+      if(toDeduct<=0.0001) break;
+      if(b.remainDays<=0.0001) continue;
+      const take = Math.min(b.remainDays, toDeduct);
+      if(take>0.0001){
+        const existing = consumed.find(c=>c._id===b.id);
+        b.remainDays -= take;
+        toDeduct -= take;
+        if(existing){ existing.take += take; existing.remainAfter = b.remainDays; }
+        else { consumed.push({date:b.date, note:b.note, take, remainAfter: b.remainDays, pinned:true, _id:b.id}); }
+      }
     }
   }
   let html = '<div class="use-preview-box">';
@@ -2385,11 +2416,12 @@ function pageAddRecord(){
                   <div class="src-batch-row" data-batch-id="${b.id}" data-batch-remain="${b.remainDays}">
                     <label class="src-batch-check">
                       <input type="checkbox" onchange="onCompSrcRowToggle(this,'${key}')">
-                      <span>${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}　剩 ${fmt(b.remainDays*getHoursPerDay())} 小時</span>
+                      <span class="src-batch-label">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</span>
+                      <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}時</span>
                     </label>
                     <div class="src-batch-input-wrap" style="display:none;">
-                      <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="小時" oninput="updateUsePreview('${key}')">
-                      <span class="src-batch-unit">小時</span>
+                      <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="時數" oninput="updateUsePreview('${key}')">
+                      <span class="src-batch-unit">時</span>
                     </div>
                   </div>`).join('') || `<p class="hint" style="margin:0;">目前沒有還有效的批次可以指定。</p>`}
               </div>
@@ -2521,11 +2553,12 @@ function buildCompLi(r, dMin, dMax, category){
               <div class="src-batch-row" data-batch-id="${b.id}" data-batch-remain="${b.remainDays}">
                 <label class="src-batch-check">
                   <input type="checkbox" ${isChecked?'checked':''} onchange="onCompSrcRowToggle(this,'${category}')">
-                  <span>${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}　剩 ${fmt(b.remainDays*getHoursPerDay())} 小時</span>
+                  <span class="src-batch-label">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</span>
+                  <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}時</span>
                 </label>
                 <div class="src-batch-input-wrap" style="${isChecked?'':'display:none;'}">
-                  <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="小時" value="${pinDisplayVal}" oninput="updateEditUsePreview('${r.id}','${category}')">
-                  <span class="src-batch-unit">小時</span>
+                  <input type="number" class="src-batch-days" min="0.5" step="0.5" placeholder="時數" value="${pinDisplayVal}" oninput="updateEditUsePreview('${r.id}','${category}')">
+                  <span class="src-batch-unit">時</span>
                 </div>
               </div>`;
             }).join('') || `<p class="hint" style="margin:0;">目前沒有還有效的批次可以指定。</p>`}
@@ -2558,7 +2591,7 @@ function buildCompLi(r, dMin, dMax, category){
           return a.days!=null ? `${label} ${fmt(a.days*getHoursPerDay())}小時` : label;
         }).filter(Boolean);
         if(!parts.length) return '<div></div>';
-        return `<div class="expiry">🗂️ 指定扣：${parts.join('、')}</div>`;
+        return `<div class="expiry alloc-list">🗂️ 指定扣：${parts.map(p=>`<div class="alloc-line">${p}</div>`).join('')}</div>`;
       })()}
       ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
       <div class="ledger-actions">
