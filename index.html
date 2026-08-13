@@ -146,6 +146,9 @@
   .toolbar-row input[type=text]{flex:1;min-width:160px;font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
   .year-switch{display:flex;align-items:center;gap:6px;}
   .year-switch button.sortbtn{width:44px;height:44px;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;color:var(--jade);background:var(--jade-soft);border-color:var(--jade-soft);border-radius:50%;}
+  .year-chips{display:flex;gap:6px;}
+  .year-chip{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;padding:9px 12px;min-height:44px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);}
+  .year-chip.active{color:#fff;background:var(--jade);border-color:var(--jade);}
   .view-toggles{display:flex;gap:8px;}
   .view-toggles button{flex:1;}
   button.sortbtn{background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;padding:9px 14px;min-height:38px;}
@@ -379,7 +382,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.14-01';
+const APP_VERSION = 'v2026.08.14-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2513,9 +2516,7 @@ function pageAddRecord(){
     const info = COMP_CATEGORIES[key];
     // 補休(comp)新增表單預設用「小時」登記比較常用；換休(exchange)維持原本預設「天」，兩者共用這段模板，用 key 分流
     const compDefaultUnit = key==='comp' ? 'hour' : 'day';
-    const compHourQuickBtns = key==='comp'
-      ? [1,2,4,8]
-      : [1,2,4];
+    const compHourQuickBtns = [1,2,4,8];
     return backBtn + typeSelector + `
       <section class="block">
         <h2><span class="dot dot-${info.c}"></span>新增${info.label}</h2>
@@ -2621,6 +2622,7 @@ function pageAddRecord(){
               <button type="button" onclick="setDays('${t.key}Amount',1)">1</button>
               <button type="button" onclick="setDays('${t.key}Amount',2)">2</button>
               <button type="button" onclick="setDays('${t.key}Amount',4)">4</button>
+              <button type="button" onclick="setDays('${t.key}Amount',8)">8</button>
             </div>
           </div>
         </div>
@@ -2876,9 +2878,13 @@ function pageLeaves(){
       <div class="toolbar-row">
         <div class="year-switch">
           <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
-          <div class="year-label">${selectedYear} 年</div>
+          <div class="year-chips">
+            <button type="button" class="year-chip ${selectedYear===CUR_YEAR-1?'active':''}" onclick="setYear(${CUR_YEAR-1})">去年</button>
+            <button type="button" class="year-chip ${selectedYear===CUR_YEAR?'active':''}" onclick="setYear(${CUR_YEAR})">今年</button>
+          </div>
           <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
         </div>
+        ${(selectedYear!==CUR_YEAR && selectedYear!==CUR_YEAR-1) ? `<div class="year-label">${selectedYear} 年</div>` : ''}
       </div>
     </div>
     ${leaveTabBar()}
@@ -3325,6 +3331,7 @@ function renderSearchResult(){
 function toggleSort(){ sortAsc = !sortAsc; render(); }
 
 function changeYear(delta){ selectedYear += delta; render(); }
+function setYear(y){ selectedYear = y; render(); }
 
 function toggleCalendar(){
   calendarMode = !calendarMode;
