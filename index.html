@@ -379,7 +379,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.13-11';
+const APP_VERSION = 'v2026.08.14-01';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2511,6 +2511,11 @@ function pageAddRecord(){
 
   if(key==='comp' || key==='exchange'){
     const info = COMP_CATEGORIES[key];
+    // 補休(comp)新增表單預設用「小時」登記比較常用；換休(exchange)維持原本預設「天」，兩者共用這段模板，用 key 分流
+    const compDefaultUnit = key==='comp' ? 'hour' : 'day';
+    const compHourQuickBtns = key==='comp'
+      ? [1,2,4,8]
+      : [1,2,4];
     return backBtn + typeSelector + `
       <section class="block">
         <h2><span class="dot dot-${info.c}"></span>新增${info.label}</h2>
@@ -2533,18 +2538,16 @@ function pageAddRecord(){
               <div class="days-row">
                 <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required oninput="updateUsePreview('${key}')">
                 <select id="compUnit" onchange="onCompUnitChange();updateUsePreview('${key}');" style="width:82px;padding:8px 4px;">
-                  <option value="day">天</option>
-                  <option value="hour">小時</option>
+                  <option value="day" ${compDefaultUnit==='day'?'selected':''}>天</option>
+                  <option value="hour" ${compDefaultUnit==='hour'?'selected':''}>小時</option>
                 </select>
-                <div class="quickdays" id="compQuickDay">
+                <div class="quickdays" id="compQuickDay" style="${compDefaultUnit==='hour'?'display:none;':''}">
                   <button type="button" onclick="setDays('compAmount',0.5);updateUsePreview('${key}');">0.5</button>
                   <button type="button" onclick="setDays('compAmount',1);updateUsePreview('${key}');">1</button>
                   <button type="button" onclick="setDays('compAmount',2);updateUsePreview('${key}');">2</button>
                 </div>
-                <div class="quickdays" id="compQuickHour" style="display:none;">
-                  <button type="button" onclick="setDays('compAmount',1);updateUsePreview('${key}');">1</button>
-                  <button type="button" onclick="setDays('compAmount',2);updateUsePreview('${key}');">2</button>
-                  <button type="button" onclick="setDays('compAmount',4);updateUsePreview('${key}');">4</button>
+                <div class="quickdays" id="compQuickHour" style="${compDefaultUnit==='hour'?'':'display:none;'}">
+                  ${compHourQuickBtns.map(h=>`<button type="button" onclick="setDays('compAmount',${h});updateUsePreview('${key}');">${h}</button>`).join('')}
                 </div>
               </div>
             </div>
