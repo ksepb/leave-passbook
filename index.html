@@ -144,15 +144,14 @@
   .toolbar-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .toolbar-row + .toolbar-row{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
   .toolbar-row input[type=text]{flex:1;min-width:160px;font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+  .year-toolbar-row{gap:10px;}
   .year-switch{display:flex;align-items:center;gap:6px;}
   .year-switch button.sortbtn{width:44px;height:44px;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;color:var(--jade);background:var(--jade-soft);border-color:var(--jade-soft);border-radius:50%;}
-  .year-chips{display:flex;gap:6px;}
-  .year-chip{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;padding:9px 12px;min-height:44px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);}
-  .year-chip.active{color:#fff;background:var(--jade);border-color:var(--jade);}
+  .back-to-today-btn{font-family:'Noto Sans TC',sans-serif;font-size:14.5px;font-weight:700;color:var(--jade);background:var(--jade-soft);border:1px solid var(--jade-soft);border-radius:20px;padding:9px 18px;min-height:44px;}
   .view-toggles{display:flex;gap:8px;}
   .view-toggles button{flex:1;}
   button.sortbtn{background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;padding:9px 14px;min-height:38px;}
-  .year-label{font-family:'IBM Plex Mono',monospace;font-weight:700;min-width:64px;text-align:center;}
+  .year-label{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;text-align:center;}
   .section-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase;margin:6px 2px 10px;}
   .leave-tabs{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:16px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .leave-tabs::-webkit-scrollbar{display:none;}
@@ -351,7 +350,7 @@
   .history-divider::before,.history-divider::after{content:'';flex:1;border-top:1px dashed var(--line);}
   .history-divider span{padding:0 10px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;}
   .divider-year-btn{width:30px;height:30px;padding:0;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--jade);background:var(--jade-soft);border:none;border-radius:50%;cursor:pointer;}
-  .history-divider .divider-year-num{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14.5px;color:var(--ink);padding:0 3px;min-width:48px;text-align:center;}
+  .history-divider .divider-year-num{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14.5px;color:var(--ink);padding:0 2px;text-align:center;}
   .kw-examples{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
   .kw-example{border-left:3px solid var(--line);background:rgba(255,255,255,.55);border-radius:0 10px 10px 0;padding:9px 12px;}
   .kw-example-code{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:5px;}
@@ -382,7 +381,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.14-03';
+const APP_VERSION = 'v2026.08.14-09';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2462,7 +2461,7 @@ function leaveSection(t){
         </div>
       </div>
       ` : ''}
-      <div class="history-divider"><span>📖 以下是 <button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button> 年的歷史紀錄</span></div>
+      <div class="history-divider"><span>📖 以下是<button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button>年的歷史紀錄</span></div>
       ${listHtml}
       <div style="margin-top:16px;">
         <button type="button" class="ghost" onclick="toggleResetPanel('${t.key}')">${resetPanelOpen[t.key]?'▲ 收起':'⋯ 更多操作'}</button>
@@ -2506,7 +2505,7 @@ function pageAddRecord(){
     <div class="toolbar-row" style="margin-bottom:14px;">
       <div class="year-switch">
         <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
-        <div class="year-label">${selectedYear} 年</div>
+        <div class="year-label">${selectedYear}年</div>
         <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
       </div>
       <div class="hint" style="margin:0;">要登記其他年度的紀錄，先在這裡切換年度</div>
@@ -2818,7 +2817,7 @@ function compSectionHtml(category){
       </div>
 
       <button type="button" class="btn-${info.c}" style="margin-bottom:14px;" onclick="openAddRecord('${category}')">＋ 新增一筆</button>
-      <div class="history-divider"><span>📖 以下是 <button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button> 年的歷史紀錄</span></div>
+      <div class="history-divider"><span>📖 以下是<button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button>年的歷史紀錄</span></div>
       ${listHtml}
       <div style="margin-top:16px;">
         <button type="button" class="ghost" onclick="toggleResetPanel('${category}')">${resetPanelOpen[category]?'▲ 收起':'⋯ 更多操作'}</button>
@@ -2875,16 +2874,13 @@ function pageLeaves(){
         <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="searchQuery=this.value" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="renderSearchResult();">
         <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
       </div>
-      <div class="toolbar-row">
+      <div class="toolbar-row year-toolbar-row">
         <div class="year-switch">
           <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
-          <div class="year-chips">
-            <button type="button" class="year-chip ${selectedYear===CUR_YEAR-1?'active':''}" onclick="setYear(${CUR_YEAR-1})">去年</button>
-            <button type="button" class="year-chip ${selectedYear===CUR_YEAR?'active':''}" onclick="setYear(${CUR_YEAR})">今年</button>
-          </div>
+          <div class="year-label">${selectedYear}年</div>
           <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
         </div>
-        ${(selectedYear!==CUR_YEAR && selectedYear!==CUR_YEAR-1) ? `<div class="year-label">${selectedYear} 年</div>` : ''}
+        ${selectedYear!==CUR_YEAR ? `<button type="button" class="back-to-today-btn" onclick="setYear(${CUR_YEAR})">回今年</button>` : ''}
       </div>
     </div>
     ${leaveTabBar()}
