@@ -379,7 +379,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.13-08';
+const APP_VERSION = 'v2026.08.13-09';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2561,7 +2561,7 @@ function pageAddRecord(){
                     <label class="src-batch-check">
                       <input type="checkbox" onchange="onCompSrcRowToggle(this,'${key}')">
                       <span class="src-batch-label">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</span>
-                      <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}時</span>
+                      <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}小時</span>
                     </label>
                     <div class="src-batch-input-wrap" style="display:none;">
                       <select class="src-batch-days" onchange="updateUsePreview('${key}')">${compHourOptions(b.remainDays*getHoursPerDay(), '')}</select>
@@ -2705,7 +2705,7 @@ function buildCompLi(r, dMin, dMax, category){
                 <label class="src-batch-check">
                   <input type="checkbox" ${isChecked?'checked':''} onchange="onCompSrcRowToggle(this,'${category}')">
                   <span class="src-batch-label">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</span>
-                  <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}時</span>
+                  <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}小時</span>
                 </label>
                 <div class="src-batch-input-wrap" style="${isChecked?'':'display:none;'}">
                   <select class="src-batch-days" onchange="updateEditUsePreview('${r.id}','${category}')">${compHourOptions(b.remainDays*getHoursPerDay(), pinDisplayVal)}</select>
