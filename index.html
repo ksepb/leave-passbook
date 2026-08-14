@@ -106,7 +106,8 @@
   .reminder-bar.reminder-urgent{background:#FBE4E2;border-color:#C0392B;color:#8b241a;}
   .reminder-bar .urgent-line{color:#C0392B;font-weight:700;}
   .reminder-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:3px 0;}
-  .ack-btn{flex-shrink:0;font-size:12.5px;font-weight:700;color:inherit;background:rgba(255,255,255,.55);border:1px solid currentColor;border-radius:14px;padding:5px 12px;min-height:32px;opacity:.85;}
+  .ack-btn{flex-shrink:0;font-size:13px;font-weight:800;color:inherit;background:#fff;border:1.5px solid currentColor;border-radius:14px;padding:6px 14px;min-height:34px;box-shadow:0 2px 6px rgba(0,0,0,.14);}
+  .ack-btn:active{box-shadow:0 1px 2px rgba(0,0,0,.14);}
 
   .stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;align-items:start;}
   .stamp-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px 16px;overflow:hidden;box-shadow:0 2px 6px rgba(43,42,40,.05);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;}
@@ -383,7 +384,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.15-03';
+const APP_VERSION = 'v2026.08.15-05';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2196,7 +2197,7 @@ function reminderBanner(){
       const statusTxt = r.diffDays < 0 ? `已過期 ${Math.abs(r.diffDays)} 天` : (r.diffDays===0? '今天到期' : `${r.diffDays} 天後到期`);
       const catLabel = COMP_CATEGORIES[r.category||'comp'].label;
       const lineClass = r.diffDays<=7 ? 'urgent-line' : '';
-      return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">已知悉</button></div>`;
+      return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
     }).join('');
     return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>⚠️ 補休／換休到期提醒</strong>${items}</div>`;
   })() : '';
