@@ -105,6 +105,8 @@
   .reminder-bar strong{display:block;margin-bottom:4px;font-size:13px;}
   .reminder-bar.reminder-urgent{background:#FBE4E2;border-color:#C0392B;color:#8b241a;}
   .reminder-bar .urgent-line{color:#C0392B;font-weight:700;}
+  .reminder-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:3px 0;}
+  .ack-btn{flex-shrink:0;font-size:12.5px;font-weight:700;color:inherit;background:rgba(255,255,255,.55);border:1px solid currentColor;border-radius:14px;padding:5px 12px;min-height:32px;opacity:.85;}
 
   .stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;align-items:start;}
   .stamp-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px 16px;overflow:hidden;box-shadow:0 2px 6px rgba(43,42,40,.05);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;}
@@ -381,7 +383,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.14-09';
+const APP_VERSION = 'v2026.08.15-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1129,18 +1131,16 @@ function renderMonthGroups(listKey, rows, emptyMsg, liBuilder, totalFn, forceExp
 
 function onCompDateChange(category){
   if(expiryTouched) return;
-  const years = (COMP_CATEGORIES[category||'comp']||COMP_CATEGORIES.comp).defaultYears;
   const dateVal = parseFlexibleDate(document.getElementById('compDate').value);
   const expiryEl = document.getElementById('compExpiry');
-  if(dateVal && expiryEl) expiryEl.value = addYears(dateVal, years);
+  if(dateVal && expiryEl) expiryEl.value = compDefaultExpiry(category||'comp', dateVal);
 }
 
 function onEditCompDateChange(id, category){
   if(editExpiryTouched) return;
-  const years = (COMP_CATEGORIES[category||'comp']||COMP_CATEGORIES.comp).defaultYears;
   const dateVal = parseFlexibleDate(document.getElementById(`editCompDate-${id}`).value);
   const expiryEl = document.getElementById(`editCompExpiry-${id}`);
-  if(dateVal && expiryEl) expiryEl.value = addYears(dateVal, years);
+  if(dateVal && expiryEl) expiryEl.value = compDefaultExpiry(category||'comp', dateVal);
 }
 
 function yearMin(y){ return y+'-01-01'; }
@@ -1152,6 +1152,20 @@ function addYears(dateStr, n){
     d.setFullYear(d.getFullYear()+n);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }catch(e){ return ''; }
+}
+// 換休規則跟補休不一樣：不是「獲得日期+N年」，是「當年度12/31要用完」
+function endOfYear(dateStr){
+  try{
+    const year = parseInt(String(dateStr).slice(0,4), 10);
+    if(!year) return '';
+    return year+'-12-31';
+  }catch(e){ return ''; }
+}
+// 補休/換休共用的預設到期日計算：換休固定用當年度12/31，補休（及其他）用「獲得日期+defaultYears年」
+function compDefaultExpiry(category, dateStr){
+  if(category==='exchange') return endOfYear(dateStr);
+  const info = COMP_CATEGORIES[category] || COMP_CATEGORIES.comp;
+  return addYears(dateStr, info.defaultYears);
 }
 function addMonths(dateStr, n){
   try{
@@ -1416,7 +1430,7 @@ function _compFifoCore(category, excludeId){
   records.forEach(r=>{
     const days = toDays(r);
     if(r.type==='earn'){
-      batches.push({id:r.id, date:r.date, expiry:r.expiry, note:r.note, photoUrl:r.photoUrl, remainDays: days});
+      batches.push({id:r.id, date:r.date, expiry:r.expiry, note:r.note, photoUrl:r.photoUrl, remainDays: days, expiryAcknowledgedFor:r.expiryAcknowledgedFor});
     } else {
       let toDeduct = days;
       const pinnedIds = new Set();
@@ -1760,7 +1774,7 @@ function compStampCard(category){
     <div class="stamp-card ${compBal<0?'warn':''}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${info.c}) 45%, transparent);" onclick="viewLeaveDetail('${category}')">
       <div class="seal c-${info.c}">${info.label.slice(0,1)}</div>
       <div class="label">${info.label}結餘</div>
-      <div class="num c-${info.c}">${fmt(compBal)}天 <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span><small>至 ${selectedYear} 年底・期限${info.defaultYears}年</small></div>
+      <div class="num c-${info.c}">${fmt(compBal)}天 <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span><small>至 ${selectedYear} 年底・${category==='exchange' ? '當年度用完' : `期限${info.defaultYears}年`}</small></div>
     </div>`;
 }
 
@@ -2039,7 +2053,7 @@ function keywordPanel(){
             const info = COMP_CATEGORIES[it.category||'comp'];
             label = `${info.label}（${it.compType==='use'?'使用':'獲得'}）`;
             amountText = `${fmt(it.amount)} ${it.unit==='hour'?'小時':'天'}`;
-            if(it.compType==='earn' && it.date){ amountText += ` ・到期 ${toROC(addYears(it.date, info.defaultYears))}`; }
+            if(it.compType==='earn' && it.date){ amountText += ` ・到期 ${toROC(compDefaultExpiry(it.category||'comp', it.date))}`; }
           } else {
             label = it.leaveLabel;
             amountText = `${fmt(it.amount)} ${it.unit==='hour'?'小時':'天'}`;
@@ -2157,11 +2171,21 @@ function compExpiryReminders(){
   ['comp','exchange'].forEach(category=>{
     compFifoRemaining(category).forEach(b=>{
       if(!b.expiry || b.remainDays<=0.001) return; // 沒有到期日、或這筆已經被用完了，不用提醒
+      if(b.expiryAcknowledgedFor && b.expiryAcknowledgedFor===b.expiry) return; // 已經按過「已知悉」，且到期日沒被改過，不再提醒
       const diffDays = Math.round((new Date(b.expiry) - todayD)/86400000);
       if(diffDays <= 90) result.push(Object.assign({}, b, {category, diffDays}));
     });
   });
   return result.sort((a,b)=> a.diffDays-b.diffDays);
+}
+// 按「已知悉」：記住目前這個到期日已經被看過了，之後只要到期日不變就不會再提醒
+// 如果之後這筆紀錄的到期日被改掉（不管是手動改還是重新計算），會自動恢復提醒，不用擔心被永久放生
+async function acknowledgeExpiry(category, id){
+  const rec = state.compRecords.find(r=>r.id===id && (r.category||'comp')===category);
+  if(!rec || !rec.expiry) return;
+  rec.expiryAcknowledgedFor = rec.expiry;
+  await saveState();
+  render();
 }
 
 function reminderBanner(){
@@ -2172,8 +2196,8 @@ function reminderBanner(){
       const statusTxt = r.diffDays < 0 ? `已過期 ${Math.abs(r.diffDays)} 天` : (r.diffDays===0? '今天到期' : `${r.diffDays} 天後到期`);
       const catLabel = COMP_CATEGORIES[r.category||'comp'].label;
       const lineClass = r.diffDays<=7 ? 'urgent-line' : '';
-      return `<span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}）</span>`;
-    }).join('<br>');
+      return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">已知悉</button></div>`;
+    }).join('');
     return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>⚠️ 補休／換休到期提醒</strong>${items}</div>`;
   })() : '';
 
@@ -2519,7 +2543,7 @@ function pageAddRecord(){
     return backBtn + typeSelector + `
       <section class="block">
         <h2><span class="dot dot-${info.c}"></span>新增${info.label}</h2>
-        <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>
+        <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${key==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>
         <form class="entry" onsubmit="addComp(event, '${key}')">
           <div class="form-row">
             <div class="field" style="flex:0 0 160px;"><label>類型</label>
@@ -2578,8 +2602,8 @@ function pageAddRecord(){
           <div id="compSelectSummary" class="select-summary-bar" style="display:none;"></div>
           <div class="form-row" id="compExpiryWrap">
             <div class="field" style="flex:1;min-width:210px;">
-              <label>⏳ 到期日（自動預設 ${info.defaultYears} 年後，可手動修改）</label>
-              <div class="date-row"><input type="date" id="compExpiry" value="${addYears(dDef,info.defaultYears)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
+              <label>⏳ 到期日（${key==='exchange' ? '自動預設為當年度12/31' : `自動預設 ${info.defaultYears} 年後`}，可手動修改）</label>
+              <div class="date-row"><input type="date" id="compExpiry" value="${compDefaultExpiry(key, dDef)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
             </div>
           </div>
           <div class="form-row">
@@ -2690,7 +2714,7 @@ function buildCompLi(r, dMin, dMax, category){
       <div id="editCompExpiryWrap-${r.id}" style="${r.type==='earn'?'':'display:none;'}width:100%;">
         <div class="field">
           <label>⏳ 到期日</label>
-          <div class="date-row"><input type="date" id="editCompExpiry-${r.id}" value="${r.expiry||addYears(r.date, info.defaultYears)}" oninput="editExpiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompExpiry-${r.id}')" title="切換手動輸入">⌨</button></div>
+          <div class="date-row"><input type="date" id="editCompExpiry-${r.id}" value="${r.expiry||compDefaultExpiry(category, r.date)}" oninput="editExpiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompExpiry-${r.id}')" title="切換手動輸入">⌨</button></div>
         </div>
       </div>
       <div id="editUsePreview-${r.id}">${initialPreview}</div>
@@ -2802,7 +2826,7 @@ function compSectionHtml(category){
   return `
     <section class="block">
       <h2><span class="dot dot-${info.c}"></span>${info.label}<button type="button" class="info-icon-btn" onclick="toggleInfoHint('${category}')" title="說明">ⓘ</button></h2>
-      ${infoHintExpanded[category] ? `<div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${info.label}期限固定為 ${info.defaultYears} 年。</div>` : ''}
+      ${infoHintExpanded[category] ? `<div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${category==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>` : ''}
 
       <div class="overview-panel">
         <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong><span class="avail-batch-hours">（${fmt(curBalance*getHoursPerDay())} 小時）</span></div>
@@ -3621,7 +3645,7 @@ async function applyKwItems(){
         const category = item.category || 'comp';
         const info = COMP_CATEGORIES[category];
         const rec = { id, type:item.compType, date:item.date, unit:item.unit, amount:Number(item.amount), note:item.note||'', category };
-        if(rec.type==='earn'){ rec.expiry = addYears(item.date, info.defaultYears); }
+        if(rec.type==='earn'){ rec.expiry = compDefaultExpiry(category, item.date); }
         else if(item.sourceEarnId){ rec.sourceEarnId = item.sourceEarnId; }
         state.compRecords.push(rec);
       } else if(item.kind==='leave'){
