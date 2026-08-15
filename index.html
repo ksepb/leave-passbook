@@ -105,7 +105,7 @@
   .reminder-bar strong{display:block;margin-bottom:4px;font-size:13px;}
   .reminder-bar.reminder-urgent{background:#FBE4E2;border-color:#C0392B;color:#8b241a;}
   .reminder-bar .urgent-line{color:#C0392B;font-weight:700;}
-  .reminder-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:3px 0;cursor:pointer;}
+  .reminder-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:3px 0;}
   .ack-btn{flex-shrink:0;font-size:13px;font-weight:800;color:inherit;background:#fff;border:1.5px solid currentColor;border-radius:14px;padding:6px 14px;min-height:34px;box-shadow:0 2px 6px rgba(0,0,0,.14);}
   .ack-btn:active{box-shadow:0 1px 2px rgba(0,0,0,.14);}
 
@@ -230,6 +230,14 @@
   .overview-panel{background:var(--jade-soft);border-radius:14px;padding:14px 16px;margin-bottom:16px;}
   .overview-balance{font-size:15px;font-weight:700;color:var(--ink);}
   .overview-expiry{font-size:13.5px;}
+  .overview-grid{display:flex;gap:0;}
+  .overview-stat{flex:1;text-align:center;padding:0 6px;border-right:1px solid rgba(0,0,0,.08);}
+  .overview-stat:last-child{border-right:none;}
+  .overview-stat-label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:4px;}
+  .overview-stat-value{font-size:19px;font-weight:800;color:var(--ink);}
+  .overview-stat-unit{font-size:12px;font-weight:600;margin-left:2px;color:var(--ink-soft);}
+  .overview-stat-sub{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .overview-stat-carryover{color:var(--jade);font-weight:700;}
   .overview-panel-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;}
   .overview-edit-link{flex-shrink:0;font-size:12px;color:var(--jade);background:#fff;padding:4px 10px;border-radius:20px;cursor:pointer;font-weight:600;white-space:nowrap;}
   .sync-status-box{border-radius:10px;padding:10px 12px;margin:8px 0 12px;font-size:13.5px;}
@@ -394,7 +402,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.15-13';
+const APP_VERSION = 'v2026.08.15-17';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2218,7 +2226,7 @@ function reminderBanner(){
       const statusTxt = r.diffDays < 0 ? `已過期 ${Math.abs(r.diffDays)} 天` : (r.diffDays===0? '今天到期' : `${r.diffDays} 天後到期`);
       const catLabel = COMP_CATEGORIES[r.category||'comp'].label;
       const lineClass = r.diffDays<=7 ? 'urgent-line' : '';
-      return `<div class="reminder-line" onclick="viewLeaveDetail('${r.category}','${r.date}')"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}） ›</span><button type="button" class="ack-btn" onclick="event.stopPropagation();acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
+      return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
     }).join('');
     return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>⚠️ 補休／換休到期提醒</strong>${items}</div>`;
   })() : '';
@@ -2592,8 +2600,21 @@ function leaveSection(t){
       ` : ''}
 
       <div class="overview-panel">
-        <div class="overview-balance">${selectedYear} 年${t.label}總天數：<strong>${fmt(getQuota(t.key,selectedYear))} 天</strong></div>
-        <div class="overview-expiry">剩餘：<strong>${fmt(remainOf(t.key,selectedYear))} 天</strong><span class="avail-batch-hours">（${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())} 小時）</span></div>
+        <div class="overview-grid">
+          <div class="overview-stat">
+            <div class="overview-stat-label">${selectedYear} 年總天數</div>
+            <div class="overview-stat-value">${fmt(getQuota(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
+          </div>
+          <div class="overview-stat">
+            <div class="overview-stat-label">已用</div>
+            <div class="overview-stat-value">${fmt(usedOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
+          </div>
+          <div class="overview-stat">
+            <div class="overview-stat-label">剩餘</div>
+            <div class="overview-stat-value">${fmt(remainOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
+            <div class="overview-stat-sub">${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())} 小時</div>
+          </div>
+        </div>
       </div>
 
       <div class="row" style="margin-bottom:14px;">
@@ -2953,18 +2974,36 @@ function compSectionHtml(category){
     .filter(b=>b.expiry && b.remainDays>0.001)
     .map(b=>Object.assign({}, b, {diffDays: Math.round((new Date(b.expiry) - new Date(TODAY))/86400000)}))
     .sort((a,b)=>a.diffDays-b.diffDays)[0];
+  const carryOver = compFifoRemaining(category)
+    .filter(b=> parseInt(String(b.date).slice(0,4),10) < selectedYear)
+    .reduce((s,b)=> s+b.remainDays, 0);
   return `
     <section class="block">
       <h2><span class="dot dot-${info.c}"></span>${info.label}<button type="button" class="info-icon-btn" onclick="toggleInfoHint('${category}')" title="說明">ⓘ</button></h2>
       ${infoHintExpanded[category] ? `<div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${category==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>` : ''}
 
       <div class="overview-panel">
-        <div class="overview-balance">截至 ${selectedYear} 年底結餘：<strong>${fmt(curBalance)} 天</strong><span class="avail-batch-hours">（${fmt(curBalance*getHoursPerDay())} 小時）</span></div>
+        <div class="overview-grid">
+          <div class="overview-stat">
+            <div class="overview-stat-label">${selectedYear} 年獲得</div>
+            <div class="overview-stat-value">${fmt(compEarnTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>
+          </div>
+          <div class="overview-stat">
+            <div class="overview-stat-label">${selectedYear} 年使用</div>
+            <div class="overview-stat-value">${fmt(compUseTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>
+          </div>
+          <div class="overview-stat">
+            <div class="overview-stat-label">目前結餘</div>
+            <div class="overview-stat-value">${fmt(curBalance)}<span class="overview-stat-unit">天</span></div>
+            <div class="overview-stat-sub">${fmt(curBalance*getHoursPerDay())} 小時</div>
+            ${carryOver>0.001 ? `<div class="overview-stat-sub overview-stat-carryover">含 ${fmt(carryOver)} 天為以前年度結轉</div>` : ''}
+          </div>
+        </div>
         ${nearestExpiry ? (()=>{
           const isUrgent = nearestExpiry.diffDays<=90;
           const color = nearestExpiry.diffDays<=7 ? 'var(--brick)' : (isUrgent ? 'var(--amber)' : 'var(--ink)');
           const countdown = nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`);
-          return `<div class="overview-expiry" style="margin-top:6px;font-size:14.5px;">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
+          return `<div class="overview-expiry" style="margin-top:10px;font-size:14.5px;">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
         })() : ''}
         <div class="avail-batch-list-label">🗂️ 還沒用完的紀錄</div>
         ${renderAvailBatchList(category)}
