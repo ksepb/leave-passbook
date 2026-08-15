@@ -105,7 +105,7 @@
   .reminder-bar strong{display:block;margin-bottom:4px;font-size:13px;}
   .reminder-bar.reminder-urgent{background:#FBE4E2;border-color:#C0392B;color:#8b241a;}
   .reminder-bar .urgent-line{color:#C0392B;font-weight:700;}
-  .reminder-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:3px 0;}
+  .reminder-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:3px 0;cursor:pointer;}
   .ack-btn{flex-shrink:0;font-size:13px;font-weight:800;color:inherit;background:#fff;border:1.5px solid currentColor;border-radius:14px;padding:6px 14px;min-height:34px;box-shadow:0 2px 6px rgba(0,0,0,.14);}
   .ack-btn:active{box-shadow:0 1px 2px rgba(0,0,0,.14);}
 
@@ -329,11 +329,11 @@
   .chart-total{font-size:9px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
   .chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:11px;color:var(--ink-soft);}
   .cmp-list{display:flex;flex-direction:column;gap:10px;}
-  .cmp-row{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:var(--paper-soft, #F4EEE2);border-radius:8px;}
+  .cmp-row{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:var(--paper-soft, #F4EEE2);border-radius:8px;cursor:pointer;}
   .cmp-label{font-weight:700;font-size:13.5px;}
   .cmp-nums{font-size:12.5px;color:var(--ink-soft);}
   .cmp-diff{font-size:12.5px;font-weight:700;color:var(--ink-soft);}
-  .util-row{margin-bottom:14px;}
+  .util-row{margin-bottom:14px;cursor:pointer;}
   .util-label{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;font-weight:700;margin-bottom:5px;}
   .util-nums{font-size:12px;font-weight:500;color:var(--ink-soft);}
   .util-track{height:10px;border-radius:6px;background:var(--paper-soft, #F4EEE2);overflow:hidden;}
@@ -394,7 +394,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.15-11';
+const APP_VERSION = 'v2026.08.15-13';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2218,7 +2218,7 @@ function reminderBanner(){
       const statusTxt = r.diffDays < 0 ? `已過期 ${Math.abs(r.diffDays)} 天` : (r.diffDays===0? '今天到期' : `${r.diffDays} 天後到期`);
       const catLabel = COMP_CATEGORIES[r.category||'comp'].label;
       const lineClass = r.diffDays<=7 ? 'urgent-line' : '';
-      return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
+      return `<div class="reminder-line" onclick="viewLeaveDetail('${r.category}','${r.date}')"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}） ›</span><button type="button" class="ack-btn" onclick="event.stopPropagation();acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
     }).join('');
     return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>⚠️ 補休／換休到期提醒</strong>${items}</div>`;
   })() : '';
@@ -2408,7 +2408,7 @@ function statsChart(){
       const label = k==='comp' ? '補休獲得' : '換休獲得';
       return `<div class="chart-seg c-${c}-bg" style="height:${px}px" title="${label} ${fmt(v)}天"></div>`;
     }).join('');
-    return `<div class="chart-col">
+    return `<div class="chart-col ${(calendarMode && calYear===y && (i+1)===calMonth)?'chart-col-active':''}" onclick="jumpToCalMonth(${y},${i+1})">
       <div class="chart-bar-track">${segments}</div>
       <div class="chart-label">${i+1}月</div>
       <div class="chart-total">${total>0?fmt(total):''}</div>
@@ -2441,10 +2441,10 @@ function statsChart(){
 function statsYearCompare(){
   if(!chartMode) return '';
   const y = selectedYear, py = y-1;
-  const rows = LEAVE_TYPES.map(t=>({label:t.label, cur:usedOf(t.key,y), prev:usedOf(t.key,py)}))
+  const rows = LEAVE_TYPES.map(t=>({key:t.key, label:t.label, cur:usedOf(t.key,y), prev:usedOf(t.key,py)}))
     .concat([
-      {label:'補休使用', cur:compUseTotal('comp',y), prev:compUseTotal('comp',py)},
-      {label:'換休使用', cur:compUseTotal('exchange',y), prev:compUseTotal('exchange',py)},
+      {key:'comp', label:'補休使用', cur:compUseTotal('comp',y), prev:compUseTotal('comp',py)},
+      {key:'exchange', label:'換休使用', cur:compUseTotal('exchange',y), prev:compUseTotal('exchange',py)},
     ])
     .filter(r=> r.cur>0 || r.prev>0);
   if(!rows.length) return '';
@@ -2452,8 +2452,8 @@ function statsYearCompare(){
     const diff = r.cur - r.prev;
     const diffTxt = Math.abs(diff)<0.001 ? '持平' : (diff>0 ? `多 ${fmt(Math.abs(diff))} 天` : `少 ${fmt(Math.abs(diff))} 天`);
     const arrow = diff>0.001 ? '▲' : (diff<-0.001 ? '▼' : '－');
-    return `<div class="cmp-row">
-      <span class="cmp-label">${r.label}</span>
+    return `<div class="cmp-row" onclick="viewLeaveDetail('${r.key}')">
+      <span class="cmp-label">${r.label} ›</span>
       <span class="cmp-nums">${py} 年 ${fmt(r.prev)} 天 → ${y} 年 ${fmt(r.cur)} 天</span>
       <span class="cmp-diff">${arrow} ${diffTxt}</span>
     </div>`;
@@ -2467,23 +2467,43 @@ function statsYearCompare(){
 
 // 使用率：只列有設定總天數（quota>0）的假別，用百分比條讓剩餘量更直覺
 // 用自己獨立的 utilizationMode 開關控制顯示/隱藏，跟「隱藏統計圖」是分開的
+// 補休/換休沒有固定年度額度（是FIFO批次逐筆累計、各自到期），改用「今年獲得」當分母、
+// 「今年使用」當分子換算使用率——這樣至少能看出今年獲得的部分用掉了多少比例
+// （如果今年完全沒有新獲得、但用了以前年度結餘的部分，分母是0沒辦法算百分比，就只顯示數字不顯示長條）
 function statsUtilization(){
   if(!utilizationMode) return '';
   const y = selectedYear;
-  const rows = LEAVE_TYPES.map(t=>({label:t.label, c:t.c, quota:getQuota(t.key,y), used:usedOf(t.key,y)}))
+  const rows = LEAVE_TYPES.map(t=>({key:t.key, label:t.label, c:t.c, quota:getQuota(t.key,y), used:usedOf(t.key,y)}))
     .filter(r=> r.quota>0);
-  if(!rows.length) return '';
+  const compRows = ['comp','exchange'].map(cat=>({
+    key:cat, label:COMP_CATEGORIES[cat].label, c:COMP_CATEGORIES[cat].c, earn:compEarnTotal(cat,y), use:compUseTotal(cat,y),
+  })).filter(r=> r.earn>0 || r.use>0);
+  if(!rows.length && !compRows.length) return '';
   const items = rows.map(r=>{
     const pct = Math.max(0, Math.min(100, Math.round(r.used/r.quota*100)));
-    return `<div class="util-row">
-      <div class="util-label">${r.label}<span class="util-nums">${fmt(r.used)} / ${fmt(r.quota)} 天（${pct}%）</span></div>
+    return `<div class="util-row" onclick="viewLeaveDetail('${r.key}')">
+      <div class="util-label">${r.label} ›<span class="util-nums">${fmt(r.used)} / ${fmt(r.quota)} 天（${pct}%）</span></div>
       <div class="util-track"><div class="util-fill c-${r.c}-bg" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  const compItems = compRows.map(r=>{
+    if(r.earn>0){
+      const pct = Math.max(0, Math.min(100, Math.round(r.use/r.earn*100)));
+      return `<div class="util-row" onclick="viewLeaveDetail('${r.key}')">
+        <div class="util-label">${r.label} ›<span class="util-nums">${fmt(r.use)} / ${fmt(r.earn)} 天（${pct}%）</span></div>
+        <div class="util-track"><div class="util-fill c-${r.c}-bg" style="width:${pct}%"></div></div>
+      </div>`;
+    }
+    // 今年沒有新獲得（可能是純粹在用以前結餘），沒有分母可以算百分比，只列數字
+    return `<div class="util-row" onclick="viewLeaveDetail('${r.key}')">
+      <div class="util-label">${r.label} ›<span class="util-nums">今年無新獲得・使用 ${fmt(r.use)} 天</span></div>
     </div>`;
   }).join('');
   return `
     <div class="block">
       <h2><span class="dot dot-jade"></span>${y} 年使用率</h2>
       ${items}
+      ${compItems ? `<h2 style="margin-top:${rows.length?'16px':'0'};font-size:14.5px;">${y} 年補休／換休概況</h2>${compItems}` : ''}
     </div>`;
 }
 
@@ -3044,8 +3064,8 @@ function pageViz(){
       </div>
     </div>
     ${calendarPanel()}
-    ${statsUtilization()}
     ${statsChart()}
+    ${statsUtilization()}
     ${statsYearCompare()}
     ${!calendarMode && !chartMode && !utilizationMode ? '<div class="empty" style="text-align:center;">選擇上面的按鈕查看行事曆或統計資料</div>' : ''}
   `;
