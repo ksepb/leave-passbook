@@ -404,7 +404,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.15-19';
+const APP_VERSION = 'v2026.08.15-20';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2606,10 +2606,12 @@ function leaveSection(t){
           <div class="overview-stat">
             <div class="overview-stat-label">總天數</div>
             <div class="overview-stat-value">${fmt(getQuota(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
+            <div class="overview-stat-hours">${fmt(getQuota(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">已用</div>
             <div class="overview-stat-value">${fmt(usedOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
+            <div class="overview-stat-hours">${fmt(usedOf(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">剩餘</div>
@@ -2989,10 +2991,12 @@ function compSectionHtml(category){
           <div class="overview-stat">
             <div class="overview-stat-label">${selectedYear} 年獲得</div>
             <div class="overview-stat-value">${fmt(compEarnTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>
+            <div class="overview-stat-hours">${fmt(compEarnTotal(category,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">${selectedYear} 年使用</div>
             <div class="overview-stat-value">${fmt(compUseTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>
+            <div class="overview-stat-hours">${fmt(compUseTotal(category,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">目前結餘</div>
