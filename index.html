@@ -222,22 +222,23 @@
   .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
   .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;}
   .avail-batch-title{font-weight:700;font-size:14.5px;margin-bottom:3px;}
-  .avail-batch-list-label{font-size:14px;font-weight:700;color:var(--jade);margin:10px 0 8px;}
+  .avail-batch-list-label{font-size:14px;font-weight:700;color:var(--jade);margin:14px 0 8px;}
   .avail-batch-remain{font-size:14px;color:var(--jade);font-weight:700;white-space:nowrap;overflow-x:auto;}
   .avail-batch-hours{color:var(--ink-soft);font-weight:600;font-size:13px;margin-left:2px;}
   .avail-batch-expiry{font-size:12.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;}
   .info-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:13px;cursor:pointer;margin-left:6px;vertical-align:middle;}
-  .overview-panel{background:var(--jade-soft);border-radius:14px;padding:14px 16px;margin-bottom:16px;}
+  .overview-panel{background:var(--jade-soft);border-radius:14px;padding:16px 16px 18px;margin-bottom:16px;}
   .overview-balance{font-size:15px;font-weight:700;color:var(--ink);}
-  .overview-expiry{font-size:13.5px;}
+  .overview-expiry{font-size:13.5px;padding-top:14px;margin-top:14px;border-top:1px solid rgba(0,0,0,.08);}
   .overview-grid{display:flex;gap:0;}
-  .overview-stat{flex:1;text-align:center;padding:0 6px;border-right:1px solid rgba(0,0,0,.08);}
+  .overview-stat{flex:1;text-align:center;padding:0 8px;border-right:1px solid rgba(0,0,0,.08);}
   .overview-stat:last-child{border-right:none;}
-  .overview-stat-label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:4px;}
-  .overview-stat-value{font-size:19px;font-weight:800;color:var(--ink);}
+  .overview-stat-label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;}
+  .overview-stat-value{font-size:19px;font-weight:800;color:var(--ink);line-height:1.3;}
   .overview-stat-unit{font-size:12px;font-weight:600;margin-left:2px;color:var(--ink-soft);}
-  .overview-stat-sub{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
-  .overview-stat-carryover{color:var(--jade);font-weight:700;}
+  .overview-stat-hours{font-size:17px;font-weight:800;color:var(--jade);margin-top:2px;line-height:1.3;}
+  .overview-stat-hours .overview-stat-unit{color:var(--jade);opacity:.75;}
+  .overview-carryover-note{display:flex;align-items:center;gap:6px;background:#fff;color:#6b4a12;border-radius:10px;padding:8px 12px;margin-top:14px;font-size:13px;font-weight:700;}
   .overview-panel-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;}
   .overview-edit-link{flex-shrink:0;font-size:12px;color:var(--jade);background:#fff;padding:4px 10px;border-radius:20px;cursor:pointer;font-weight:600;white-space:nowrap;}
   .sync-status-box{border-radius:10px;padding:10px 12px;margin:8px 0 12px;font-size:13.5px;}
@@ -402,7 +403,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.15-17';
+const APP_VERSION = 'v2026.08.15-18';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2612,7 +2613,7 @@ function leaveSection(t){
           <div class="overview-stat">
             <div class="overview-stat-label">剩餘</div>
             <div class="overview-stat-value">${fmt(remainOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
-            <div class="overview-stat-sub">${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())} 小時</div>
+            <div class="overview-stat-hours">${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
           </div>
         </div>
       </div>
@@ -2995,15 +2996,15 @@ function compSectionHtml(category){
           <div class="overview-stat">
             <div class="overview-stat-label">目前結餘</div>
             <div class="overview-stat-value">${fmt(curBalance)}<span class="overview-stat-unit">天</span></div>
-            <div class="overview-stat-sub">${fmt(curBalance*getHoursPerDay())} 小時</div>
-            ${carryOver>0.001 ? `<div class="overview-stat-sub overview-stat-carryover">含 ${fmt(carryOver)} 天為以前年度結轉</div>` : ''}
+            <div class="overview-stat-hours">${fmt(curBalance*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
           </div>
         </div>
+        ${carryOver>0.001 ? `<div class="overview-carryover-note">🔄 結餘中有 ${fmt(carryOver)} 天是以前年度結轉下來的，不是今年新獲得的</div>` : ''}
         ${nearestExpiry ? (()=>{
           const isUrgent = nearestExpiry.diffDays<=90;
           const color = nearestExpiry.diffDays<=7 ? 'var(--brick)' : (isUrgent ? 'var(--amber)' : 'var(--ink)');
           const countdown = nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`);
-          return `<div class="overview-expiry" style="margin-top:10px;font-size:14.5px;">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
+          return `<div class="overview-expiry">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
         })() : ''}
         <div class="avail-batch-list-label">🗂️ 還沒用完的紀錄</div>
         ${renderAvailBatchList(category)}
