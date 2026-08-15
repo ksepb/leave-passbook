@@ -231,14 +231,14 @@
   .overview-panel{background:var(--jade-soft);border-radius:14px;padding:16px 16px 18px;margin-bottom:16px;}
   .overview-balance{font-size:15px;font-weight:700;color:var(--ink);}
   .overview-expiry{font-size:13.5px;padding-top:14px;margin-top:14px;border-top:1px solid rgba(0,0,0,.08);}
+  .overview-panel-toolbar{display:flex;justify-content:flex-end;margin-bottom:10px;}
+  .overview-unit-toggle{font-size:12px;font-weight:700;color:var(--jade);background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:5px 12px;min-height:32px;}
   .overview-grid{display:flex;gap:0;}
   .overview-stat{flex:1;text-align:center;padding:0 8px;border-right:1px solid rgba(0,0,0,.08);}
   .overview-stat:last-child{border-right:none;}
   .overview-stat-label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;}
-  .overview-stat-value{font-size:19px;font-weight:800;color:var(--ink);line-height:1.3;}
-  .overview-stat-unit{font-size:12px;font-weight:600;margin-left:2px;color:var(--ink-soft);}
-  .overview-stat-hours{font-size:17px;font-weight:800;color:var(--jade);margin-top:2px;line-height:1.3;}
-  .overview-stat-hours .overview-stat-unit{color:var(--jade);opacity:.75;}
+  .overview-stat-value{font-size:22px;font-weight:800;color:var(--ink);line-height:1.3;}
+  .overview-stat-unit{font-size:13px;font-weight:600;margin-left:2px;color:var(--ink-soft);}
   .overview-carryover-note{display:flex;align-items:center;gap:6px;background:#fff;color:#6b4a12;border-radius:10px;padding:8px 12px;margin-top:14px;font-size:13px;font-weight:700;}
   .overview-panel-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;}
   .overview-edit-link{flex-shrink:0;font-size:12px;color:var(--jade);background:#fff;padding:4px 10px;border-radius:20px;cursor:pointer;font-weight:600;white-space:nowrap;}
@@ -404,7 +404,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.15-20';
+const APP_VERSION = 'v2026.08.15-21';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1074,6 +1074,7 @@ async function ensureHolidayYear(year){
 }
 let chartMode = true;
 let utilizationMode = true;
+let overviewUnit = 'day'; // 假別紀錄頁「總天數/已用/剩餘」面板要顯示天還是小時，兩個一起擠容易太滿
 let expiryTouched = false;
 let editExpiryTouched = false;
 let editPhotoRemoved = {}; // {recordId: true} 編輯時使用者按了「移除照片」但還沒存檔
@@ -2602,21 +2603,27 @@ function leaveSection(t){
       ` : ''}
 
       <div class="overview-panel">
+        <div class="overview-panel-toolbar">
+          <button type="button" class="overview-unit-toggle" onclick="toggleOverviewUnit()">${overviewUnit==='day' ? '顯示：天　🔄 切換小時' : '顯示：小時　🔄 切換天'}</button>
+        </div>
         <div class="overview-grid">
           <div class="overview-stat">
             <div class="overview-stat-label">總天數</div>
-            <div class="overview-stat-value">${fmt(getQuota(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
-            <div class="overview-stat-hours">${fmt(getQuota(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
+            ${overviewUnit==='day'
+              ? `<div class="overview-stat-value">${fmt(getQuota(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              : `<div class="overview-stat-value">${fmt(getQuota(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">已用</div>
-            <div class="overview-stat-value">${fmt(usedOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
-            <div class="overview-stat-hours">${fmt(usedOf(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
+            ${overviewUnit==='day'
+              ? `<div class="overview-stat-value">${fmt(usedOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              : `<div class="overview-stat-value">${fmt(usedOf(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">剩餘</div>
-            <div class="overview-stat-value">${fmt(remainOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
-            <div class="overview-stat-hours">${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
+            ${overviewUnit==='day'
+              ? `<div class="overview-stat-value">${fmt(remainOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              : `<div class="overview-stat-value">${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
         </div>
       </div>
@@ -2987,24 +2994,30 @@ function compSectionHtml(category){
       ${infoHintExpanded[category] ? `<div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${category==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>` : ''}
 
       <div class="overview-panel">
+        <div class="overview-panel-toolbar">
+          <button type="button" class="overview-unit-toggle" onclick="toggleOverviewUnit()">${overviewUnit==='day' ? '顯示：天　🔄 切換小時' : '顯示：小時　🔄 切換天'}</button>
+        </div>
         <div class="overview-grid">
           <div class="overview-stat">
             <div class="overview-stat-label">${selectedYear} 年獲得</div>
-            <div class="overview-stat-value">${fmt(compEarnTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>
-            <div class="overview-stat-hours">${fmt(compEarnTotal(category,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
+            ${overviewUnit==='day'
+              ? `<div class="overview-stat-value">${fmt(compEarnTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              : `<div class="overview-stat-value">${fmt(compEarnTotal(category,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">${selectedYear} 年使用</div>
-            <div class="overview-stat-value">${fmt(compUseTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>
-            <div class="overview-stat-hours">${fmt(compUseTotal(category,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
+            ${overviewUnit==='day'
+              ? `<div class="overview-stat-value">${fmt(compUseTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              : `<div class="overview-stat-value">${fmt(compUseTotal(category,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">目前結餘</div>
-            <div class="overview-stat-value">${fmt(curBalance)}<span class="overview-stat-unit">天</span></div>
-            <div class="overview-stat-hours">${fmt(curBalance*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>
+            ${overviewUnit==='day'
+              ? `<div class="overview-stat-value">${fmt(curBalance)}<span class="overview-stat-unit">天</span></div>`
+              : `<div class="overview-stat-value">${fmt(curBalance*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
         </div>
-        ${carryOver>0.001 ? `<div class="overview-carryover-note">🔄 結餘中有 ${fmt(carryOver)} 天是以前年度結轉下來的，不是今年新獲得的</div>` : ''}
+        ${carryOver>0.001 ? `<div class="overview-carryover-note">🔄 結餘中有 ${overviewUnit==='day' ? `${fmt(carryOver)} 天` : `${fmt(carryOver*getHoursPerDay())} 小時`}是以前年度結轉下來的，不是今年新獲得的</div>` : ''}
         ${nearestExpiry ? (()=>{
           const isUrgent = nearestExpiry.diffDays<=90;
           const color = nearestExpiry.diffDays<=7 ? 'var(--brick)' : (isUrgent ? 'var(--amber)' : 'var(--ink)');
@@ -3571,6 +3584,7 @@ function calTouchEnd(e){
 }
 function toggleChart(){ chartMode = !chartMode; render(); }
 function toggleUtilization(){ utilizationMode = !utilizationMode; render(); }
+function toggleOverviewUnit(){ overviewUnit = overviewUnit==='day' ? 'hour' : 'day'; render(); }
 
 async function updateHoursPerDay(){
   try{
