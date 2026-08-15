@@ -222,7 +222,8 @@
   .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
   .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;}
   .avail-batch-title{font-weight:700;font-size:14.5px;margin-bottom:3px;}
-  .avail-batch-list-label{font-size:14px;font-weight:700;color:var(--jade);margin:14px 0 8px;}
+  .avail-batch-list-label{font-size:14px;font-weight:700;color:var(--jade);margin:0 0 8px;}
+  .avail-batch-section{margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);}
   .avail-batch-remain{font-size:14px;color:var(--jade);font-weight:700;white-space:nowrap;overflow-x:auto;}
   .avail-batch-hours{color:var(--ink-soft);font-weight:600;font-size:13px;margin-left:2px;}
   .avail-batch-expiry{font-size:12.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;}
@@ -403,7 +404,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.15-18';
+const APP_VERSION = 'v2026.08.15-19';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2603,7 +2604,7 @@ function leaveSection(t){
       <div class="overview-panel">
         <div class="overview-grid">
           <div class="overview-stat">
-            <div class="overview-stat-label">${selectedYear} 年總天數</div>
+            <div class="overview-stat-label">總天數</div>
             <div class="overview-stat-value">${fmt(getQuota(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>
           </div>
           <div class="overview-stat">
@@ -3006,8 +3007,10 @@ function compSectionHtml(category){
           const countdown = nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`);
           return `<div class="overview-expiry">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
         })() : ''}
-        <div class="avail-batch-list-label">🗂️ 還沒用完的紀錄</div>
-        ${renderAvailBatchList(category)}
+        <div class="avail-batch-section">
+          <div class="avail-batch-list-label">🗂️ 還沒用完的紀錄</div>
+          ${renderAvailBatchList(category)}
+        </div>
       </div>
 
       <button type="button" class="btn-${info.c}" style="margin-bottom:14px;" onclick="openAddRecord('${category}')">＋ 新增一筆</button>
