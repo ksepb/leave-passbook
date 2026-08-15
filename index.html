@@ -163,7 +163,7 @@
   .manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
   @media(max-width:620px){.manage-grid{grid-template-columns:1fr;}}
 
-  section.block{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;margin-bottom:20px;}
+  .block{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;margin-bottom:20px;}
   section.block h2{font-family:'Noto Serif TC',serif;font-size:19px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
   section.block h2 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
   .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);} .dot-rose{background:var(--rose);} .dot-teal{background:var(--teal);}
@@ -252,7 +252,6 @@
   .overview-panel .avail-batch-item{background:#fff;}
   .mental-model-hint{background:var(--blue-soft);color:var(--blue);font-size:13px;line-height:1.6;padding:10px 12px;border-radius:10px;margin-bottom:12px;}
   .hint{font-size:15.5px;color:var(--ink-soft);line-height:1.6;}
-  .long-weekend-hint{background:var(--jade-soft);color:var(--jade);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:13.5px;}
   .total-row .hint{flex-basis:100%;margin-top:-2px;}
 
   ul.ledger{list-style:none;margin:0;padding:0;}
@@ -395,7 +394,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.15-10';
+const APP_VERSION = 'v2026.08.15-11';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2237,38 +2236,6 @@ function reminderBanner(){
   return compHtml + annualHtml;
 }
 
-// 連假提示：找出這個月裡，哪些平日如果請假，可以跟前後的假日/週末連成3天以上的連假
-// 限制：只看當月範圍內，跨月份銜接的連假（例如月底最後一天接下個月初的假日）不會被算進來，是刻意簡化
-function calLongWeekendHints(y, m){
-  const holidays = (holidayCache[y] && typeof holidayCache[y]==='object') ? holidayCache[y] : null;
-  if(!holidays) return []; // 國定假日資料還沒載入完成時，先不要顯示，避免誤判
-  const daysInMonth = new Date(y, m, 0).getDate();
-  const startWeekday = new Date(y, m-1, 1).getDay();
-  function dateOf(d){ return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
-  function weekdayOf(d){ return (startWeekday + d - 1) % 7; }
-  function isOffDay(d){
-    const dateStr = dateOf(d);
-    const h = holidays[dateStr];
-    if(h && h.isHoliday && h.description) return true; // 國定假日
-    if(h && h.isHoliday===false && h.description) return false; // 補行上班日，即使剛好是週末也要上班
-    if(weekdayOf(d)===0 || weekdayOf(d)===6) return true; // 一般週末
-    // 這天是不是已經整天請假了（一般假別或補休/換休都算）
-    const hasFullDayLeave = LEAVE_TYPES.some(t=> (state.records[t.key]||[]).some(r=> r.date===dateStr && toDays(r)>=1))
-      || state.compRecords.some(r=> r.type==='use' && r.date===dateStr && toDays(r)>=1);
-    return hasFullDayLeave;
-  }
-  const suggestions = [];
-  for(let d=1; d<=daysInMonth; d++){
-    if(isOffDay(d)) continue; // 這天本來就休息了，不用建議
-    let start = d, end = d;
-    while(start>1 && isOffDay(start-1)) start--;
-    while(end<daysInMonth && isOffDay(end+1)) end++;
-    const span = end - start + 1;
-    if(span >= 3) suggestions.push({ dateStr: dateOf(d), startStr: dateOf(start), endStr: dateOf(end), span });
-  }
-  return suggestions.slice(0, 5); // 最多列5個，避免特殊月份塞爆畫面
-}
-
 function calendarPanel(){
   if(!calendarMode) return '';
   const y = calYear, m = calMonth;
@@ -2341,8 +2308,6 @@ function calendarPanel(){
   const monthUsageLabels = LEAVE_TYPES.concat([{key:'comp',label:'補休'},{key:'exchange',label:'換休'}]);
   const monthSummaryParts = monthUsageLabels.filter(t=>monthUsage[t.key]>0).map(t=>`${t.label} ${fmt(monthUsage[t.key])}天`);
   const monthSummary = monthSummaryParts.length ? `本月已用：${monthSummaryParts.join('、')}` : '本月尚無請假紀錄';
-  const longWeekendHints = calLongWeekendHints(y, m);
-  const longWeekendHtml = longWeekendHints.length ? `<p class="hint long-weekend-hint">💡 連假提示：${longWeekendHints.map(h=>`${toROC(h.dateStr)}請假可連成 ${toROC(h.startStr)}～${toROC(h.endStr)}共${h.span}天`).join('；')}</p>` : '';
   const selectedInfo = calSelectedDate && calSelectedDate.startsWith(ymPrefix) ? (()=>{
     const dNum = parseInt(calSelectedDate.slice(8,10),10);
     const items = dayMap[dNum]||[];
@@ -2379,7 +2344,6 @@ function calendarPanel(){
       </div>` : ''}
       ${(y!==CUR_YEAR || m!==NOW.getMonth()+1) ? `<button type="button" class="ghost cal-today-btn" onclick="jumpToToday()">📍 回到今天</button>` : ''}
       <div class="cal-month-summary">${monthSummary}</div>
-      ${longWeekendHtml}
       <div class="cal-swipe-area" ontouchstart="calTouchStart(event)" ontouchend="calTouchEnd(event)">
         <div class="cal-grid cal-weekdays"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
         <div class="cal-grid">${cells}</div>
