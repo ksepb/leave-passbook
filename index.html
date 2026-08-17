@@ -226,8 +226,13 @@
   .avail-batch-note-tag{display:inline-block;background:var(--plum-soft);color:var(--plum);font-weight:700;padding:2px 9px;border-radius:8px;font-size:13.5px;}
   .avail-batch-list-label{font-size:14px;font-weight:700;color:var(--jade);margin:0 0 8px;}
   .avail-batch-section{margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);}
-  .avail-batch-remain{font-size:14px;color:var(--jade);font-weight:700;white-space:nowrap;overflow-x:auto;}
+  .avail-batch-remain{font-size:14px;color:var(--ink-soft);font-weight:700;white-space:nowrap;overflow-x:auto;}
+  /* 小時的顯示樣式故意拆成兩個class：
+     .avail-batch-hours（低調小字）用在首頁明細彈窗、到期倒數文字等4個地方，這些地方要維持不搶眼
+     .avail-batch-hours-strong（放大加粗綠色）只用在「假別紀錄→補休/換休→還沒用完的紀錄」這個清單，故意要醒目
+     兩者外觀刻意不同，之後如果要調整「小時顯示」的樣式，記得確認是要動哪一個、還是兩個都要動 */
   .avail-batch-hours{color:var(--ink-soft);font-weight:600;font-size:13px;margin-left:2px;}
+  .avail-batch-hours-strong{color:var(--jade);font-weight:700;font-size:15px;margin-left:2px;}
   .avail-batch-expiry{font-size:12.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;}
   .info-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:13px;cursor:pointer;margin-left:6px;vertical-align:middle;}
   .leave-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;}
@@ -406,7 +411,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.16-04';
+const APP_VERSION = 'v2026.08.17-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1853,22 +1858,24 @@ function dashboardPanel(){
       return `
       <div class="home-detail-row">
         <span class="home-detail-date">${toROC(b.date)}</span>
-        <span class="home-detail-amt">剩 ${fmt(b.remainDays)} 天</span>
+        <span class="home-detail-amt">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></span>
         ${expiryText || b.note ? `<span class="home-detail-note">${expiryText}${expiryText && b.note ? '　' : ''}${b.note ? `<span class="home-detail-note-tag">${escapeHtml(b.note)}</span>` : ''}</span>` : ''}
       </div>`;
     };
+    const compBatchesTotal = compBatches.reduce((s,b)=>s+b.remainDays,0);
+    const exchangeBatchesTotal = exchangeBatches.reduce((s,b)=>s+b.remainDays,0);
     return `
       <p class="hint" style="margin:0 0 10px;">只顯示目前還有效(沒過期、沒用完)。</p>
       <div class="home-detail-group">
-        <div class="home-detail-group-title c-jade">🌴 特休　剩 ${fmt(annualRemain)} 天</div>
+        <div class="home-detail-group-title c-jade">🌴 特休　剩 ${fmt(annualRemain)} 天<span class="avail-batch-hours">（${fmt(annualRemain*getHoursPerDay())} 小時）</span></div>
         <p class="hint" style="margin:2px 0 0;">今年度額度共 ${fmt(annualQuota)} 天</p>
       </div>
       <div class="home-detail-group">
-        <div class="home-detail-group-title c-brick">🧾 補休　剩 ${fmt(compBatches.reduce((s,b)=>s+b.remainDays,0))} 天</div>
+        <div class="home-detail-group-title c-brick">🧾 補休　剩 ${fmt(compBatchesTotal)} 天<span class="avail-batch-hours">（${fmt(compBatchesTotal*getHoursPerDay())} 小時）</span></div>
         ${compBatches.length ? compBatches.map(batchRowHtml).join('') : `<p class="hint" style="margin:2px 0 0;">目前沒有還有效的補休紀錄。</p>`}
       </div>
       <div class="home-detail-group">
-        <div class="home-detail-group-title c-teal">🔁 換休　剩 ${fmt(exchangeBatches.reduce((s,b)=>s+b.remainDays,0))} 天</div>
+        <div class="home-detail-group-title c-teal">🔁 換休　剩 ${fmt(exchangeBatchesTotal)} 天<span class="avail-batch-hours">（${fmt(exchangeBatchesTotal*getHoursPerDay())} 小時）</span></div>
         ${exchangeBatches.length ? exchangeBatches.map(batchRowHtml).join('') : `<p class="hint" style="margin:2px 0 0;">目前沒有還有效的換休紀錄。</p>`}
       </div>`;
   };
@@ -2962,7 +2969,7 @@ function renderAvailBatchList(category){
     const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期 ${Math.abs(b.diffDays)} 天` : (b.diffDays===0?'今天到期':`${b.diffDays} 天後到期`));
     return `<div class="avail-batch-item">
       <div class="avail-batch-title"><span class="avail-batch-date">${toROC(b.date)}</span>${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}${b.photoUrl?` <span class="photo-badge" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')">📷 附件</span>`:''}</div>
-      <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
+      <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours-strong">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">⏳ 到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
     </div>`;
   }).join('')}</div>`;
