@@ -237,6 +237,7 @@
   .info-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:13px;cursor:pointer;margin-left:6px;vertical-align:middle;}
   .leave-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;}
   .overview-unit-toggle{flex-shrink:0;font-size:14px;font-weight:700;color:var(--jade);background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 12px;min-height:32px;}
+  .overview-unit-arrow-icon{font-size:17px;font-weight:900;margin-right:2px;}
   .overview-panel{background:var(--jade-soft);border-radius:14px;padding:16px 16px 18px;margin-bottom:16px;}
   .overview-balance{font-size:15px;font-weight:700;color:var(--ink);}
   .overview-expiry{font-size:13.5px;padding-top:14px;margin-top:14px;border-top:1px solid rgba(0,0,0,.08);}
@@ -413,7 +414,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.17-13';
+const APP_VERSION = 'v2026.08.17-15';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2624,7 +2625,7 @@ function leaveSection(t){
     <section class="block">
       <h2 class="leave-section-title">
         <span><span class="dot dot-${t.c}"></span>${t.label}${hasReminders ? `<button type="button" class="info-icon-btn" onclick="toggleInfoHint('${t.key}')" title="說明">ⓘ</button>` : ''}</span>
-        <button type="button" class="overview-unit-toggle" onclick="toggleOverviewUnit()">${overviewUnit==='day' ? '顯示：天　🔄 切換小時' : '顯示：小時　🔄 切換天'}</button>
+        <button type="button" class="overview-unit-toggle" onclick="toggleOverviewUnit()"><span class="overview-unit-arrow-icon">↓</span>${overviewUnit==='day' ? '顯示：天　🔄 切換小時' : '顯示：小時　🔄 切換天'}</button>
       </h2>
       ${infoHintExpanded[t.key] ? `
       ${t.key==='sick' && menstrualExcess(selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 生理假併入病假提醒</strong>${selectedYear} 年生理假已使用超過 ${MENSTRUAL_FREE_DAYS} 天，超過的 ${fmt(menstrualExcess(selectedYear))} 天已自動計入病假已使用天數。</div>` : ''}
@@ -3033,7 +3034,7 @@ function compSectionHtml(category){
     <section class="block">
       <h2 class="leave-section-title">
         <span><span class="dot dot-${info.c}"></span>${info.label}<button type="button" class="info-icon-btn" onclick="toggleInfoHint('${category}')" title="說明">ⓘ</button></span>
-        <button type="button" class="overview-unit-toggle" onclick="toggleOverviewUnit()">${overviewUnit==='day' ? '顯示：天　🔄 切換小時' : '顯示：小時　🔄 切換天'}</button>
+        <button type="button" class="overview-unit-toggle" onclick="toggleOverviewUnit()"><span class="overview-unit-arrow-icon">↓</span>${overviewUnit==='day' ? '顯示：天　🔄 切換小時' : '顯示：小時　🔄 切換天'}</button>
       </h2>
       ${infoHintExpanded[category] ? `<div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${category==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>` : ''}
 
