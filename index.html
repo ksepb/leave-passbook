@@ -413,7 +413,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.17-12';
+const APP_VERSION = 'v2026.08.17-13';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1448,9 +1448,7 @@ function toDays(r){
   return Number(r.days)||0;
 }
 function displayAmount(r){
-  if(r.unit==='hour') return `${fmt(r.amount)} 小時`;
-  const amt = r.unit==='day' ? r.amount : r.days;
-  return `${fmt(amt)} 天`;
+  return `${fmt(toDays(r)*getHoursPerDay())} 小時`;
 }
 function compBalanceAsOf(category, date, excludeId){
   return state.compRecords
@@ -2618,7 +2616,7 @@ function leaveSection(t){
   const emptyMsg = all.length===0 ? `${selectedYear} 年尚無${t.label}紀錄，可以點上方「＋新增一筆」登記第一筆 👆` : '查無符合搜尋的紀錄';
   const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = defaultDateFor(selectedYear);
   const forceExpand = (groupRows)=> editing && editing.kind==='record' && editing.key===t.key && groupRows.some(r=>r.id===editing.id);
-  const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r),0))} 天`;
+  const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r),0)*getHoursPerDay())}小時`;
   const listHtml = renderMonthGroups(t.key, rows, emptyMsg, r=>buildLeaveLi(t,r,dMin,dMax), totalFn, forceExpand);
   const hasReminders = (t.key==='sick' && (menstrualExcess(selectedYear)>0 || remainOf('sick',selectedYear)<0))
     || (t.key==='personal' && (usedOf('familyCare',selectedYear)>0 || usedOf('personal',selectedYear)>0));
