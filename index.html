@@ -414,7 +414,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.17-15';
+const APP_VERSION = 'v2026.08.17-17';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -488,6 +488,7 @@ async function signInWithGoogle(){
     if(result && result.user){
       signInFlowInProgress = true;
       currentUser = result.user;
+      try{ localStorage.setItem('lastSignInMethod', 'google'); }catch(e){}
       await pullOrPushOnSignIn();
       applyUiScale();
       render();
@@ -528,6 +529,7 @@ async function submitEmailPasswordAuth(mode, btnEl){
     );
     if(result && result.user){
       currentUser = result.user; // 直接用剛拿到的結果，不要等 onAuthStateChanged 非同步更新，避免時機沒對上
+      try{ localStorage.setItem('lastSignInMethod', 'email-password'); }catch(e){}
       emailAuthMode = null;
       emailPwEmailVal = '';
       emailPwPasswordVal = '';
@@ -630,6 +632,7 @@ async function completeEmailLinkSignIn(){
     if(result && result.user){
       signInFlowInProgress = true;
       currentUser = result.user;
+      try{ localStorage.setItem('lastSignInMethod', 'email-link'); }catch(e){}
       await pullOrPushOnSignIn();
       applyUiScale();
       render();
@@ -1228,6 +1231,24 @@ function getDeviceId(){
     if(!id){ id = uid(); localStorage.setItem('devicePersistentId', id); }
     return id;
   }catch(e){ return 'unknown'; }
+}
+// 判斷目前帳號是用哪種方式登入的（Google / Email），方便以後跨裝置比對是不是同一種登入方式
+// 注意：Email密碼登入 跟 Email連結登入 在Firebase底層的providerId都是'password'，沒辦法細分，這是Firebase本身的限制
+// 判斷目前帳號是用哪種方式登入的。優先讀本機記錄的登入方式（在登入成功當下自己存的，
+// 能精確分辨Email密碼登入 vs Email連結登入）；如果本機沒有這筆記錄（例如帳號是更新這個功能之前就登入的），
+// 才退回用Firebase的providerData判斷（只能分辨Google vs Email，沒辦法細分密碼還是連結，這是Firebase本身的限制）
+function getSignInMethodLabel(){
+  if(!currentUser) return '';
+  let localMethod = null;
+  try{ localMethod = localStorage.getItem('lastSignInMethod'); }catch(e){}
+  if(localMethod==='google') return 'Google 帳號';
+  if(localMethod==='email-password') return 'Email 帳號（密碼登入）';
+  if(localMethod==='email-link') return 'Email 帳號（連結登入）';
+  if(!currentUser.providerData || !currentUser.providerData.length) return '';
+  const providerId = currentUser.providerData[0].providerId;
+  if(providerId==='google.com') return 'Google 帳號';
+  if(providerId==='password') return 'Email 帳號';
+  return providerId;
 }
 function detectDeviceTypeLabel(){
   try{
@@ -3266,11 +3287,11 @@ function pageData(){
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('cloud')">
           <span>☁️ 雲端同步（跨裝置）</span>
-          <span>${currentUser?'已登入':'未登入'}　${settingsExpandedKey==='cloud'?'▲':'▼'}</span>
+          <span>${currentUser?`已登入（${getSignInMethodLabel()}）`:'未登入'}　${settingsExpandedKey==='cloud'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='cloud' ? (currentUser ? `
         <div class="auth-option">
-          <p style="margin:0 0 10px;">已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。</p>
+          <p style="margin:0 0 10px;">已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}（登入方式：${getSignInMethodLabel()}）。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。</p>
           <div class="sync-status-box ${!isOnline ? 'sync-status-syncing' : `sync-status-${cloudSyncStatus}`}" style="margin:0;">
             ${!isOnline ? `<span>📴 離線中，已在本機排隊，恢復網路後自動同步</span>` :
               cloudSyncStatus==='syncing' ? `<span>🔄 同步中…</span>` : ''}
