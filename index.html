@@ -413,7 +413,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.17-11';
+const APP_VERSION = 'v2026.08.17-12';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1543,6 +1543,21 @@ function compFifoRemaining(category, excludeId){
 // 給歷史紀錄畫面用：查某一筆使用紀錄實際扣了哪幾批、各扣多少（不管是手動指定還是自動判斷）
 function compUsageBreakdown(category, useRecordId){
   return _compFifoCore(category, null).breakdown[useRecordId] || [];
+}
+// 反向查詢：這筆「獲得」批次，被哪幾筆「使用」紀錄扣過、各扣多少、扣的那天是哪天
+// 用途：翻到獲得那筆所在的月份時，就算實際使用紀錄是登記在別的月份，也能看出這批已經被動用了
+function compEarnUsedByBreakdown(category, earnId){
+  const breakdown = _compFifoCore(category, null).breakdown;
+  const results = [];
+  Object.keys(breakdown).forEach(useId=>{
+    breakdown[useId].forEach(entry=>{
+      if(entry.batchId===earnId){
+        const useRec = state.compRecords.find(rr=>rr.id===useId);
+        if(useRec) results.push({useDate: useRec.date, take: entry.take});
+      }
+    });
+  });
+  return results.sort((a,b)=>a.useDate.localeCompare(b.useDate));
 }
 
 // ---- 補休/換休一致性檢查 ----
@@ -2946,6 +2961,12 @@ function buildCompLi(r, dMin, dMax, category){
         const parts = usage.map(u=> `${toROC(u.date)}${u.note?`（${escapeHtml(u.note)}）`:''} ${fmt(u.take*getHoursPerDay())}小時`);
         return `<div class="expiry alloc-list">${label}${parts.map(p=>`<div class="alloc-line">${p}</div>`).join('')}</div>`;
       })()}
+      ${r.type==='earn' ? (() => {
+        const usedBy = compEarnUsedByBreakdown(category, r.id);
+        if(!usedBy.length) return '';
+        const parts = usedBy.map(u=> `${toROC(u.useDate)} 用了 ${fmt(u.take*getHoursPerDay())}小時`);
+        return `<div class="expiry alloc-list" style="color:var(--jade);">🔻 已被使用：${parts.map(p=>`<div class="alloc-line">${p}</div>`).join('')}</div>`;
+      })() : ''}
       ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
