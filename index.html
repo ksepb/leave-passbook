@@ -363,11 +363,13 @@
   .backup.danger-zone h2{color:var(--brick);}
   .month-group{margin-bottom:10px;}
   .month-group:last-child{margin-bottom:0;}
-  .month-header{width:100%;display:flex;align-items:center;gap:8px;border-radius:10px 10px 0 0;padding:13px 12px;color:var(--ink);text-align:left;transition:background .15s ease, border-color .15s ease;}
+  .month-header{width:100%;display:flex;flex-direction:column;align-items:stretch;border-radius:10px 10px 0 0;padding:13px 12px;color:var(--ink);text-align:left;transition:background .15s ease, border-color .15s ease;}
   .month-header.month-header-closed{background:linear-gradient(135deg, #F6EAD2, var(--paper-deep));border:1px solid #E4D3A8;border-radius:10px;}
   .month-header.month-header-open{background:linear-gradient(135deg, #DCEAE4, var(--paper-deep));border:1px solid #B9D6C9;border-bottom:none;}
-  .month-header .month-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;}
-  .month-header .month-meta{font-size:14.5px;font-weight:700;color:var(--ink);font-family:'IBM Plex Mono',monospace;margin-left:auto;}
+  .month-header-main{display:flex;align-items:center;gap:8px;width:100%;}
+  .month-header .month-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;flex-shrink:0;}
+  .month-header .month-meta{font-size:14.5px;font-weight:700;color:var(--ink);font-family:'IBM Plex Mono',monospace;margin-left:auto;flex-shrink:1;min-width:0;text-align:right;}
+  .month-header-sub{font-size:13.5px;color:var(--ink-soft);font-weight:600;margin-top:4px;text-align:right;padding-right:40px;}
   .month-header .chevron{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;flex:none;background:#fff;box-shadow:0 1px 3px rgba(43,42,40,.15);}
   .month-header .chevron svg{display:block;}
   .month-header .chevron-open{color:var(--jade);border:2px solid var(--jade);}
@@ -411,7 +413,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.17-05';
+const APP_VERSION = 'v2026.08.17-11';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1129,7 +1131,7 @@ function monthLabel(ym){
 
 function toggleMonthExpand(stateKey, current){ expandedMonths[stateKey] = !current; render(); }
 
-function renderMonthGroups(listKey, rows, emptyMsg, liBuilder, totalFn, forceExpand){
+function renderMonthGroups(listKey, rows, emptyMsg, liBuilder, totalFn, forceExpand, subTotalFn){
   if(rows.length===0) return `<div class="empty">${emptyMsg}</div>`;
   const groups = {};
   const order = [];
@@ -1147,12 +1149,16 @@ function renderMonthGroups(listKey, rows, emptyMsg, liBuilder, totalFn, forceExp
     const forced = forceExpand ? forceExpand(groupRows) : false;
     const expanded = forced ? true : (searchQuery ? true : (expandedMonths[stateKey] !== undefined ? expandedMonths[stateKey] : isDefaultOpen));
     const metaText = totalFn ? totalFn(groupRows) : `${groupRows.length} 筆`;
+    const subText = subTotalFn ? subTotalFn(groupRows) : '';
     return `
       <div class="month-group">
         <button type="button" class="month-header ${expanded?'month-header-open':'month-header-closed'}" onclick="toggleMonthExpand('${stateKey}', ${expanded})">
-          <span class="month-title">${monthLabel(ym)}</span>
-          <span class="month-meta">${metaText}</span>
-          <span class="chevron ${expanded?'chevron-open':'chevron-closed'}">${expanded?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>'}</span>
+          <div class="month-header-main">
+            <span class="month-title">${monthLabel(ym)}</span>
+            <span class="month-meta">${metaText}</span>
+            <span class="chevron ${expanded?'chevron-open':'chevron-closed'}">${expanded?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>'}</span>
+          </div>
+          ${subText ? `<div class="month-header-sub">${subText}</div>` : ''}
         </button>
         ${expanded? `<div class="month-body"><ul class="ledger">${groupRows.map(liBuilder).join('')}</ul></div>` : ''}
       </div>`;
@@ -2986,9 +2992,16 @@ function compSectionHtml(category){
   const forceExpand = (groupRows)=> editing && editing.kind==='comp' && groupRows.some(r=>r.id===editing.id);
   const totalFn = (groupRows)=>{
     const net = groupRows.reduce((s,r)=> s + (r.type==='earn'? toDays(r): -toDays(r)), 0);
-    return `${groupRows.length} 筆・淨 ${net>=0?'+':''}${fmt(net)} 天`;
+    const netLabel = groupRows.length===1 ? '' : '淨 ';
+    return `${groupRows.length} 筆・${netLabel}${net>=0?'+':''}${fmt(net*getHoursPerDay())}小時`;
   };
-  const listHtml = renderMonthGroups(category, compRows, compEmptyMsg, r=>buildCompLi(r,dMin,dMax,category), totalFn, forceExpand);
+  const subTotalFn = (groupRows)=>{
+    const earn = groupRows.filter(r=>r.type==='earn').reduce((s,r)=>s+toDays(r),0);
+    const use = groupRows.filter(r=>r.type==='use').reduce((s,r)=>s+toDays(r),0);
+    if(earn>0 && use>0) return `獲得 ${fmt(earn*getHoursPerDay())} 小時・使用 ${fmt(use*getHoursPerDay())} 小時`;
+    return '';
+  };
+  const listHtml = renderMonthGroups(category, compRows, compEmptyMsg, r=>buildCompLi(r,dMin,dMax,category), totalFn, forceExpand, subTotalFn);
   const curBalance = compBalanceUpTo(selectedYear, category);
   const nearestExpiry = compFifoRemaining(category)
     .filter(b=>b.expiry && b.remainDays>0.001)
