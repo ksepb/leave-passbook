@@ -414,7 +414,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.17-17';
+const APP_VERSION = 'v2026.08.17-18';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -3287,7 +3287,7 @@ function pageData(){
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('cloud')">
           <span>☁️ 雲端同步（跨裝置）</span>
-          <span>${currentUser?`已登入（${getSignInMethodLabel()}）`:'未登入'}　${settingsExpandedKey==='cloud'?'▲':'▼'}</span>
+          <span>${currentUser?'已登入':'未登入'}　${settingsExpandedKey==='cloud'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='cloud' ? (currentUser ? `
         <div class="auth-option">
