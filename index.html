@@ -261,7 +261,9 @@
   .expiry-decision-title{font-weight:700;font-size:14.5px;margin-bottom:3px;}
   .expiry-decision-sub{font-size:13px;color:var(--brick);margin-bottom:10px;}
   .expiry-decision-actions{display:flex;gap:8px;}
-  .expiry-decision-actions button{flex:1;}
+  .expiry-decision-option{flex:1;display:flex;flex-direction:column;gap:4px;}
+  .expiry-decision-caption{font-size:11px;color:var(--ink-soft);text-align:center;line-height:1.3;}
+  .expiry-decision-option button{width:100%;}
   .modal-box h3{margin:0 0 16px;font-family:'Noto Serif TC',serif;font-size:18px;color:var(--ink);}
   .home-detail-group{margin-bottom:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
   .home-detail-group:last-child{margin-bottom:0;}
@@ -420,7 +422,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.18-03';
+const APP_VERSION = 'v2026.08.18-04';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1687,8 +1689,8 @@ function expiryDecisionModal(){
   return `
     <div class="modal-overlay" onclick="closeExpiryDecisionModal()">
       <div class="modal-box" onclick="event.stopPropagation()">
-        <h3>⏳ 有補休／換休已經過期</h3>
-        <p class="hint" style="margin:0 0 14px;">以下 ${list.length} 筆還沒用完就已經過期了，請選擇要怎麼處理。選「已使用」會自動補一筆使用紀錄（備註「逾期自動取消」），讓結餘數字對得起來；選「保留」則維持原狀、之後系統自動扣抵時會跳過這一批（只有手動明確指定才會扣到），且不會再問這一筆。</p>
+        <h3>⏳ 補休／換休已過期（${list.length} 筆）</h3>
+        <p class="hint" style="margin:0 0 14px;">這幾筆還沒用完就已經過期了，請選擇要怎麼處理。</p>
         ${list.length>1 ? `<button type="button" class="ghost" style="width:100%;margin-bottom:14px;" onclick="markAllExpiredBatchesUsed()">✓ 全部標記為已使用</button>` : ''}
         <div class="expiry-decision-list">
           ${list.map(b=>{
@@ -1698,8 +1700,14 @@ function expiryDecisionModal(){
               <div class="expiry-decision-title">${toROC(b.date)} 獲得的 ${label}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
               <div class="expiry-decision-sub">剩 ${fmt(b.remainDays)} 天，${toROC(b.expiry)} 到期（已過期 ${diffDays} 天）</div>
               <div class="expiry-decision-actions">
-                <button type="button" class="btn-jade" onclick="decideExpiredBatch('${b.category}','${b.id}','used')">已使用</button>
-                <button type="button" class="ghost" onclick="decideExpiredBatch('${b.category}','${b.id}','kept')">保留</button>
+                <div class="expiry-decision-option">
+                  <button type="button" class="btn-jade" style="width:100%;" onclick="decideExpiredBatch('${b.category}','${b.id}','used')">已使用</button>
+                  <div class="expiry-decision-caption">補一筆使用紀錄，數字對得起來</div>
+                </div>
+                <div class="expiry-decision-option">
+                  <button type="button" class="ghost" style="width:100%;" onclick="decideExpiredBatch('${b.category}','${b.id}','kept')">保留</button>
+                  <div class="expiry-decision-caption">之後不會自動扣到，可手動指定</div>
+                </div>
               </div>
             </div>`;
           }).join('')}
