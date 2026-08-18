@@ -255,7 +255,13 @@
   .sync-status-box.sync-status-syncing{background:var(--paper-deep);color:var(--ink-soft);}
   .sync-status-box.sync-status-error,.sync-status-box.sync-status-idle{background:var(--amber-soft, #FBEFDC);color:var(--amber);}
   .modal-overlay{position:fixed;inset:0;background:rgba(43,42,40,.45);display:flex;align-items:center;justify-content:center;z-index:300;padding:24px;}
-  .modal-box{background:#fffdf8;border-radius:16px;padding:22px 20px;width:100%;max-width:340px;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+  .modal-box{background:#fffdf8;border-radius:16px;padding:22px 20px;width:100%;max-width:340px;box-shadow:0 20px 50px rgba(0,0,0,.3);max-height:80vh;overflow-y:auto;}
+  .expiry-decision-list{display:flex;flex-direction:column;gap:10px;max-height:50vh;overflow-y:auto;}
+  .expiry-decision-item{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff;}
+  .expiry-decision-title{font-weight:700;font-size:14.5px;margin-bottom:3px;}
+  .expiry-decision-sub{font-size:13px;color:var(--brick);margin-bottom:10px;}
+  .expiry-decision-actions{display:flex;gap:8px;}
+  .expiry-decision-actions button{flex:1;}
   .modal-box h3{margin:0 0 16px;font-family:'Noto Serif TC',serif;font-size:18px;color:var(--ink);}
   .home-detail-group{margin-bottom:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
   .home-detail-group:last-child{margin-bottom:0;}
@@ -414,7 +420,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.17-18';
+const APP_VERSION = 'v2026.08.18-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -960,6 +966,7 @@ let addRecordFrom = 'leaves';
 let quotaExpandedKey = null;
 let quotaEditModalOpen = null;
 let homeDetailModalOpen = null; // null | 'remain' | 'month' | 'year' —— 首頁摘要卡三格點進去的明細彈窗
+let expiryDecisionModalOpen = false; // 過期補休/換休批次「已使用/保留」決定彈窗
 function openHomeDetailModal(kind){ homeDetailModalOpen = kind; render(); }
 function closeHomeDetailModal(){ homeDetailModalOpen = null; render(); }
 
@@ -1493,10 +1500,11 @@ function _compFifoCore(category, excludeId){
     .sort((a,b)=> a.date.localeCompare(b.date) || (a.type==='earn'?-1:1));
   const batches = [];
   const breakdown = {}; // useRecordId -> [{date, note, take, batchId}]
+  let unfulfilledByKept = 0; // 因為跳過「保留」批次而扣不滿的總量，供一致性檢查排除，避免誤判成超扣
   records.forEach(r=>{
     const days = toDays(r);
     if(r.type==='earn'){
-      batches.push({id:r.id, date:r.date, expiry:r.expiry, note:r.note, photoUrl:r.photoUrl, remainDays: days, expiryAcknowledgedFor:r.expiryAcknowledgedFor});
+      batches.push({id:r.id, date:r.date, expiry:r.expiry, note:r.note, photoUrl:r.photoUrl, remainDays: days, expiryAcknowledgedFor:r.expiryAcknowledgedFor, expiryDecision:r.expiryDecision});
     } else {
       let toDeduct = days;
       const pinnedIds = new Set();
@@ -1532,9 +1540,12 @@ function _compFifoCore(category, excludeId){
       }
       // 指定批次扣不夠（或沒有指定）的部分，自動接回先進先出，從最早的開始補
       // 第一階段：優先從「沒被指定過」的批次補，這樣才符合「只指定扣一部分、故意留一部分」的預期
+      // 過期後使用者選過「保留」的批次（expiryDecision==='kept'）不會被自動選中，只有手動明確指定才會扣到它，
+      // 這是為了不讓系統自動去動用一批使用者已經明確表示「先留著、之後有需要再手動處理」的過期批次
       for(const b of batches){
         if(toDeduct<=0) break;
         if(pinnedIds.has(b.id)) continue;
+        if(b.expiryDecision==='kept') continue;
         if(b.remainDays<=0) continue;
         const take = Math.min(b.remainDays, toDeduct);
         takeFrom(b, take);
@@ -1542,9 +1553,11 @@ function _compFifoCore(category, excludeId){
       }
       // 第二階段：如果沒被指定的批次全部用完還是不夠，代表真的需要動用「已指定但還有剩」的批次，
       // 這時候不該再放著不用害系統誤判成餘額不足，改回去繼續照日期先後補（不然總量會對不起來，參見一致性檢查）
+      // 「保留」的批次同樣跳過，理由跟第一階段一致
       if(toDeduct>0){
         for(const b of batches){
           if(toDeduct<=0) break;
+          if(b.expiryDecision==='kept') continue;
           if(b.remainDays<=0) continue;
           const take = Math.min(b.remainDays, toDeduct);
           takeFrom(b, take);
@@ -1552,10 +1565,17 @@ function _compFifoCore(category, excludeId){
         }
       }
       // 若扣抵量超過目前所有獲得批次總和（理論上不該發生），超出的部分忽略，不影響到期提醒
+      // 這裡的toDeduct>0可能有兩種原因：① 剛好被跳過的「保留」批次還有剩餘量（系統正確保護，不是bug）
+      // ② 真的所有批次（含保留）都不夠扣（使用者記錄的用量超過實際擁有的總量，這才是真正該被一致性檢查抓到的異常）
+      // 只有原因①要排除，不能讓一致性檢查把它誤判成超扣
+      if(toDeduct>0.0001){
+        const keptAvailable = batches.filter(b=>b.expiryDecision==='kept').reduce((s,b)=>s+Math.max(0,b.remainDays),0);
+        unfulfilledByKept += Math.min(toDeduct, keptAvailable);
+      }
       if(useLog.length) breakdown[r.id] = useLog;
     }
   });
-  return { batches, breakdown };
+  return { batches, breakdown, unfulfilledByKept };
 }
 function compFifoRemaining(category, excludeId){
   return _compFifoCore(category, excludeId).batches;
@@ -1588,19 +1608,105 @@ function compEarnUsedByBreakdown(category, earnId){
 function checkCompLedgerConsistency(){
   try{
     ['comp','exchange'].forEach(category=>{
-      const fifoTotal = compFifoRemaining(category).reduce((s,b)=> s + Math.max(0, b.remainDays), 0);
+      const core = _compFifoCore(category, null);
+      const fifoTotal = core.batches.reduce((s,b)=> s + Math.max(0, b.remainDays), 0);
       const simpleTotal = compBalanceAsOf(category, '9999-12-31', null); // 涵蓋所有年度的全時段簡單加總
-      const diff = Math.abs(fifoTotal - simpleTotal);
+      // 差異裡如果有一部分是因為「保留」批次被系統正確跳過造成的（不是bug，是刻意的保護機制），要先扣掉這部分，
+      // 剩下還兜不起來的才是真正的異常（例如使用量超過所有批次總和，含保留批次都不夠扣）
+      const diff = Math.abs(fifoTotal - simpleTotal - core.unfulfilledByKept);
       if(diff > 0.01){
         const label = category==='comp' ? '補休' : '換休';
-        console.warn(`[一致性檢查] ${label}結餘不一致：FIFO加總=${fifoTotal}，簡單加總=${simpleTotal}`);
+        console.warn(`[一致性檢查] ${label}結餘不一致：FIFO加總=${fifoTotal}，簡單加總=${simpleTotal}，保留批次差異=${core.unfulfilledByKept}`);
         logAppError(
           `${label}結餘計算不一致`,
-          `FIFO加總＝${fmt(fifoTotal)} 天，簡單加總＝${fmt(simpleTotal)} 天，差異＝${fmt(diff)} 天。最可能是使用量超過獲得量（超扣）造成的，可以去「假別紀錄」檢查${label}紀錄有沒有登記錯誤。`
+          `FIFO加總＝${fmt(fifoTotal)} 天，簡單加總＝${fmt(simpleTotal)} 天，差異＝${fmt(diff)} 天（已排除保留批次造成的合理差異）。最可能是使用量超過獲得量（超扣）造成的，可以去「假別紀錄」檢查${label}紀錄有沒有登記錯誤。`
         );
       }
     });
   }catch(e){ console.error('一致性檢查本身發生錯誤', e); }
+}
+
+// 找出所有「已經過期、還沒用完、使用者還沒決定要怎麼處理」的補休/換休批次
+// 「還沒決定」的判斷：earn紀錄上沒有 expiryDecision==='kept' 這個標記（代表使用者選過要保留），
+// 而且目前透過FIFO算出來的剩餘量還大於0（代表還沒被別的使用紀錄扣完，包括這次自動加的「逾期自動取消」那筆）
+function getExpiringUndecidedBatches(){
+  const result = [];
+  ['comp','exchange'].forEach(category=>{
+    const batches = compFifoRemaining(category);
+    batches.forEach(b=>{
+      if(!b.expiry || b.remainDays<=0.0001) return;
+      if(b.expiry >= TODAY) return; // 還沒到期，不用問
+      const rec = state.compRecords.find(r=>r.id===b.id);
+      if(rec && rec.expiryDecision==='kept') return; // 已經選過保留，不再問
+      result.push(Object.assign({category}, b));
+    });
+  });
+  return result.sort((a,b)=> a.expiry.localeCompare(b.expiry));
+}
+// 使用者選「已使用」：自動幫這批補一筆「使用」紀錄，日期用到期日（不是今天，才能讓月份分組正確反映實際失效的月份），
+// 備註固定寫「逾期自動取消」，並且明確指定扣這一批（sourceAllocations），避免FIFO又跑去扣到別批
+async function markExpiredBatchUsed(category, batchId){
+  const batches = compFifoRemaining(category);
+  const b = batches.find(x=>x.id===batchId);
+  if(!b) return;
+  state.compRecords.push({
+    id: uid(), type:'use', category, date: b.expiry, unit:'day', amount: b.remainDays,
+    note: '逾期自動取消',
+    sourceAllocations: [{id: batchId, days: b.remainDays}],
+  });
+  await saveState();
+}
+// 使用者選「保留」：在這批earn紀錄上記一個標記，之後不會再被問到，且系統自動扣抵時會跳過這一批
+// （只有手動明確指定才會扣到它，見 _compFifoCore 裡的 expiryDecision==='kept' 判斷）
+async function markExpiredBatchKept(category, batchId){
+  const rec = state.compRecords.find(r=>r.id===batchId && (r.category||'comp')===category);
+  if(!rec) return;
+  rec.expiryDecision = 'kept';
+  await saveState();
+}
+async function markAllExpiredBatchesUsed(){
+  const list = getExpiringUndecidedBatches();
+  for(const b of list){
+    await markExpiredBatchUsed(b.category, b.id);
+  }
+  render();
+}
+async function decideExpiredBatch(category, id, decision){
+  if(decision==='used') await markExpiredBatchUsed(category, id);
+  else await markExpiredBatchKept(category, id);
+  if(getExpiringUndecidedBatches().length===0) expiryDecisionModalOpen = false;
+  render();
+}
+function closeExpiryDecisionModal(){
+  expiryDecisionModalOpen = false; // 稍後決定：不標記任何狀態，下次開App還是會再問
+  render();
+}
+function expiryDecisionModal(){
+  const list = getExpiringUndecidedBatches();
+  if(!list.length) return '';
+  return `
+    <div class="modal-overlay" onclick="closeExpiryDecisionModal()">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        <h3>⏳ 有補休／換休已經過期</h3>
+        <p class="hint" style="margin:0 0 14px;">以下 ${list.length} 筆還沒用完就已經過期了，請選擇要怎麼處理。選「已使用」會自動補一筆使用紀錄（備註「逾期自動取消」），讓結餘數字對得起來；選「保留」則維持原狀、之後系統自動扣抵時會跳過這一批（只有手動明確指定才會扣到），且不會再問這一筆。</p>
+        ${list.length>1 ? `<button type="button" class="ghost" style="width:100%;margin-bottom:14px;" onclick="markAllExpiredBatchesUsed()">✓ 全部標記為已使用</button>` : ''}
+        <div class="expiry-decision-list">
+          ${list.map(b=>{
+            const label = COMP_CATEGORIES[b.category].label;
+            const diffDays = Math.round((new Date(TODAY) - new Date(b.expiry))/86400000);
+            return `<div class="expiry-decision-item">
+              <div class="expiry-decision-title">${toROC(b.date)} 獲得的 ${label}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
+              <div class="expiry-decision-sub">剩 ${fmt(b.remainDays)} 天，${toROC(b.expiry)} 到期（已過期 ${diffDays} 天）</div>
+              <div class="expiry-decision-actions">
+                <button type="button" class="btn-jade" onclick="decideExpiredBatch('${b.category}','${b.id}','used')">已使用</button>
+                <button type="button" class="ghost" onclick="decideExpiredBatch('${b.category}','${b.id}','kept')">保留</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <button type="button" class="ghost" style="width:100%;margin-top:14px;" onclick="closeExpiryDecisionModal()">稍後決定</button>
+      </div>
+    </div>`;
 }
 function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
   if(!amount || amount<=0) return '';
@@ -1633,6 +1739,7 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
   for(const b of batches){
     if(toDeduct<=0.0001) break;
     if(pinnedIds.has(b.id)) continue;
+    if(b.expiryDecision==='kept') continue;
     const take = Math.min(b.remainDays, toDeduct);
     if(take>0.0001){
       consumed.push({date:b.date, note:b.note, take, remainAfter: b.remainDays-take, pinned:false});
@@ -1642,9 +1749,11 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
   }
   // 第二階段：沒被指定的批次都不夠補的話，回頭動用「已指定但還有剩」的批次繼續補，
   // 邏輯要跟compFifoRemaining一致，不然預覽畫面看到的結果會跟實際存檔後不一樣
+  // 「保留」的批次同樣跳過（跟_compFifoCore的邏輯保持一致）
   if(toDeduct>0.0001){
     for(const b of batches){
       if(toDeduct<=0.0001) break;
+      if(b.expiryDecision==='kept') continue;
       if(b.remainDays<=0.0001) continue;
       const take = Math.min(b.remainDays, toDeduct);
       if(take>0.0001){
@@ -3557,6 +3666,8 @@ function render(){
       ${pageContent}
     </div>
 
+    ${expiryDecisionModalOpen ? expiryDecisionModal() : ''}
+
     <div class="status" id="statusMsg" style="text-align:center;"></div>
   `;
   lastAddedId = null;
@@ -4549,6 +4660,7 @@ async function restoreBackup(){
   initOnlineDetection();
   await loadState();
   checkCompLedgerConsistency();
+  if(getExpiringUndecidedBatches().length>0) expiryDecisionModalOpen = true;
   applyUiScale();
   render();
   initFirebase();
