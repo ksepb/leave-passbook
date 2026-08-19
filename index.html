@@ -220,8 +220,9 @@
   .src-batch-input-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;}
   .src-batch-unit{font-size:14px;color:var(--ink-soft);flex-shrink:0;}
   .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
-  .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;}
-  .avail-batch-title{margin-bottom:3px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+  .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;position:relative;}
+  .avail-batch-edit-btn{position:absolute;top:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:14px;cursor:pointer;}
+  .avail-batch-title{margin-bottom:3px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding-right:38px;}
   .avail-batch-date{font-weight:700;font-size:14.5px;color:var(--ink);}
   .avail-batch-note-tag{display:inline-block;background:var(--plum-soft);color:var(--plum);font-weight:700;padding:2px 9px;border-radius:8px;font-size:13.5px;}
   .avail-batch-list-label{font-size:14px;font-weight:700;color:var(--jade);margin:0 0 8px;}
@@ -425,7 +426,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.19-07';
+const APP_VERSION = 'v2026.08.19-09';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1139,11 +1140,13 @@ function viewLeaveDetail(key, dateStr){
   }, 30);
 }
 // 直接跳轉並進入編輯模式（不用先看到列表再自己點編輯），用在「年度紀錄」頁點一筆資料就直接改
+// 注意：這裡不能像viewLeaveDetail一樣設searchQuery=dateStr，因為searchQuery同時也是搜尋框的過濾條件，
+// 會把其他不符合這個日期的紀錄全部濾掉，導致其他月份的資料看起來「消失」。
+// 只靠editing狀態搭配各頁面既有的forceExpand機制，就足以自動展開包含這筆紀錄的月份，不需要用到搜尋過濾。
 function jumpToEditRecord(key, dateStr, id){
   activeLeaveTab = key;
   if(dateStr){
     selectedYear = parseInt(dateStr.slice(0,4),10);
-    searchQuery = dateStr;
   }
   editing = (key==='comp'||key==='exchange') ? {kind:'comp', id} : {kind:'record', key, id};
   switchPage('leaves');
@@ -1981,34 +1984,6 @@ function pageYearRecord(){
       <ul class="ledger">${groups[ym].map(liBuilder).join('')}</ul>
     </div>`).join('') : `<div class="empty">${year} 年目前還沒有請假紀錄。</div>`;
 
-  // 補休/換休：這年獲得、但還沒用完的批次，點了直接跳去編輯那筆獲得紀錄
-  const pendingBatches = [];
-  ['comp','exchange'].forEach(category=>{
-    compFifoRemaining(category).forEach(b=>{
-      if(!b.date.startsWith(String(year))) return;
-      if(b.remainDays<=0.0001) return;
-      pendingBatches.push(Object.assign({category}, b));
-    });
-  });
-  pendingBatches.sort((a,b)=> a.date.localeCompare(b.date));
-  const pendingHtml = pendingBatches.length ? `
-    <div class="year-record-month">
-      <div class="year-record-month-title">🗂️ 還沒用完的補休／換休（${year} 年獲得）</div>
-      <ul class="ledger">
-        ${pendingBatches.map(b=>{
-          const info = COMP_CATEGORIES[b.category];
-          return `<li class="ledger year-record-row" onclick="jumpToEditRecord('${b.category}','${b.date}','${b.id}')">
-            <div class="ledger-top">
-              <span class="d">${toROC(b.date)}</span>
-              <span class="home-detail-tag c-${info.c}">${info.label}</span>
-              <span class="amt">剩 ${fmt(b.remainDays)} 天</span>
-            </div>
-            ${b.note ? `<div class="home-detail-note-tag" style="display:inline-block;margin-top:4px;">${escapeHtml(b.note)}</div>` : ''}
-          </li>`;
-        }).join('')}
-      </ul>
-    </div>` : '';
-
   return `
     <section class="block">
       <button type="button" class="ghost" style="margin-bottom:14px;" onclick="switchPage('home')">‹ 返回</button>
@@ -2019,7 +1994,6 @@ function pageYearRecord(){
       </div>
       ${year!==CUR_YEAR ? `<div style="text-align:center;margin-bottom:6px;"><button type="button" class="back-to-today-btn" onclick="setYear(${CUR_YEAR})">回今年</button></div>` : ''}
       <p class="hint" style="text-align:center;margin:0 0 16px;">${year} 年全年共使用 ${fmt(totalHours)} 小時（含特休、病假、事假等所有假別，以及補休、換休的使用紀錄）</p>
-      ${pendingHtml}
       ${listHtml}
     </section>`;
 }
@@ -3234,6 +3208,7 @@ function renderAvailBatchList(category){
     const urgent = b.diffDays!==null && b.diffDays<=7;
     const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期 ${Math.abs(b.diffDays)} 天` : (b.diffDays===0?'今天到期':`${b.diffDays} 天後到期`));
     return `<div class="avail-batch-item">
+      <button type="button" class="avail-batch-edit-btn" onclick="jumpToEditRecord('${category}','${b.date}','${b.id}')" title="編輯">✎</button>
       <div class="avail-batch-title"><span class="avail-batch-date">${toROC(b.date)}</span>${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}${b.photoUrl?` <span class="photo-badge" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')">📷 附件</span>`:''}</div>
       <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours-strong">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">⏳ 到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
