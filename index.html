@@ -371,6 +371,8 @@
   .backup.danger-zone{border-color:var(--brick);background:rgba(241,223,218,.5);margin-bottom:20px;}
   .backup.danger-zone h2{color:var(--brick);}
   .month-group{margin-bottom:10px;}
+  .year-record-month{margin-bottom:18px;}
+  .year-record-month-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;color:var(--ink-soft);padding-bottom:6px;margin-bottom:8px;border-bottom:1.5px solid var(--line);}
   .month-group:last-child{margin-bottom:0;}
   .month-header{width:100%;display:flex;flex-direction:column;align-items:stretch;border-radius:10px 10px 0 0;padding:13px 12px;color:var(--ink);text-align:left;transition:background .15s ease, border-color .15s ease;}
   .month-header.month-header-closed{background:linear-gradient(135deg, #F6EAD2, var(--paper-deep));border:1px solid #E4D3A8;border-radius:10px;}
@@ -422,7 +424,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.19-05';
+const APP_VERSION = 'v2026.08.19-06';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1940,7 +1942,6 @@ function pageYearRecord(){
 
   const totalHours = rows.reduce((s,r)=>s+r.hours, 0);
 
-  const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+r.hours, 0))}小時`;
   const liBuilder = (r)=> `
     <li class="ledger">
       <div class="ledger-top">
@@ -1952,7 +1953,18 @@ function pageYearRecord(){
       ${r.breakdown ? `<div class="hint" style="margin-top:4px;font-size:12.5px;">🗂️ 扣自：${r.breakdown}</div>` : ''}
     </li>`;
 
-  const listHtml = renderMonthGroups('yearRecord', rows, `${year} 年目前還沒有請假紀錄。`, liBuilder, totalFn);
+  const groups = {};
+  const order = [];
+  rows.forEach(r=>{
+    const ym = r.date.slice(0,7);
+    if(!groups[ym]){ groups[ym]=[]; order.push(ym); }
+    groups[ym].push(r);
+  });
+  const listHtml = rows.length ? order.map(ym=>`
+    <div class="year-record-month">
+      <div class="year-record-month-title">${monthLabel(ym)}</div>
+      <ul class="ledger">${groups[ym].map(liBuilder).join('')}</ul>
+    </div>`).join('') : `<div class="empty">${year} 年目前還沒有請假紀錄。</div>`;
 
   return `
     <section class="block">
