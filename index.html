@@ -425,7 +425,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.19-11';
+const APP_VERSION = 'v2026.08.19-14';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -973,6 +973,7 @@ let quotaExpandedKey = null;
 let quotaEditModalOpen = null;
 let homeDetailModalOpen = null; // null | 'remain' | 'month' —— 首頁摘要卡三格點進去的明細彈窗（年度已經改成獨立頁面，見switchPage('yearRecord')）
 let expiryDecisionModalOpen = false; // 過期補休/換休批次「已使用/保留」決定彈窗
+let quickEditModalOpen = null; // {category, id} | null —— 補休/換休「還沒用完的紀錄」清單點小筆，直接彈窗編輯，不用跳頁
 function openHomeDetailModal(kind){ homeDetailModalOpen = kind; render(); }
 function closeHomeDetailModal(){ homeDetailModalOpen = null; render(); }
 
@@ -1152,8 +1153,8 @@ function jumpToEditRecord(key, dateStr, id){
   editing = (key==='comp'||key==='exchange') ? {kind:'comp', id} : {kind:'record', key, id};
   render(); // 上面switchPage已經render過一次（那時editing還沒設定），這裡要再render一次讓編輯表單真的展開
   setTimeout(()=>{
-    const el = document.getElementById('leaveSectionContent');
-    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    const el = document.getElementById(`editrow-${key}-${id}`);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
   }, 30);
 }
 
@@ -2766,7 +2767,7 @@ function buildLeaveLi(t, r, dMin, dMax){
   if(editing && editing.kind==='record' && editing.key===t.key && editing.id===r.id){
     const eu = r.unit || 'day';
     const ea = r.unit ? r.amount : r.days;
-    return `<li class="editrow">
+    return `<li class="editrow" id="editrow-${t.key}-${r.id}">
       <div class="field">
         <label>日期</label>
         <div class="date-row"><input type="date" id="editDate-${t.key}-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}"><button type="button" class="date-toggle" onclick="toggleDateInputType('editDate-${t.key}-${r.id}')" title="切換手動輸入">⌨</button></div>
@@ -3061,10 +3062,15 @@ function pageAddRecord(){
     </section>`;
 }
 
-function buildCompLi(r, dMin, dMax, category){
+function buildCompLi(r, dMin, dMax, category, forceEdit){
   category = category || r.category || 'comp';
   const info = COMP_CATEGORIES[category];
-  if(editing && editing.kind==='comp' && editing.id===r.id){
+  // 這筆正在被「彈窗編輯」（quickEditModal）處理時，底下清單本身不能同時也渲染成編輯表單，
+  // 不然會產生跟彈窗裡一模一樣的id（例如editCompDate-xxx重複兩份），存檔時document.getElementById
+  // 抓到的會是畫面上第一個（被彈窗蓋住、使用者看不到也沒有實際輸入的那份），導致存檔內容是舊資料、
+  // 使用者操作起來像「完全沒反應」。forceEdit=true是專門給quickEditModal自己呼叫時用的，跳過這個排除規則。
+  const suppressForModal = quickEditModalOpen && quickEditModalOpen.id===r.id && !forceEdit;
+  if(editing && editing.kind==='comp' && editing.id===r.id && !suppressForModal){
     const eu = r.unit || 'day';
     const ea = r.unit ? r.amount : r.days;
     const editBatches = compFifoRemaining(category, r.id).filter(b=>b.remainDays>0.0001);
@@ -3080,7 +3086,7 @@ function buildCompLi(r, dMin, dMax, category){
     const initialNeededHours = eu==='hour' ? ea : ea*getHoursPerDay();
     const showInitialBar = r.type==='use' && hasManual;
     const initialBarHtml = showInitialBar ? `<span>已選 ${fmt(initialSelectedHours)} 小時</span><span class="ssb-need">需要 ${fmt(initialNeededHours)} 小時</span>` : '';
-    return `<li class="editrow">
+    return `<li class="editrow" id="editrow-${category}-${r.id}">
       <div class="field">
         <label>類型</label>
         <select id="editCompType-${r.id}" onchange="updateEditUsePreview('${r.id}','${category}')">
@@ -3190,6 +3196,33 @@ function buildCompLi(r, dMin, dMax, category){
   </li>`;
 }
 
+function openQuickEditModal(category, id){
+  quickEditModalOpen = {category, id};
+  editing = {kind:'comp', id};
+  render();
+}
+function closeQuickEditModal(){
+  quickEditModalOpen = null;
+  editing = null;
+  render();
+}
+function quickEditModal(){
+  if(!quickEditModalOpen) return '';
+  const {category, id} = quickEditModalOpen;
+  const rec = state.compRecords.find(r=>r.id===id);
+  if(!rec){ return ''; } // 紀錄不見了（例如剛好被刪除），彈窗內容渲染不出來就不顯示，避免報錯
+  const info = COMP_CATEGORIES[category];
+  const dMin = isoDate(CUR_YEAR-5,1,1), dMax = yearMax(CUR_YEAR+1);
+  // 直接重用buildCompLi在editing狀態下產生的編輯表單內容（跟原地展開是同一份表單），只是外面包一層彈窗，不是另外重寫一份
+  const formHtml = buildCompLi(rec, dMin, dMax, category, true);
+  return `
+    <div class="modal-overlay" onclick="closeQuickEditModal()">
+      <div class="modal-box" style="max-width:400px;max-height:85vh;overflow-y:auto;" onclick="event.stopPropagation()">
+        <h3>編輯${info.label}紀錄</h3>
+        <ul class="ledger" style="list-style:none;padding:0;margin:0;">${formHtml}</ul>
+      </div>
+    </div>`;
+}
 function renderAvailBatchList(category){
   const info = COMP_CATEGORIES[category];
   const todayD = new Date(TODAY);
@@ -3209,7 +3242,7 @@ function renderAvailBatchList(category){
     const urgent = b.diffDays!==null && b.diffDays<=7;
     const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期 ${Math.abs(b.diffDays)} 天` : (b.diffDays===0?'今天到期':`${b.diffDays} 天後到期`));
     return `<div class="avail-batch-item">
-      <button type="button" class="avail-batch-edit-btn" onclick="jumpToEditRecord('${category}','${b.date}','${b.id}')" title="編輯">✎</button>
+      <button type="button" class="avail-batch-edit-btn" onclick="openQuickEditModal('${category}','${b.id}')" title="編輯">✎</button>
       <div class="avail-batch-title"><span class="avail-batch-date">${toROC(b.date)}</span>${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}${b.photoUrl?` <span class="photo-badge" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')">📷 附件</span>`:''}</div>
       <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours-strong">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">⏳ 到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
@@ -3754,6 +3787,7 @@ function render(){
     </div>
 
     ${expiryDecisionModalOpen ? expiryDecisionModal() : ''}
+    ${quickEditModalOpen ? quickEditModal() : ''}
 
     <div class="status" id="statusMsg" style="text-align:center;"></div>
   `;
@@ -3974,7 +4008,7 @@ async function addRecord(key, e){
 }
 
 async function startEditRecord(key,id){ editing = {kind:'record', key, id}; render(); }
-function cancelEdit(){ editing = null; render(); }
+function cancelEdit(){ editing = null; quickEditModalOpen = null; render(); }
 
 async function saveEditRecord(key,id){
   try{
@@ -4419,6 +4453,7 @@ async function saveEditComp(id, btnEl){
       state.compRecords[idx] = updated;
     }
     editing = null;
+    quickEditModalOpen = null;
     await saveState();
     render();
     setStatus('已更新紀錄', true);
