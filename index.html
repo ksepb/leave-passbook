@@ -430,7 +430,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.22-03';
+const APP_VERSION = 'v2026.08.22-04';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -3259,6 +3259,18 @@ function renderAvailBatchList(category){
   const todayD = new Date(TODAY);
   const batches = compFifoRemaining(category)
     .filter(b=>b.remainDays>0.0001)
+    // 依照「獲得年份 ≤ 目前看的年度 ≤ 到期年份」過濾：
+    // 還沒獲得的（獲得年份晚於目前看的年度）不該出現；已經在更早年度就過期的也不該出現；
+    // 同一年內到期的，還算有效，維持顯示
+    .filter(b=>{
+      const earnYear = parseInt(b.date.slice(0,4),10);
+      if(earnYear > selectedYear) return false;
+      if(b.expiry){
+        const expiryYear = parseInt(b.expiry.slice(0,4),10);
+        if(expiryYear < selectedYear) return false;
+      }
+      return true;
+    })
     .map(b=>Object.assign({}, b, {diffDays: b.expiry ? Math.round((new Date(b.expiry)-todayD)/86400000) : null}))
     .sort((a,b)=>{
       if(a.diffDays===null && b.diffDays===null) return a.date.localeCompare(b.date);
