@@ -315,13 +315,12 @@
   .cal-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;}
   .cal-weekdays{margin-bottom:4px;font-size:11px;color:var(--ink-soft);text-align:center;}
-  .cal-cell{aspect-ratio:1/1;min-width:44px;min-height:44px;overflow:hidden;border:1px solid var(--line);border-radius:4px;padding:3px;background:#fff;}
-  .cal-cell.empty{border:none;background:transparent;}
-  .cal-cell.adjacent{background:transparent;border-color:transparent;cursor:default;}
+  .cal-cell{aspect-ratio:1/1;min-width:44px;min-height:44px;overflow:hidden;border-radius:12px;padding:3px;background:#EFEDE7;}
+  .cal-cell.empty{background:transparent;}
+  .cal-cell.adjacent{background:transparent;cursor:default;}
   .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
-  .cal-cell.today{border-color:var(--jade);}
   .cal-cell.today .cal-daynum{background:var(--jade);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;font-weight:700;}
-  .cal-cell.selected{background:var(--blue-soft);border-color:var(--blue);}
+  .cal-cell.selected{background:var(--blue-soft);}
   .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
   .cal-cell.selected.today .cal-daynum{background:var(--jade);color:#fff;}
   .cal-daynum{font-size:10px;color:var(--ink-soft);}
@@ -431,7 +430,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.22-02';
+const APP_VERSION = 'v2026.08.22-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
