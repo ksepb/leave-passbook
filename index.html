@@ -179,6 +179,7 @@
     background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTUgOWw3IDcgNy03IiBmaWxsPSJub25lIiBzdHJva2U9IiMyRjVENTAiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=");
     background-repeat:no-repeat; background-position:right 9px center; background-size:19px;
     padding-right:34px !important;
+    text-align:center; text-align-last:center;
   }
   .field input:focus,.field select:focus{background-color:#fff;}
   .field input:focus,.field select:focus{outline:none;border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);}
@@ -345,7 +346,7 @@
   .cal-detail-chip span{cursor:pointer;}
   .cal-detail-chip-del{background:rgba(0,0,0,.08);border:none;border-radius:50%;width:18px;height:18px;font-size:10px;line-height:1;cursor:pointer;color:inherit;flex-shrink:0;}
   .cal-detail-add-row{display:flex;gap:8px;margin-top:12px;align-items:center;}
-  .cal-detail-add-row select{flex:1;padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
+  .cal-detail-add-row select{flex:0 1 auto;min-width:110px;padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-dots{display:flex;flex-wrap:wrap;gap:1.5px;margin-top:2px;}
   .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;font-size:7px;font-weight:700;color:#fff;flex-shrink:0;}
   .cal-dot-wide{width:auto;min-width:16px;padding:0 2px;border-radius:5px;font-size:6.5px;letter-spacing:-.03em;flex-shrink:0;}
@@ -430,7 +431,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.22-04';
+const APP_VERSION = 'v2026.08.23-02';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -959,6 +960,7 @@ let editing = null;
 let searchQuery = '';
 let revealDate = null; // 從行事曆/其他頁面點某一天要跳去看時，用這個強制展開包含那天的月份，不會像searchQuery一樣把其他月份濾掉
 let sortAsc = false;
+let yearRecordSortAsc = false; // 年度紀錄頁專用的排序狀態，跟假別紀錄頁的sortAsc分開，避免切一邊另一邊也跟著變
 let selectedYear = CUR_YEAR;
 let calendarMode = true;
 let calYear = CUR_YEAR;
@@ -1964,7 +1966,7 @@ function pageYearRecord(){
     const breakdown = usage.length ? usage.map(u=>`${toROC(u.date)}${u.note?`（${escapeHtml(u.note)}）`:''}獲得的${info.label}`).join('、') : null;
     rows.push({ date:r.date, key:category, label:info.label, c:info.c, id:r.id, hours: toDays(r)*getHoursPerDay(), amountText:displayAmount(r), note:r.note, breakdown });
   });
-  rows.sort((a,b)=> b.date.localeCompare(a.date));
+  rows.sort((a,b)=> yearRecordSortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
 
   const totalHours = rows.reduce((s,r)=>s+r.hours, 0);
 
@@ -2001,6 +2003,7 @@ function pageYearRecord(){
         <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
       </div>
       ${year!==CUR_YEAR ? `<div style="text-align:center;margin-bottom:6px;"><button type="button" class="back-to-today-btn" onclick="setYear(${CUR_YEAR})">回今年</button></div>` : ''}
+      ${rows.length ? `<div style="text-align:center;margin-bottom:6px;"><button type="button" class="sortbtn" onclick="toggleYearRecordSort()">日期 ${yearRecordSortAsc? '▲ 舊到新':'▼ 新到舊'}</button></div>` : ''}
       <p class="hint" style="text-align:center;margin:0 0 16px;">${year} 年全年共使用 ${fmt(totalHours)} 小時（含特休、病假、事假等所有假別，以及補休、換休的使用紀錄）</p>
       ${listHtml}
     </section>`;
@@ -3882,6 +3885,7 @@ function renderSearchResult(){
 }
 
 function toggleSort(){ sortAsc = !sortAsc; render(); }
+function toggleYearRecordSort(){ yearRecordSortAsc = !yearRecordSortAsc; render(); }
 
 function changeYear(delta){ selectedYear += delta; render(); }
 function setYear(y){ selectedYear = y; render(); }
