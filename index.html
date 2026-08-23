@@ -431,7 +431,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.23-02';
+const APP_VERSION = 'v2026.08.23-03';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2608,7 +2608,7 @@ function calendarPanel(){
         <span onclick="viewLeaveDetail('${it.key}','${calSelectedDate}')">${escapeHtml(it.label)} ›</span>
         <button type="button" class="cal-detail-chip-del" onclick="event.stopPropagation();removeFromCalendar(this,'${it.kind}','${it.key}','${it.id}')" aria-label="刪除">✕</button>
       </span>`).join('')}</div>` : `<div class="hint">這天沒有請假紀錄</div>`;
-    const typeOptions = LEAVE_TYPES.map(t=>`<option value="${t.key}">${t.label}</option>`).join('') + `<option value="comp">補休</option><option value="exchange">換休</option>`;
+    const typeOptions = `<option value="${LEAVE_TYPES[0].key}">${LEAVE_TYPES[0].label}</option><option value="comp">補休</option>` + LEAVE_TYPES.slice(1).map(t=>`<option value="${t.key}">${t.label}</option>`).join('') + `<option value="exchange">換休</option>`;
     return `<div class="cal-detail-panel">
       <div class="cal-detail-date">${toROC(calSelectedDate)}（${weekLabel}）</div>
       ${holidayLine}
@@ -2959,7 +2959,7 @@ function pageAddRecord(){
   const dDef = addRecordDate || defaultDateFor(selectedYear);
   const backLabel = addRecordFrom==='home' ? '‹ 返回首頁' : (addRecordFrom==='viz' ? '‹ 返回行事曆' : '‹ 返回列表');
   const backBtn = `<button type="button" class="ghost" style="margin-bottom:14px;" onclick="switchPage('${addRecordFrom}')">${backLabel}</button>`;
-  const typeOptions = LEAVE_TYPES.map(t=>`<option value="${t.key}" ${key===t.key?'selected':''}>${t.label}</option>`).join('') + `<option value="comp" ${key==='comp'?'selected':''}>補休</option><option value="exchange" ${key==='exchange'?'selected':''}>換休</option>`;
+  const typeOptions = `<option value="${LEAVE_TYPES[0].key}" ${key===LEAVE_TYPES[0].key?'selected':''}>${LEAVE_TYPES[0].label}</option><option value="comp" ${key==='comp'?'selected':''}>補休</option>` + LEAVE_TYPES.slice(1).map(t=>`<option value="${t.key}" ${key===t.key?'selected':''}>${t.label}</option>`).join('') + `<option value="exchange" ${key==='exchange'?'selected':''}>換休</option>`;
   const typeSelector = `
     <div class="field" style="margin-bottom:14px;max-width:220px;">
       <label>選擇假別</label>
