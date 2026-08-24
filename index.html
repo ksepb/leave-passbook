@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>假期存摺</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2F5D50">
@@ -38,7 +38,7 @@
     background-size:24px 24px, 100% 100%;
     background-attachment:fixed;
     color:var(--ink); font-family:'Noto Sans TC', sans-serif;
-    padding:24px 16px calc(86px + env(safe-area-inset-bottom)); min-height:100vh;
+    padding:calc(24px + env(safe-area-inset-top)) 16px calc(86px + env(safe-area-inset-bottom)); min-height:100vh;
   }
   .wrap{max-width:760px;margin:0 auto;}
   @keyframes fadeInPage{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
@@ -416,7 +416,11 @@
   .status{font-size:15px;font-weight:700;margin-top:8px;min-height:20px;padding:8px 4px;}
   .status.ok{color:var(--jade);}
   .status.err{color:var(--brick);}
-  .loading{text-align:center;padding:60px 0;color:var(--ink-soft);font-size:13px;}
+  .loading{text-align:center;padding:120px 0 60px;color:var(--ink-soft);font-size:13px;animation:loadingPulse 1.6s ease-in-out infinite;}
+  .loading-seal{font-size:44px;line-height:1;margin-bottom:10px;}
+  .loading-title{font-family:'Noto Serif TC',serif;font-weight:900;font-size:22px;color:var(--ink);margin-bottom:8px;}
+  .loading-text{font-size:13px;color:var(--ink-soft);}
+  @keyframes loadingPulse{0%,100%{opacity:.55;}50%{opacity:1;}}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
@@ -426,12 +430,16 @@
 </head>
 <body>
 <div class="wrap" id="app">
-  <div class="loading" id="loading">載入存摺資料中…</div>
+  <div class="loading" id="loading">
+    <div class="loading-seal">📒</div>
+    <div class="loading-title">假期存摺</div>
+    <div class="loading-text">載入存摺資料中…</div>
+  </div>
 </div>
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.24-02';
+const APP_VERSION = 'v2026.08.24-04';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -982,6 +990,8 @@ let quotaEditModalOpen = null;
 let homeDetailModalOpen = null; // null | 'remain' | 'month' —— 首頁摘要卡三格點進去的明細彈窗（年度已經改成獨立頁面，見switchPage('yearRecord')）
 let expiryDecisionModalOpen = false; // 過期補休/換休批次「已使用/保留」決定彈窗
 let quickEditModalOpen = null; // {category, id} | null —— 補休/換休「還沒用完的紀錄」清單點小筆，直接彈窗編輯，不用跳頁
+let customAddOpen = false; // 「其他假別」頁面的新增表單是否展開
+let customAddType = 'earn'; // 「其他假別」新增表單目前選的是獲得還是使用
 function openHomeDetailModal(kind){ homeDetailModalOpen = kind; render(); }
 function closeHomeDetailModal(){ homeDetailModalOpen = null; render(); }
 
@@ -1514,23 +1524,23 @@ function toDays(r){
 function displayAmount(r){
   return `${fmt(toDays(r)*getHoursPerDay())} 小時`;
 }
-function compBalanceAsOf(category, date, excludeId){
+function compBalanceAsOf(category, date, excludeId, customLabel){
   return state.compRecords
-    .filter(r=>(r.category||'comp')===category && r.date<=date && r.id!==excludeId)
+    .filter(r=>(r.category||'comp')===category && r.date<=date && r.id!==excludeId && (category!=='custom' || r.customLabel===customLabel))
     .reduce((s,r)=> s + (r.type==='earn'? toDays(r) : -toDays(r)), 0);
 }
 
-function compBalanceUpTo(year, category){
+function compBalanceUpTo(year, category, customLabel){
   category = category || 'comp';
-  return state.compRecords.filter(r=> parseInt(r.date.slice(0,4),10) <= year && (r.category||'comp')===category).reduce((s,r)=> s + (r.type==='earn'? toDays(r): -toDays(r)),0);
+  return state.compRecords.filter(r=> parseInt(r.date.slice(0,4),10) <= year && (r.category||'comp')===category && (category!=='custom' || r.customLabel===customLabel)).reduce((s,r)=> s + (r.type==='earn'? toDays(r): -toDays(r)),0);
 }
 
 // 先進先出核心運算：算出每一筆「獲得」紀錄實際還剩多少沒被用掉，
 // 同時記錄每一筆「使用」紀錄實際扣了哪些批次各多少天（不管是手動指定還是自動判斷），
 // 這樣歷史紀錄畫面才能不管是不是手動指定，都能顯示「這筆實際扣了哪幾批」。
-function _compFifoCore(category, excludeId){
+function _compFifoCore(category, excludeId, customLabel){
   const records = state.compRecords
-    .filter(r=>(r.category||'comp')===category && r.id!==excludeId)
+    .filter(r=>(r.category||'comp')===category && r.id!==excludeId && (category!=='custom' || r.customLabel===customLabel))
     .slice()
     .sort((a,b)=> a.date.localeCompare(b.date) || (a.type==='earn'?-1:1));
   const batches = [];
@@ -1612,17 +1622,17 @@ function _compFifoCore(category, excludeId){
   });
   return { batches, breakdown, unfulfilledByKept };
 }
-function compFifoRemaining(category, excludeId){
-  return _compFifoCore(category, excludeId).batches;
+function compFifoRemaining(category, excludeId, customLabel){
+  return _compFifoCore(category, excludeId, customLabel).batches;
 }
 // 給歷史紀錄畫面用：查某一筆使用紀錄實際扣了哪幾批、各扣多少（不管是手動指定還是自動判斷）
-function compUsageBreakdown(category, useRecordId){
-  return _compFifoCore(category, null).breakdown[useRecordId] || [];
+function compUsageBreakdown(category, useRecordId, customLabel){
+  return _compFifoCore(category, null, customLabel).breakdown[useRecordId] || [];
 }
 // 反向查詢：這筆「獲得」批次，被哪幾筆「使用」紀錄扣過、各扣多少、扣的那天是哪天
 // 用途：翻到獲得那筆所在的月份時，就算實際使用紀錄是登記在別的月份，也能看出這批已經被動用了
-function compEarnUsedByBreakdown(category, earnId){
-  const breakdown = _compFifoCore(category, null).breakdown;
+function compEarnUsedByBreakdown(category, earnId, customLabel){
+  const breakdown = _compFifoCore(category, null, customLabel).breakdown;
   const results = [];
   Object.keys(breakdown).forEach(useId=>{
     breakdown[useId].forEach(entry=>{
@@ -2063,6 +2073,17 @@ function stampCard(t){
       <div class="label">${t.label}剩餘</div>
       <div class="num c-${t.c}">${fmt(remain)}天 <span class="hour-inline">${fmt(remain*getHoursPerDay())}小時</span><small>共 ${fmt(getQuota(t.key,selectedYear))} 天</small></div>
       ${chips.length? `<div class="mini-chips">${chips.join('')}</div>` : ''}
+    </div>`;
+}
+
+function customStampCard(){
+  const activeLabels = getActiveCustomLabels();
+  if(!activeLabels.length) return '';
+  return `
+    <div class="stamp-card" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--plum) 45%, transparent);" onclick="viewLeaveDetail('custom')">
+      <div class="seal c-plum">他</div>
+      <div class="label">其他假別</div>
+      ${activeLabels.map(x=>`<div class="num c-plum" style="font-size:16px;margin-top:2px;">${escapeHtml(x.label)}剩餘 ${fmt(x.remainDays)}天</div>`).join('')}
     </div>`;
 }
 
@@ -2553,9 +2574,11 @@ function calendarPanel(){
       const d = parseInt(r.date.slice(8,10),10);
       if(!dayMap[d]) dayMap[d]=[];
       const cat = r.category||'comp';
-      const info = COMP_CATEGORIES[cat];
+      const isCustom = cat==='custom';
+      const label = isCustom ? (r.customLabel||'其他假別') : COMP_CATEGORIES[cat].label;
+      const c = isCustom ? 'plum' : COMP_CATEGORIES[cat].c;
       const sign = r.type==='earn' ? '+' : '－';
-      dayMap[d].push({kind:'comp', key:cat, id:r.id, seal:sign+info.label, wide:true, c:info.c, label:`${info.label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
+      dayMap[d].push({kind:'comp', key:cat, id:r.id, seal:sign+label, wide:true, c, label:`${label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
     }
   });
   let cells = '';
@@ -2595,11 +2618,17 @@ function calendarPanel(){
   state.compRecords.forEach(r=>{
     if(r.date.startsWith(ymPrefix) && r.type==='use'){
       const cat = r.category||'comp';
-      monthUsage[cat] = (monthUsage[cat]||0) + toDays(r);
+      if(cat==='custom'){
+        const key = `custom:${r.customLabel||'其他假別'}`;
+        monthUsage[key] = (monthUsage[key]||0) + toDays(r);
+      } else {
+        monthUsage[cat] = (monthUsage[cat]||0) + toDays(r);
+      }
     }
   });
   const monthUsageLabels = LEAVE_TYPES.concat([{key:'comp',label:'補休'},{key:'exchange',label:'換休'}]);
-  const monthSummaryParts = monthUsageLabels.filter(t=>monthUsage[t.key]>0).map(t=>`${t.label} ${fmt(monthUsage[t.key])}天`);
+  const customUsageParts = Object.keys(monthUsage).filter(k=>k.startsWith('custom:') && monthUsage[k]>0).map(k=>`${k.slice(7)} ${fmt(monthUsage[k])}天`);
+  const monthSummaryParts = monthUsageLabels.filter(t=>monthUsage[t.key]>0).map(t=>`${t.label} ${fmt(monthUsage[t.key])}天`).concat(customUsageParts);
   const monthSummary = monthSummaryParts.length ? `本月已用：${monthSummaryParts.join('、')}` : '本月尚無請假紀錄';
   const selectedInfo = calSelectedDate && calSelectedDate.startsWith(ymPrefix) ? (()=>{
     const dNum = parseInt(calSelectedDate.slice(8,10),10);
@@ -2851,7 +2880,7 @@ function leaveTabBar(){
     {key:LEAVE_TYPES[0].key, label:LEAVE_TYPES[0].label, c:LEAVE_TYPES[0].c},
     {key:'comp', label:'補休', c:'brick'},
     {key:'exchange', label:'換休', c:'teal'}
-  ].concat(LEAVE_TYPES.slice(1).map(t=>({key:t.key, label:t.label, c:t.c})));
+  ].concat(LEAVE_TYPES.slice(1).map(t=>({key:t.key, label:t.label, c:t.c}))).concat([{key:'custom', label:'其他假別', c:'plum'}]);
   return `
     <div class="leave-tabs">
       ${tabs.map(t=>{
@@ -3302,6 +3331,153 @@ function renderAvailBatchList(category){
   }).join('')}</div>`;
 }
 
+function toggleCustomAdd(){ customAddOpen = !customAddOpen; render(); }
+function setCustomAddType(t){ customAddType = t; render(); }
+
+// 「其他假別」目前有效（還沒用完）的所有名目清單，每個名目各自獨立算FIFO結餘
+function getActiveCustomLabels(){
+  const labels = Array.from(new Set(state.compRecords.filter(r=>(r.category||'comp')==='custom' && r.customLabel).map(r=>r.customLabel)));
+  return labels.map(label=>{
+    const batches = compFifoRemaining('custom', null, label).filter(b=>b.remainDays>0.0001);
+    const remainDays = batches.reduce((s,b)=>s+b.remainDays, 0);
+    const nearestExpiry = batches.filter(b=>b.expiry).sort((a,b)=>a.expiry.localeCompare(b.expiry))[0];
+    return { label, remainDays, batches, nearestExpiry: nearestExpiry ? nearestExpiry.expiry : null };
+  }).filter(x=>x.remainDays>0.0001);
+}
+
+async function addCustomRecord(e){
+  e.preventDefault();
+  try{
+    const type = customAddType;
+    const label = document.getElementById('customLabelInput') ? document.getElementById('customLabelInput').value.trim() : '';
+    const date = parseFlexibleDate(document.getElementById('customDate').value);
+    const unit = document.getElementById('customUnit').value;
+    const amount = parseFloat(document.getElementById('customAmount').value);
+    const note = document.getElementById('customNote').value.trim();
+    if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫日期與數量', false); return; }
+    if(type==='earn' && !label){ setStatus('請填寫假別名稱（例如：婚假、喪假）', false); return; }
+    let useLabel = label;
+    if(type==='use'){
+      const sel = document.getElementById('customUseLabelSelect');
+      useLabel = sel ? sel.value : '';
+      if(!useLabel){ setStatus('請選擇要使用哪個假別名目', false); return; }
+    }
+    const daysEquiv = unit==='hour' ? amount/getHoursPerDay() : amount;
+    if(type==='use'){
+      const balAsOfDate = compBalanceAsOf('custom', date, null, useLabel);
+      if(balAsOfDate - daysEquiv < 0){
+        if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，「${useLabel}」只累積了 ${fmt(balAsOfDate)} 天，登記後會變負數，仍要登記嗎？`)) return;
+      }
+    }
+    const id = uid();
+    const record = { id, type, date, unit, amount, note, category:'custom', customLabel: useLabel };
+    if(type==='earn'){
+      const expiryEl = document.getElementById('customExpiry');
+      const expiry = expiryEl ? parseFlexibleDate(expiryEl.value) : null;
+      if(expiry) record.expiry = expiry;
+    }
+    state.compRecords.push(record);
+    lastAddedId = id;
+    customAddOpen = false;
+    await saveState();
+    render();
+    setStatus(`已新增${type==='earn'?'獲得':'使用'}「${useLabel}」${fmt(amount)}${unit==='hour'?'小時':'天'}`, true);
+  }catch(err){
+    setStatus('新增失敗：' + (err && err.message ? err.message : String(err)), false);
+  }
+}
+
+function customSectionHtml(){
+  const year = selectedYear;
+  const activeLabels = getActiveCustomLabels();
+  const unusedListHtml = activeLabels.length ? `
+    <div class="overview-panel" style="background:var(--plum-soft);margin-bottom:16px;">
+      <h3 class="section-title">🗂️ 還沒用完的紀錄</h3>
+      <div class="avail-batch-list">${activeLabels.map(x=>`
+        <div class="avail-batch-item">
+          <div class="avail-batch-title"><span class="avail-batch-note-tag" style="background:var(--plum-soft);color:var(--plum);">${escapeHtml(x.label)}</span></div>
+          <div class="avail-batch-remain">剩 ${fmt(x.remainDays)} 天<span class="avail-batch-hours-strong">（${fmt(x.remainDays*getHoursPerDay())} 小時）</span></div>
+          ${x.nearestExpiry ? `<div class="avail-batch-expiry" style="color:var(--amber);">⏳ 到期 ${toROC(x.nearestExpiry)}</div>` : ''}
+        </div>`).join('')}</div>
+    </div>` : `<div class="hint" style="margin-bottom:16px;">目前沒有還能使用的其他假別紀錄。</div>`;
+
+  const addForm = customAddOpen ? `
+    <div class="overview-panel" style="background:#fff;border:1px solid var(--plum-soft);margin-bottom:16px;">
+      <div class="row" style="gap:8px;margin-bottom:12px;">
+        <button type="button" class="${customAddType==='earn'?'btn-plum':'ghost'}" onclick="setCustomAddType('earn')" style="flex:1;">獲得</button>
+        <button type="button" class="${customAddType==='use'?'btn-plum':'ghost'}" onclick="setCustomAddType('use')" style="flex:1;">使用</button>
+      </div>
+      <form onsubmit="addCustomRecord(event)">
+        ${customAddType==='earn' ? `
+          <div class="field" style="margin-bottom:12px;">
+            <label>假別名稱</label>
+            <input type="text" id="customLabelInput" placeholder="例如：婚假、喪假">
+          </div>` : `
+          <div class="field" style="margin-bottom:12px;">
+            <label>選擇假別</label>
+            <select id="customUseLabelSelect">${activeLabels.map(x=>`<option value="${escapeAttr(x.label)}">${escapeHtml(x.label)}（剩${fmt(x.remainDays)}天）</option>`).join('')}</select>
+          </div>`}
+        <div class="field" style="margin-bottom:12px;">
+          <label>日期</label>
+          <div class="date-row"><input type="date" id="customDate" value="${defaultDateFor(year)}"><button type="button" class="date-toggle" onclick="toggleDateInputType('customDate')" title="切換手動輸入">⌨</button></div>
+        </div>
+        <div class="field field-days" style="margin-bottom:12px;">
+          <label>數量</label>
+          <div class="days-row">
+            <input type="number" id="customAmount" value="1" min="0.5" step="0.5">
+            <select id="customUnit"><option value="day">天</option><option value="hour">小時</option></select>
+          </div>
+        </div>
+        ${customAddType==='earn' ? `
+          <div class="field" style="margin-bottom:12px;">
+            <label>🗓️ 到期日（可自行設定，沒有固定規則）</label>
+            <div class="date-row"><input type="date" id="customExpiry" value="${addYears(defaultDateFor(year),2)}"><button type="button" class="date-toggle" onclick="toggleDateInputType('customExpiry')" title="切換手動輸入">⌨</button></div>
+          </div>` : ''}
+        <div class="field" style="margin-bottom:14px;">
+          <label>備註</label>
+          <input type="text" id="customNote" placeholder="選填">
+        </div>
+        <div class="row" style="gap:8px;">
+          <button type="button" class="ghost" style="flex:1;" onclick="toggleCustomAdd()">取消</button>
+          <button type="submit" class="btn-plum" style="flex:1;">儲存</button>
+        </div>
+      </form>
+    </div>` : `<button type="button" class="btn-plum" style="width:100%;margin-bottom:16px;" onclick="toggleCustomAdd()">＋ 新增其他假別</button>`;
+
+  const historyRows = state.compRecords.filter(r=>(r.category||'comp')==='custom' && r.date.startsWith(String(year)));
+  const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r)*getHoursPerDay(),0))}小時`;
+  const liBuilder = (r)=> `
+    <li class="ledger">
+      <div class="ledger-top">
+        <span class="d">${toROC(r.date)}</span>
+        <span class="tag" style="background:var(--plum-soft);color:var(--plum);">${escapeHtml(r.customLabel||'其他假別')}・${r.type==='earn'?'獲得':'使用'}</span>
+        <span class="days">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
+        ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
+      </div>
+      <div class="ledger-bottom">
+        <div class="ledger-actions">
+          <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
+        </div>
+      </div>
+    </li>`;
+  const historyHtml = renderMonthGroups('custom', historyRows, `${year} 年目前沒有其他假別紀錄。`, liBuilder, totalFn);
+
+  return `
+    <section class="block">
+      <h2 style="margin-top:0;">其他假別</h2>
+      <p class="hint" style="margin-bottom:16px;">給喪假、婚假這類不常發生、但有固定天數跟期限的假別使用。每個名稱各自獨立計算，互不影響。</p>
+      ${unusedListHtml}
+      ${addForm}
+      <div class="year-switch" style="justify-content:center;margin-bottom:10px;">
+        <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
+        <div class="year-label">${year}年</div>
+        <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
+      </div>
+      <h3 class="section-title">歷史紀錄</h3>
+      ${historyHtml}
+    </section>`;
+}
+
 function compSectionHtml(category){
   category = category || 'comp';
   const info = COMP_CATEGORIES[category];
@@ -3417,6 +3593,7 @@ function pageHome(justEntered){
       ${stampCard(LEAVE_TYPES[0])}
       ${compStampCard('comp')}
       ${compStampCard('exchange')}
+      ${customStampCard()}
       ${LEAVE_TYPES.slice(1).map(stampCard).join('')}
     </div>
 
@@ -3442,7 +3619,7 @@ function pageLeaves(){
     </div>
     ${leaveTabBar()}
     <div id="leaveSectionContent">
-      ${activeLeaveTab==='comp' ? compSectionHtml('comp') : activeLeaveTab==='exchange' ? compSectionHtml('exchange') : leaveSection(LEAVE_TYPES.find(t=>t.key===activeLeaveTab) || LEAVE_TYPES[0])}
+      ${activeLeaveTab==='comp' ? compSectionHtml('comp') : activeLeaveTab==='exchange' ? compSectionHtml('exchange') : activeLeaveTab==='custom' ? customSectionHtml() : leaveSection(LEAVE_TYPES.find(t=>t.key===activeLeaveTab) || LEAVE_TYPES[0])}
     </div>
   `;
 }
@@ -4519,9 +4696,13 @@ async function saveEditComp(id, btnEl){
   }
 }
 
+function compRecordLabel(r){
+  const category = r.category||'comp';
+  return category==='custom' ? (r.customLabel || '其他假別') : COMP_CATEGORIES[category].label;
+}
 async function removeComp(btnEl, id){
   const target0 = state.compRecords.find(r=>r.id===id);
-  const confirmText = target0 ? `確定刪除這筆 ${toROC(target0.date)} ${COMP_CATEGORIES[target0.category||'comp'].label} ${displayAmount(target0)}？` : '確定要刪除這筆紀錄嗎？';
+  const confirmText = target0 ? `確定刪除這筆 ${toROC(target0.date)} ${compRecordLabel(target0)} ${displayAmount(target0)}？` : '確定要刪除這筆紀錄嗎？';
   if(!window.confirm(confirmText)) return;
   try{
     await playRemoveAnimation(btnEl);
@@ -4529,7 +4710,7 @@ async function removeComp(btnEl, id){
     if(idx===-1) return;
     const item = state.compRecords[idx];
     state.compRecords.splice(idx,1);
-    registerUndo({ kind:'comp', item, index: idx, label: `${COMP_CATEGORIES[item.category||'comp'].label} ${toROC(item.date)} ${displayAmount(item)}` });
+    registerUndo({ kind:'comp', item, index: idx, label: `${compRecordLabel(item)} ${toROC(item.date)} ${displayAmount(item)}` });
     await saveState();
     render();
   }catch(err){
