@@ -431,7 +431,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.23-03';
+const APP_VERSION = 'v2026.08.24-02';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -960,7 +960,7 @@ let editing = null;
 let searchQuery = '';
 let revealDate = null; // 從行事曆/其他頁面點某一天要跳去看時，用這個強制展開包含那天的月份，不會像searchQuery一樣把其他月份濾掉
 let sortAsc = false;
-let yearRecordSortAsc = false; // 年度紀錄頁專用的排序狀態，跟假別紀錄頁的sortAsc分開，避免切一邊另一邊也跟著變
+let yearRecordSortAsc = true; // 年度紀錄頁專用的排序狀態，跟假別紀錄頁的sortAsc分開，避免切一邊另一邊也跟著變；預設舊到新
 let selectedYear = CUR_YEAR;
 let calendarMode = true;
 let calYear = CUR_YEAR;
@@ -1257,7 +1257,7 @@ function addMonths(dateStr, n){
 function defaultState(){
   const records={};
   LEAVE_TYPES.forEach(t=>{ records[t.key]=[]; });
-  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1, annualMinDays: DEFAULT_ANNUAL_MIN_DAYS, autoDeleteExpiredPhotos: true };
+  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1, annualMinDays: DEFAULT_ANNUAL_MIN_DAYS, autoDeleteExpiredPhotos: true, overviewUnit:'day', sortAsc:false, yearRecordSortAsc:true };
 }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -1388,6 +1388,9 @@ async function loadState(){
       if(parsed.uiScale){ state.uiScale = Number(parsed.uiScale); }
       if(parsed.lastUsedType){ state.lastUsedType = String(parsed.lastUsedType); }
       if(parsed.autoDeleteExpiredPhotos !== undefined){ state.autoDeleteExpiredPhotos = !!parsed.autoDeleteExpiredPhotos; }
+      if(parsed.overviewUnit==='day' || parsed.overviewUnit==='hour'){ state.overviewUnit = parsed.overviewUnit; overviewUnit = parsed.overviewUnit; }
+      if(parsed.sortAsc !== undefined){ state.sortAsc = !!parsed.sortAsc; sortAsc = !!parsed.sortAsc; }
+      if(parsed.yearRecordSortAsc !== undefined){ state.yearRecordSortAsc = !!parsed.yearRecordSortAsc; yearRecordSortAsc = !!parsed.yearRecordSortAsc; }
     }
   }catch(e){ /* 無資料，使用預設值 */ }
 }
@@ -1996,14 +1999,16 @@ function pageYearRecord(){
 
   return `
     <section class="block">
-      <button type="button" class="ghost" style="margin-bottom:14px;" onclick="switchPage('home')">‹ 返回</button>
+      <div class="row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <button type="button" class="ghost" onclick="switchPage('home')">‹ 返回</button>
+        ${rows.length ? `<button type="button" class="sortbtn" onclick="toggleYearRecordSort()">日期 ${yearRecordSortAsc? '▲ 舊到新':'▼ 新到舊'}</button>` : ''}
+      </div>
       <div class="year-switch" style="justify-content:center;margin-bottom:6px;">
         <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
         <div class="year-label">${year}年</div>
         <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
       </div>
       ${year!==CUR_YEAR ? `<div style="text-align:center;margin-bottom:6px;"><button type="button" class="back-to-today-btn" onclick="setYear(${CUR_YEAR})">回今年</button></div>` : ''}
-      ${rows.length ? `<div style="text-align:center;margin-bottom:6px;"><button type="button" class="sortbtn" onclick="toggleYearRecordSort()">日期 ${yearRecordSortAsc? '▲ 舊到新':'▼ 新到舊'}</button></div>` : ''}
       <p class="hint" style="text-align:center;margin:0 0 16px;">${year} 年全年共使用 ${fmt(totalHours)} 小時（含特休、病假、事假等所有假別，以及補休、換休的使用紀錄）</p>
       ${listHtml}
     </section>`;
@@ -3884,8 +3889,8 @@ function renderSearchResult(){
   render();
 }
 
-function toggleSort(){ sortAsc = !sortAsc; render(); }
-function toggleYearRecordSort(){ yearRecordSortAsc = !yearRecordSortAsc; render(); }
+async function toggleSort(){ sortAsc = !sortAsc; state.sortAsc = sortAsc; render(); await saveState(); }
+async function toggleYearRecordSort(){ yearRecordSortAsc = !yearRecordSortAsc; state.yearRecordSortAsc = yearRecordSortAsc; render(); await saveState(); }
 
 function changeYear(delta){ selectedYear += delta; render(); }
 function setYear(y){ selectedYear = y; render(); }
@@ -3928,7 +3933,7 @@ function calTouchEnd(e){
 }
 function toggleChart(){ chartMode = !chartMode; render(); }
 function toggleUtilization(){ utilizationMode = !utilizationMode; render(); }
-function toggleOverviewUnit(){ overviewUnit = overviewUnit==='day' ? 'hour' : 'day'; render(); }
+async function toggleOverviewUnit(){ overviewUnit = overviewUnit==='day' ? 'hour' : 'day'; state.overviewUnit = overviewUnit; render(); await saveState(); }
 
 async function updateHoursPerDay(){
   try{
