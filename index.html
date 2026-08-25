@@ -439,7 +439,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.25-02';
+const APP_VERSION = 'v2026.08.25-04';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -940,6 +940,8 @@ const LEAVE_TYPES = [
   {key:'menstrual', label:'生理假', seal:'生', c:'rose', defaultQuota:12, hint:'每月至多1天；全年前3天不併入病假，超過部分自動併入病假計算（性平法第14條）'},
   {key:'mentalCare', label:'身心照顧假', seal:'心', c:'rust', defaultQuota:3, hint:'依公司規定，預設 3 天，可自行調整'}
 ];
+// 「快速登記今天」只適用臨時性、當天才知道要請的假別；特休/補休/換休都是預先排定，不需要這個捷徑
+const QUICK_LOG_ELIGIBLE_TYPES = ['sick', 'personal', 'familyCare', 'menstrual', 'mentalCare'];
 
 const NOW = new Date();
 const TODAY = NOW.getFullYear()+'-'+String(NOW.getMonth()+1).padStart(2,'0')+'-'+String(NOW.getDate()).padStart(2,'0');
@@ -1129,10 +1131,12 @@ let kwUnmatchedModalOpen = false;
 let expandedMonths = {};
 let isComposing = false;
 let activeLeaveTab = 'annual';
-function switchLeaveTab(key){
+async function switchLeaveTab(key){
   activeLeaveTab = key;
+  state.activeLeaveTab = key;
   searchQuery='';
   render();
+  await saveState();
   setTimeout(()=>{
     const el = document.getElementById('leaveSectionContent');
     if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
@@ -1267,7 +1271,7 @@ function addMonths(dateStr, n){
 function defaultState(){
   const records={};
   LEAVE_TYPES.forEach(t=>{ records[t.key]=[]; });
-  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1, annualMinDays: DEFAULT_ANNUAL_MIN_DAYS, autoDeleteExpiredPhotos: true, overviewUnit:'day', sortAsc:false, yearRecordSortAsc:true };
+  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1, annualMinDays: DEFAULT_ANNUAL_MIN_DAYS, autoDeleteExpiredPhotos: true, overviewUnit:'day', sortAsc:false, yearRecordSortAsc:true, activeLeaveTab:'annual' };
 }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -1401,6 +1405,10 @@ async function loadState(){
       if(parsed.overviewUnit==='day' || parsed.overviewUnit==='hour'){ state.overviewUnit = parsed.overviewUnit; overviewUnit = parsed.overviewUnit; }
       if(parsed.sortAsc !== undefined){ state.sortAsc = !!parsed.sortAsc; sortAsc = !!parsed.sortAsc; }
       if(parsed.yearRecordSortAsc !== undefined){ state.yearRecordSortAsc = !!parsed.yearRecordSortAsc; yearRecordSortAsc = !!parsed.yearRecordSortAsc; }
+      if(parsed.activeLeaveTab){
+        const validTabKeys = LEAVE_TYPES.map(t=>t.key).concat(['comp','exchange','custom']);
+        if(validTabKeys.includes(parsed.activeLeaveTab)){ state.activeLeaveTab = parsed.activeLeaveTab; activeLeaveTab = parsed.activeLeaveTab; }
+      }
     }
   }catch(e){ /* 無資料，使用預設值 */ }
 }
@@ -3585,7 +3593,7 @@ function pageHome(justEntered){
 
     <div style="margin-bottom:16px;">
       <button type="button" class="btn-jade${justEntered?' shimmer-once':''}" style="width:100%;font-size:16px;padding:14px 16px;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')">＋ 登記休假／補休紀錄</button>
-      ${state.lastUsedType ? `<button type="button" style="width:100%;margin-top:8px;font-size:16px;padding:14px 16px;background:var(--jade-soft);color:var(--jade);border:1.5px solid var(--jade);" onclick="quickLogToday()">⚡ 快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
+      ${(state.lastUsedType && QUICK_LOG_ELIGIBLE_TYPES.includes(state.lastUsedType)) ? `<button type="button" style="width:100%;margin-top:8px;font-size:16px;padding:14px 16px;background:var(--jade-soft);color:var(--jade);border:1.5px solid var(--jade);" onclick="quickLogToday()">⚡ 快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
     </div>
 
     <div class="stamps">
