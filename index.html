@@ -197,6 +197,29 @@
   .quickdays button{padding:8px 9px;min-height:38px;min-width:32px;font-size:11.5px;background:transparent;color:var(--ink-soft);border:1px solid var(--line);border-radius:10px;font-weight:600;box-sizing:border-box;}
   .quickdays button:active{color:var(--jade);border-color:var(--jade);}
   .days-row{display:flex;gap:6px;align-items:center;}
+  select.unit-select{
+    -webkit-appearance:none; appearance:none; font-weight:700; cursor:pointer;
+    background-repeat:no-repeat; background-position:right 8px center; background-size:14px;
+    padding-right:28px !important;
+    transition:background-color .15s ease, border-color .15s ease, color .15s ease;
+  }
+  select.unit-select.u-day{
+    background-color:var(--jade-soft) !important; border-color:var(--jade) !important; color:var(--jade) !important;
+    background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 9l7 7 7-7' fill='none' stroke='%232F5D50' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  select.unit-select.u-hour{
+    background-color:var(--amber-soft, #FBEFDC) !important; border-color:var(--amber) !important; color:var(--amber) !important;
+    background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 9l7 7 7-7' fill='none' stroke='%23B5761A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  .convert-hint{
+    margin-top:6px; font-size:13.5px; color:var(--ink-soft);
+    border-radius:8px; padding:6px 10px; display:inline-flex; align-items:center; gap:4px;
+  }
+  .convert-hint.u-day{ background:var(--jade-soft); }
+  .convert-hint.u-hour{ background:var(--amber-soft, #FBEFDC); }
+  .convert-hint b{ font-family:'IBM Plex Mono',monospace; font-size:14px; }
+  .convert-hint.u-day b{ color:var(--jade); }
+  .convert-hint.u-hour b{ color:var(--amber); }
   .date-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .date-row input{flex:1;min-width:130px;}
   .date-toggle{padding:8px 9px;min-height:44px;min-width:44px;font-size:11.5px;background:transparent;color:var(--ink-soft);border:1px solid var(--line);border-radius:10px;font-weight:600;flex:none;box-sizing:border-box;}
@@ -447,7 +470,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.25-08';
+const APP_VERSION = 'v2026.08.25-10';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -3027,8 +3050,8 @@ function pageAddRecord(){
 
   if(key==='comp' || key==='exchange'){
     const info = COMP_CATEGORIES[key];
-    // 補休(comp)新增表單預設用「小時」登記比較常用；換休(exchange)維持原本預設「天」，兩者共用這段模板，用 key 分流
-    const compDefaultUnit = key==='comp' ? 'hour' : 'day';
+    // 補休(comp)/換休(exchange)新增表單，統一預設用「天」登記，跟其他假別一致，避免單位在不同分頁之間默默切換造成選錯
+    const compDefaultUnit = 'day';
     const compHourQuickBtns = [1,2,4,8];
     return backBtn + typeSelector + `
       <section class="block">
@@ -3050,20 +3073,21 @@ function pageAddRecord(){
             <div class="field field-days">
               <label>數量</label>
               <div class="days-row">
-                <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required oninput="updateUsePreview('${key}')">
-                <select id="compUnit" onchange="onCompUnitChange();updateUsePreview('${key}');" style="width:82px;padding:8px 4px;">
+                <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required oninput="updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">
+                <select id="compUnit" class="unit-select ${compDefaultUnit==='day'?'u-day':'u-hour'}" onchange="onCompUnitChange();updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');" style="width:96px;padding:8px 4px;">
                   <option value="day" ${compDefaultUnit==='day'?'selected':''}>天</option>
                   <option value="hour" ${compDefaultUnit==='hour'?'selected':''}>小時</option>
                 </select>
                 <div class="quickdays" id="compQuickDay" style="${compDefaultUnit==='hour'?'display:none;':''}">
-                  <button type="button" onclick="setDays('compAmount',0.5);updateUsePreview('${key}');">0.5</button>
-                  <button type="button" onclick="setDays('compAmount',1);updateUsePreview('${key}');">1</button>
-                  <button type="button" onclick="setDays('compAmount',2);updateUsePreview('${key}');">2</button>
+                  <button type="button" onclick="setDays('compAmount',0.5);updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">0.5</button>
+                  <button type="button" onclick="setDays('compAmount',1);updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">1</button>
+                  <button type="button" onclick="setDays('compAmount',2);updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">2</button>
                 </div>
                 <div class="quickdays" id="compQuickHour" style="${compDefaultUnit==='hour'?'':'display:none;'}">
-                  ${compHourQuickBtns.map(h=>`<button type="button" onclick="setDays('compAmount',${h});updateUsePreview('${key}');">${h}</button>`).join('')}
+                  ${compHourQuickBtns.map(h=>`<button type="button" onclick="setDays('compAmount',${h});updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">${h}</button>`).join('')}
                 </div>
               </div>
+              <div class="convert-hint ${compDefaultUnit==='day'?'u-day':'u-hour'}" id="compConvertHint">= <b>${compDefaultUnit==='day'?fmt(getHoursPerDay())+' 小時':fmt(1/getHoursPerDay())+' 天'}</b></div>
             </div>
           </div>
           <div id="usePreview"></div>
@@ -3121,23 +3145,24 @@ function pageAddRecord(){
         <div class="field field-days">
           <label>數量</label>
           <div class="days-row">
-            <input type="number" id="${t.key}Amount" min="0.5" step="0.5" value="1" required>
-            <select id="${t.key}Unit" onchange="onUnitChange('${t.key}')" style="width:82px;padding:8px 4px;">
+            <input type="number" id="${t.key}Amount" min="0.5" step="0.5" value="1" required oninput="updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">
+            <select id="${t.key}Unit" class="unit-select u-day" onchange="onUnitChange('${t.key}');updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');" style="width:96px;padding:8px 4px;">
               <option value="day">天</option>
               <option value="hour">小時</option>
             </select>
             <div class="quickdays" id="${t.key}QuickDay">
-              <button type="button" onclick="setDays('${t.key}Amount',0.5)">0.5</button>
-              <button type="button" onclick="setDays('${t.key}Amount',1)">1</button>
-              <button type="button" onclick="setDays('${t.key}Amount',2)">2</button>
+              <button type="button" onclick="setDays('${t.key}Amount',0.5);updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">0.5</button>
+              <button type="button" onclick="setDays('${t.key}Amount',1);updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">1</button>
+              <button type="button" onclick="setDays('${t.key}Amount',2);updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">2</button>
             </div>
             <div class="quickdays" id="${t.key}QuickHour" style="display:none;">
-              <button type="button" onclick="setDays('${t.key}Amount',1)">1</button>
-              <button type="button" onclick="setDays('${t.key}Amount',2)">2</button>
-              <button type="button" onclick="setDays('${t.key}Amount',4)">4</button>
-              <button type="button" onclick="setDays('${t.key}Amount',8)">8</button>
+              <button type="button" onclick="setDays('${t.key}Amount',1);updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">1</button>
+              <button type="button" onclick="setDays('${t.key}Amount',2);updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">2</button>
+              <button type="button" onclick="setDays('${t.key}Amount',4);updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">4</button>
+              <button type="button" onclick="setDays('${t.key}Amount',8);updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">8</button>
             </div>
           </div>
+          <div class="convert-hint u-day" id="${t.key}ConvertHint">= <b>${fmt(getHoursPerDay())} 小時</b></div>
         </div>
         <div class="field note"><label>備註</label><input type="text" id="${t.key}Note" placeholder="原因或備註"></div>
         <button type="submit" class="btn-${t.c}">登記使用</button>
@@ -3440,9 +3465,10 @@ function customSectionHtml(){
         <div class="field field-days" style="margin-bottom:12px;">
           <label>數量</label>
           <div class="days-row">
-            <input type="number" id="customAmount" value="1" min="0.5" step="0.5">
-            <select id="customUnit"><option value="day">天</option><option value="hour">小時</option></select>
+            <input type="number" id="customAmount" value="1" min="0.5" step="0.5" oninput="updateUnitColor('customAmount','customUnit','customConvertHint');">
+            <select id="customUnit" class="unit-select u-day" onchange="updateUnitColor('customAmount','customUnit','customConvertHint');"><option value="day">天</option><option value="hour">小時</option></select>
           </div>
+          <div class="convert-hint u-day" id="customConvertHint">= <b>${fmt(getHoursPerDay())} 小時</b></div>
         </div>
         ${customAddType==='earn' ? `
           <div class="field" style="margin-bottom:12px;">
@@ -4175,6 +4201,24 @@ async function updateQuota(key){
     setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
     console.error(err);
   }
+}
+
+// 共用函式：更新單位下拉選單的顏色（天=綠色系、小時=琥珀色系），並顯示即時換算結果，
+// 讓使用者能一眼確認目前選的單位，換算數字也能幫忙抓到「單位選錯」這種容易被忽略的錯誤
+function updateUnitColor(amountId, unitId, hintId){
+  const amountEl = document.getElementById(amountId);
+  const unitEl = document.getElementById(unitId);
+  const hintEl = document.getElementById(hintId);
+  if(!amountEl || !unitEl || !hintEl) return;
+  const unit = unitEl.value;
+  const amount = parseFloat(amountEl.value) || 0;
+  unitEl.classList.toggle('u-day', unit==='day');
+  unitEl.classList.toggle('u-hour', unit==='hour');
+  const converted = unit==='day' ? amount*getHoursPerDay() : amount/getHoursPerDay();
+  const convertedLabel = unit==='day' ? '小時' : '天';
+  hintEl.textContent = `= ${fmt(converted)} ${convertedLabel}`;
+  hintEl.classList.toggle('u-day', unit==='day');
+  hintEl.classList.toggle('u-hour', unit==='hour');
 }
 
 function onUnitChange(key){
