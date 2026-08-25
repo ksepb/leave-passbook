@@ -120,6 +120,14 @@
   .mini-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
   .mini-chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;}
   .hour-inline{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:var(--amber);vertical-align:middle;}
+  .tint-jade{background:color-mix(in srgb, var(--jade-soft) 45%, #fff);}
+  .tint-brick{background:color-mix(in srgb, var(--brick-soft) 45%, #fff);}
+  .tint-blue{background:color-mix(in srgb, var(--blue-soft) 45%, #fff);}
+  .tint-olive{background:color-mix(in srgb, var(--olive-soft) 45%, #fff);}
+  .tint-plum{background:color-mix(in srgb, var(--plum-soft) 45%, #fff);}
+  .tint-rust{background:color-mix(in srgb, var(--rust-soft) 45%, #fff);}
+  .tint-rose{background:color-mix(in srgb, var(--rose-soft) 45%, #fff);}
+  .tint-teal{background:color-mix(in srgb, var(--teal-soft) 45%, #fff);}
   .stamp-card.warn .num{color:var(--amber);}
   .stamp-card.level-warn{border-color:var(--amber);}
   .stamp-card.level-warn .num{color:var(--amber);}
@@ -439,7 +447,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.25-04';
+const APP_VERSION = 'v2026.08.25-08';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2076,7 +2084,7 @@ function stampCard(t){
   }
   if(t.key==='annual' && minDaysBorder) chips.push(`<span class="mini-chip" style="background:${minDaysBorder.includes('brick')?'var(--brick-soft);color:var(--brick);':'var(--amber-soft, #FBEFDC);color:var(--amber);'}">還沒用滿最低 ${fmt(getAnnualMinDays())} 天</span>`);
   return `
-    <div class="stamp-card ${level}" style="${minDaysBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetail('${t.key}')">
+    <div class="stamp-card tint-${t.c} ${level}" style="${minDaysBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetail('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
       <div class="num c-${t.c}">${fmt(remain)}天 <span class="hour-inline">${fmt(remain*getHoursPerDay())}小時</span><small>共 ${fmt(getQuota(t.key,selectedYear))} 天</small></div>
@@ -2088,7 +2096,7 @@ function customStampCard(){
   const activeLabels = getActiveCustomLabels();
   if(!activeLabels.length) return '';
   return `
-    <div class="stamp-card" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--plum) 45%, transparent);" onclick="viewLeaveDetail('custom')">
+    <div class="stamp-card tint-plum" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--plum) 45%, transparent);" onclick="viewLeaveDetail('custom')">
       <div class="seal c-plum">他</div>
       <div class="label">其他假別</div>
       ${activeLabels.map(x=>`<div class="num c-plum" style="font-size:16px;margin-top:2px;">${escapeHtml(x.label)}剩餘 ${fmt(x.remainDays)}天</div>`).join('')}
@@ -2110,7 +2118,7 @@ function compStampCard(category){
     else if(monthsUntil<=3) urgentBorder = 'border:2px solid var(--amber);';
   }
   return `
-    <div class="stamp-card ${compBal<0?'warn':''}" style="${urgentBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${info.c}) 45%, transparent);" onclick="viewLeaveDetail('${category}')">
+    <div class="stamp-card tint-${info.c} ${compBal<0?'warn':''}" style="${urgentBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${info.c}) 45%, transparent);" onclick="viewLeaveDetail('${category}')">
       <div class="seal c-${info.c}">${info.label.slice(0,1)}</div>
       <div class="label">${info.label}結餘</div>
       <div class="num c-${info.c}">${fmt(compBal)}天 <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span><small>至 ${selectedYear} 年底・${category==='exchange' ? '當年度用完' : `期限${info.defaultYears}年`}</small></div>
