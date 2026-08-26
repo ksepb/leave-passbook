@@ -325,6 +325,7 @@
 
   ul.ledger{list-style:none;margin:0;padding:0;}
   ul.ledger li{display:block;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:15.5px;margin-bottom:8px;}
+  ul.ledger li:nth-child(even){background:color-mix(in srgb, var(--plum-soft) 55%, #fff);}
   ul.ledger li:last-child{margin-bottom:0;}
   ul.ledger .ledger-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   ul.ledger .ledger-bottom{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
@@ -360,10 +361,10 @@
   .cal-cell.adjacent{background:transparent;cursor:default;}
   .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
   .cal-cell.today .cal-daynum{background:var(--jade);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;font-weight:700;}
-  .cal-cell.selected{background:var(--blue-soft);}
+  .cal-cell.selected{background:color-mix(in srgb, var(--blue) 30%, var(--blue-soft));}
   .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
   .cal-cell.selected.today .cal-daynum{background:var(--jade);color:#fff;}
-  .cal-daynum{font-size:10px;color:var(--ink-soft);}
+  .cal-daynum{font-size:10px;color:var(--ink-soft);font-weight:700;}
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
   .cal-makeup-badge{display:inline-block;font-size:7px;font-weight:700;color:#fff;background:var(--blue);border-radius:3px;padding:0 2px;margin-left:2px;vertical-align:middle;}
@@ -378,12 +379,13 @@
   .cal-today-btn{margin:6px 0 4px;font-size:12.5px;padding:6px 12px;}
   .cal-swipe-area{touch-action:pan-y;}
   .cal-detail-panel{margin-top:12px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;}
-  .cal-detail-date{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;margin-bottom:6px;}
+  .cal-detail-date{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .cal-detail-today-badge{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;color:var(--jade);background:var(--jade-soft);padding:3px 10px;border-radius:10px;}
   .cal-detail-holiday{font-size:13px;color:var(--brick);margin-bottom:6px;}
   .cal-detail-chips{display:flex;flex-wrap:wrap;gap:6px;}
-  .cal-detail-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:6px 6px 6px 10px;border-radius:14px;}
+  .cal-detail-chip{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:700;padding:7px 7px 7px 12px;border-radius:16px;}
   .cal-detail-chip span{cursor:pointer;}
-  .cal-detail-chip-del{background:rgba(0,0,0,.08);border:none;border-radius:50%;width:18px;height:18px;font-size:10px;line-height:1;cursor:pointer;color:inherit;flex-shrink:0;}
+  .cal-detail-chip-del{background:#fff;border:1.5px solid currentColor;border-radius:50%;width:22px;height:22px;font-size:11px;line-height:1;cursor:pointer;color:inherit;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;}
   .cal-detail-add-row{display:flex;gap:8px;margin-top:12px;align-items:center;}
   .cal-detail-add-row select{flex:0 1 auto;min-width:110px;padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-dots{display:flex;flex-wrap:wrap;gap:1.5px;margin-top:2px;}
@@ -480,7 +482,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.26-25';
+const APP_VERSION = 'v2026.08.26-30';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2694,7 +2696,7 @@ function calendarPanel(){
       </span>`).join('')}</div>` : `<div class="hint">這天沒有請假紀錄</div>`;
     const typeOptions = `<option value="${LEAVE_TYPES[0].key}">${LEAVE_TYPES[0].label}</option><option value="comp">補休</option>` + LEAVE_TYPES.slice(1).map(t=>`<option value="${t.key}">${t.label}</option>`).join('') + `<option value="exchange">換休</option>`;
     return `<div class="cal-detail-panel">
-      <div class="cal-detail-date">${toROC(calSelectedDate)}（${weekLabel}）</div>
+      <div class="cal-detail-date">${toROC(calSelectedDate)}（${weekLabel}）${calSelectedDate===TODAY?'<span class="cal-detail-today-badge">今日</span>':''}</div>
       ${holidayLine}
       ${recordChips}
       <div class="cal-detail-add-row">
@@ -3380,7 +3382,7 @@ function renderAvailBatchList(category){
     return `<div class="hint" style="margin-bottom:12px;">目前沒有還能使用的${info.label}紀錄。</div>`;
   }
   // 依「獲得年份」（西元）產生篩選鈕，只列出目前清單裡實際還有剩餘的年份；只有1個年份時完全不顯示，避免多一排東西擠畫面
-  const distinctYears = Array.from(new Set(batches.map(b=>b.earnYear))).sort((a,b)=>b-a);
+  const distinctYears = Array.from(new Set(batches.map(b=>b.earnYear))).sort((a,b)=>a-b);
   const currentFilter = availBatchYearFilter[category] || 'all';
   const effectiveFilter = distinctYears.includes(currentFilter) || currentFilter==='all' ? currentFilter : 'all';
   const pillsHtml = distinctYears.length>=2 ? `
