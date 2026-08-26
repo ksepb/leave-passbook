@@ -262,7 +262,7 @@
   .src-batch-input-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;}
   .src-batch-unit{font-size:15.5px;font-weight:600;color:var(--ink);flex-shrink:0;}
   .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
-  .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;position:relative;}
+  .avail-batch-item{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;background:#fff;position:relative;}
   .avail-batch-edit-btn{position:absolute;top:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:14px;cursor:pointer;}
   .avail-batch-title{margin-bottom:3px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding-right:38px;}
   .avail-batch-date{font-weight:700;font-size:14.5px;color:var(--ink);}
@@ -325,7 +325,7 @@
 
   ul.ledger{list-style:none;margin:0;padding:0;}
   ul.ledger li{display:block;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:15.5px;margin-bottom:8px;}
-  ul.ledger li:nth-child(even){background:color-mix(in srgb, var(--plum-soft) 55%, #fff);}
+  ul.ledger li:nth-child(even){border-style:dashed;border-width:2px;}
   ul.ledger li:last-child{margin-bottom:0;}
   ul.ledger .ledger-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   ul.ledger .ledger-bottom{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
@@ -348,6 +348,8 @@
   @keyframes editConfirmFade{0%{opacity:0;}15%{opacity:1;}75%{opacity:1;}100%{opacity:0;}}
   .edit-confirm-badge{position:absolute;top:8px;right:8px;background:var(--jade);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;z-index:2;animation:editConfirmFade 1.6s ease-out forwards;pointer-events:none;}
   .stamp-in{animation:stampIn .32s ease-out;}
+  @keyframes revealFlash{0%{box-shadow:0 0 0 0 rgba(47,93,80,0);background:var(--jade-soft);}100%{box-shadow:0 0 0 0 rgba(47,93,80,0);background:#fff;}}
+  .reveal-flash{animation:revealFlash 1.5s ease-out;}
   @keyframes fadeOutRemove{to{opacity:0;transform:scale(.92) translateX(10px);}}
   ul.ledger li.removing{animation:fadeOutRemove .2s ease-in forwards;pointer-events:none;}
 
@@ -482,7 +484,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.26-30';
+const APP_VERSION = 'v2026.08.26-36';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1202,8 +1204,13 @@ function viewLeaveDetail(key, dateStr){
   }
   switchPage('leaves');
   setTimeout(()=>{
-    const el = document.getElementById('leaveSectionContent');
-    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    const target = dateStr ? document.querySelector(`#leaveSectionContent [data-rec-date="${dateStr}"]`) : null;
+    const el = target || document.getElementById('leaveSectionContent');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    if(target){
+      target.classList.add('reveal-flash');
+      setTimeout(()=>target.classList.remove('reveal-flash'), 1600);
+    }
   }, 30);
 }
 // 直接跳轉並進入編輯模式（不用先看到列表再自己點編輯），用在「年度紀錄」頁點一筆資料就直接改
@@ -2910,7 +2917,7 @@ function buildLeaveLi(t, r, dMin, dMax){
       </div>
     </li>`;
   }
-  return `<li class="${r.id===lastAddedId?'stamp-in':''}" style="position:relative;">
+  return `<li class="${r.id===lastAddedId?'stamp-in':''}" data-rec-date="${r.date}" style="position:relative;">
     ${r.id===lastEditedId ? `<span class="edit-confirm-badge">✓ 已編輯</span>` : ''}
     <div class="ledger-top">
       <span class="d">${toROC(r.date)}</span>
@@ -3142,8 +3149,8 @@ function pageAddRecord(){
           </div>
           <div class="form-row">
             <div class="field" style="flex:1;">
-              <label>📷 上傳照片（選填，比如加班單、請假證明）</label>
-              ${currentUser ? `<input type="file" id="compPhotoInput" accept="image/*">` : `<p class="hint" style="margin:0;">需要先登入雲端帳號才能使用這個功能（見「設定」分頁）</p>`}
+              <label>📷 上傳照片（選填：加一補一才需要證明）</label>
+              ${currentUser ? `<input type="file" id="compPhotoInput" accept="image/*">` : `<p class="hint" style="margin:0;">需要先登入雲端帳號才能使用這個功能（到「設定」分頁）</p>`}
             </div>
           </div>
           <div class="form-row">
@@ -3289,7 +3296,7 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
       </div>
     </li>`;
   }
-  return `<li class="${r.id===lastAddedId?'stamp-in':''}" style="position:relative;">
+  return `<li class="${r.id===lastAddedId?'stamp-in':''}" data-rec-date="${r.date}" style="position:relative;">
     ${r.id===lastEditedId ? `<span class="edit-confirm-badge">✓ 已編輯</span>` : ''}
     <div class="ledger-top">
       <span class="d">${toROC(r.date)}</span>
