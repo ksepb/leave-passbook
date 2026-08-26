@@ -156,20 +156,27 @@
   .toolbar{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin:10px 0 18px;}
   .toolbar-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .toolbar-row + .toolbar-row{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
-  .toolbar-row input[type=text]{flex:1;min-width:160px;font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+  .search-sort-row{display:flex;gap:8px;flex-wrap:nowrap;align-items:center;margin:0 0 14px;}
+  .search-sort-row input[type=text]{flex:1;min-width:0;font-family:'Noto Sans TC',sans-serif;font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+  .search-sort-row .sortbtn{flex-shrink:0;font-size:13.5px;padding:9px 10px;white-space:nowrap;}
   .year-toolbar-row{gap:10px;}
   .year-switch{display:flex;align-items:center;gap:6px;}
-  .year-switch button.sortbtn{width:44px;height:44px;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;color:var(--jade);background:var(--jade-soft);border-color:var(--jade-soft);border-radius:50%;}
-  .back-to-today-btn{font-family:'Noto Sans TC',sans-serif;font-size:14.5px;font-weight:700;color:var(--jade);background:var(--jade-soft);border:1px solid var(--jade-soft);border-radius:20px;padding:9px 18px;min-height:44px;}
+  .year-switch button.sortbtn{width:36px;height:36px;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--jade);background:#fff;border:1.5px solid var(--jade);border-radius:50%;}
+  .back-to-today-btn{font-family:'Noto Sans TC',sans-serif;font-size:14.5px;font-weight:700;color:var(--jade);background:#fff;border:1.5px solid var(--jade);border-radius:20px;padding:9px 18px;min-height:44px;}
   .view-toggles{display:flex;gap:8px;}
   .view-toggles button{flex:1;}
   button.sortbtn{background:#fff;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;padding:9px 14px;min-height:38px;}
-  .year-label{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;text-align:center;}
+  .year-label{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;text-align:center;white-space:nowrap;}
   .section-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase;margin:6px 2px 10px;}
   .leave-tabs{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:16px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .leave-tabs::-webkit-scrollbar{display:none;}
   .leave-tab{flex-shrink:0;font-family:'Noto Sans TC',sans-serif;font-size:14.5px;font-weight:700;padding:9px 16px;border-radius:20px;border:1px solid var(--line);cursor:pointer;transition:transform .1s ease;}
   .leave-tab:active{transform:scale(.96);}
+  .year-pills{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .year-pills::-webkit-scrollbar{display:none;}
+  .year-pill{flex-shrink:0;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:6px 13px;border-radius:16px;border:1px solid var(--line);cursor:pointer;transition:transform .1s ease;background:#fff;color:var(--ink-soft);}
+  .year-pill:active{transform:scale(.96);}
+  .year-pill.active{background:var(--pill-c,var(--plum));color:#fff;border-color:var(--pill-c,var(--plum));}
   .manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
   @media(max-width:620px){.manage-grid{grid-template-columns:1fr;}}
 
@@ -212,14 +219,12 @@
     background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 9l7 7 7-7' fill='none' stroke='%23B5761A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
   .convert-hint{
-    margin-top:6px; font-size:13.5px; color:var(--ink-soft);
+    margin-top:6px; font-size:16px; font-weight:700;
     border-radius:8px; padding:6px 10px; display:inline-flex; align-items:center; gap:4px;
   }
-  .convert-hint.u-day{ background:var(--jade-soft); }
-  .convert-hint.u-hour{ background:var(--amber-soft, #FBEFDC); }
-  .convert-hint b{ font-family:'IBM Plex Mono',monospace; font-size:14px; }
-  .convert-hint.u-day b{ color:var(--jade); }
-  .convert-hint.u-hour b{ color:var(--amber); }
+  .convert-hint.u-day{ background:var(--jade-soft); color:var(--jade); }
+  .convert-hint.u-hour{ background:var(--amber-soft, #FBEFDC); color:var(--amber); }
+  .convert-hint b{ font-family:'Noto Sans TC',sans-serif; font-size:17px; font-weight:800; }
   .date-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .date-row input{flex:1;min-width:130px;}
   .date-toggle{padding:8px 9px;min-height:44px;min-width:44px;font-size:11.5px;background:transparent;color:var(--ink-soft);border:1px solid var(--line);border-radius:10px;font-weight:600;flex:none;box-sizing:border-box;}
@@ -243,23 +248,26 @@
   .use-preview-box{background:var(--jade-soft);border-radius:10px;padding:10px 12px;margin:8px 0 14px;}
   .use-preview-line{font-size:13.5px;color:var(--ink);padding:3px 0;}
   .src-batch-list{border:1px solid var(--line);border-radius:10px;padding:6px 12px 10px;overflow:hidden;box-sizing:border-box;max-width:100%;}
-  .src-batch-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:9px 0;border-top:1px solid var(--line);max-width:100%;box-sizing:border-box;}
+  .manual-source-toggle{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin:-4px 0 10px;cursor:pointer;color:var(--ink);}
+  .manual-source-toggle input[type="checkbox"]{width:20px;height:20px;flex-shrink:0;accent-color:var(--jade);}
+  .src-batch-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:12px 8px;border-top:1px solid var(--line);max-width:100%;box-sizing:border-box;border-radius:8px;}
   .src-batch-row:first-child{border-top:none;}
-  .src-batch-check{display:flex;align-items:center;gap:6px;font-size:15.5px;color:var(--ink);cursor:pointer;flex:0 1 auto;min-width:0;max-width:100%;}
+  .src-batch-row:has(input[type="checkbox"]:checked){background:var(--jade-soft);}
+  .src-batch-check{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:600;color:var(--ink);cursor:pointer;flex:0 1 auto;min-width:0;max-width:100%;}
   .src-batch-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto;}
-  .src-batch-remain{color:var(--jade);font-weight:700;font-size:14px;flex-shrink:0;white-space:nowrap;}
+  .src-batch-remain{color:var(--jade);font-weight:700;font-size:16px;flex-shrink:0;white-space:nowrap;}
   .src-batch-row:has(input[type="checkbox"]:checked) .src-batch-remain{display:none;}
-  .src-batch-check input[type="checkbox"]{flex-shrink:0;width:18px;height:18px;}
-  .src-batch-days{width:60px;box-sizing:border-box;padding:6px 4px;font-size:15px;text-align:center;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
-  .src-batch-input-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;}
-  .src-batch-unit{font-size:14px;color:var(--ink-soft);flex-shrink:0;}
+  .src-batch-check input[type="checkbox"]{flex-shrink:0;width:22px;height:22px;accent-color:var(--jade);}
+  .src-batch-days{width:72px;box-sizing:border-box;padding:8px 6px;font-size:17px;font-weight:700;text-align:center;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
+  .src-batch-input-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .src-batch-unit{font-size:15.5px;font-weight:600;color:var(--ink);flex-shrink:0;}
   .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
   .avail-batch-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;position:relative;}
   .avail-batch-edit-btn{position:absolute;top:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:14px;cursor:pointer;}
   .avail-batch-title{margin-bottom:3px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding-right:38px;}
   .avail-batch-date{font-weight:700;font-size:14.5px;color:var(--ink);}
   .avail-batch-note-tag{display:inline-block;background:var(--plum-soft);color:var(--plum);font-weight:700;padding:2px 9px;border-radius:8px;font-size:13.5px;}
-  .avail-batch-list-label{font-size:14px;font-weight:700;color:var(--jade);margin:0 0 8px;}
+  .avail-batch-list-label{font-size:16.5px;font-weight:800;color:var(--jade);margin:0 0 10px;letter-spacing:.2px;}
   .avail-batch-section{margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);}
   .avail-batch-remain{font-size:14px;color:var(--ink-soft);font-weight:700;white-space:nowrap;overflow-x:auto;}
   /* 小時的顯示樣式故意拆成兩個class：
@@ -427,11 +435,13 @@
   .month-body ul.ledger{margin:0;}
   .month-group .ledger{margin-top:8px;}
   .reset-row{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);flex-wrap:wrap;}
-  .history-divider{display:flex;align-items:center;text-align:center;color:var(--ink-soft);font-size:13.5px;font-weight:600;margin:20px 0 14px;}
+  .history-divider{display:flex;align-items:center;text-align:center;color:var(--ink);font-size:17.5px;font-weight:700;margin:20px 0 14px;}
   .history-divider::before,.history-divider::after{content:'';flex:1;border-top:1px dashed var(--line);}
-  .history-divider span{padding:0 10px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;}
-  .divider-year-btn{width:30px;height:30px;padding:0;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--jade);background:var(--jade-soft);border:none;border-radius:50%;cursor:pointer;}
-  .history-divider .divider-year-num{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14.5px;color:var(--ink);padding:0 2px;text-align:center;}
+  .history-divider span{padding:0 10px;white-space:nowrap;display:inline-flex;align-items:center;}
+  .history-divider .divider-year-btn:first-of-type{margin:0 4px 0 3px;}
+  .history-divider .divider-year-btn:last-of-type{margin:0 3px 0 4px;}
+  .divider-year-btn{width:26px;height:26px;padding:0;min-width:0;min-height:0;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--jade);background:#fff;border:1.5px solid var(--jade);border-radius:50%;cursor:pointer;line-height:1;}
+  .history-divider .divider-year-num{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:17.5px;color:var(--ink);padding:0;text-align:center;}
   .kw-examples{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
   .kw-example{border-left:3px solid var(--line);background:rgba(255,255,255,.55);border-radius:0 10px 10px 0;padding:9px 12px;}
   .kw-example-code{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:5px;}
@@ -470,7 +480,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.25-10';
+const APP_VERSION = 'v2026.08.26-25';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1023,6 +1033,7 @@ let quotaEditModalOpen = null;
 let homeDetailModalOpen = null; // null | 'remain' | 'month' —— 首頁摘要卡三格點進去的明細彈窗（年度已經改成獨立頁面，見switchPage('yearRecord')）
 let expiryDecisionModalOpen = false; // 過期補休/換休批次「已使用/保留」決定彈窗
 let quickEditModalOpen = null; // {category, id} | null —— 補休/換休「還沒用完的紀錄」清單點小筆，直接彈窗編輯，不用跳頁
+let availBatchYearFilter = {}; // {comp:'all'|西元年, exchange:'all'|西元年} —— 「還沒用完的紀錄」清單依獲得年份篩選，故意不存進state/雲端同步：這只是畫面上暫時篩選方便看，不是需要記住的偏好設定
 let customAddOpen = false; // 「其他假別」頁面的新增表單是否展開
 let customAddType = 'earn'; // 「其他假別」新增表單目前選的是獲得還是使用
 function openHomeDetailModal(kind){ homeDetailModalOpen = kind; render(); }
@@ -2998,7 +3009,11 @@ function leaveSection(t){
         </div>
       </div>
       ` : ''}
-      <div class="history-divider"><span>📖 以下是<button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button>年的歷史紀錄</span></div>
+      <div class="search-sort-row">
+        <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="searchQuery=this.value" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="renderSearchResult();">
+        <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
+      </div>
+      <div class="history-divider"><span>📖 <button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}年</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button>全部紀錄</span></div>
       ${listHtml}
       <div style="margin-top:16px;">
         <button type="button" class="ghost" onclick="toggleResetPanel('${t.key}')">${resetPanelOpen[t.key]?'▲ 收起':'⋯ 更多操作'}</button>
@@ -3060,7 +3075,7 @@ function pageAddRecord(){
         <form class="entry" onsubmit="addComp(event, '${key}')">
           <div class="form-row">
             <div class="field" style="flex:0 0 160px;"><label>類型</label>
-              <select id="compType" onchange="updateUsePreview('${key}')">
+              <select id="compType" onchange="updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint','compType');">
                 <option value="earn">獲得${info.label}</option>
                 <option value="use">使用${info.label}</option>
               </select>
@@ -3073,26 +3088,26 @@ function pageAddRecord(){
             <div class="field field-days">
               <label>數量</label>
               <div class="days-row">
-                <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required oninput="updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">
-                <select id="compUnit" class="unit-select ${compDefaultUnit==='day'?'u-day':'u-hour'}" onchange="onCompUnitChange();updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');" style="width:96px;padding:8px 4px;">
+                <input type="number" id="compAmount" min="0.5" step="0.5" value="1" required oninput="updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint','compType');">
+                <select id="compUnit" class="unit-select ${compDefaultUnit==='day'?'u-day':'u-hour'}" onchange="onCompUnitChange();updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint','compType');" style="width:96px;padding:8px 4px;">
                   <option value="day" ${compDefaultUnit==='day'?'selected':''}>天</option>
                   <option value="hour" ${compDefaultUnit==='hour'?'selected':''}>小時</option>
                 </select>
                 <div class="quickdays" id="compQuickDay" style="${compDefaultUnit==='hour'?'display:none;':''}">
-                  <button type="button" onclick="setDays('compAmount',0.5);updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">0.5</button>
-                  <button type="button" onclick="setDays('compAmount',1);updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">1</button>
-                  <button type="button" onclick="setDays('compAmount',2);updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">2</button>
+                  <button type="button" onclick="setDays('compAmount',0.5);updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint','compType');">0.5</button>
+                  <button type="button" onclick="setDays('compAmount',1);updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint','compType');">1</button>
+                  <button type="button" onclick="setDays('compAmount',2);updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint','compType');">2</button>
                 </div>
                 <div class="quickdays" id="compQuickHour" style="${compDefaultUnit==='hour'?'':'display:none;'}">
-                  ${compHourQuickBtns.map(h=>`<button type="button" onclick="setDays('compAmount',${h});updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint');">${h}</button>`).join('')}
+                  ${compHourQuickBtns.map(h=>`<button type="button" onclick="setDays('compAmount',${h});updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint','compType');">${h}</button>`).join('')}
                 </div>
               </div>
-              <div class="convert-hint ${compDefaultUnit==='day'?'u-day':'u-hour'}" id="compConvertHint">= <b>${compDefaultUnit==='day'?fmt(getHoursPerDay())+' 小時':fmt(1/getHoursPerDay())+' 天'}</b></div>
+              <div class="convert-hint ${compDefaultUnit==='day'?'u-day':'u-hour'}" id="compConvertHint">獲得 <b>${compDefaultUnit==='day'?fmt(getHoursPerDay())+' 小時':fmt(1/getHoursPerDay())+' 天'}</b></div>
             </div>
           </div>
           <div id="usePreview"></div>
           <div id="manualSourceWrap" style="display:none;">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:-4px 0 8px;cursor:pointer;color:var(--ink-soft);">
+            <label class="manual-source-toggle">
               <input type="checkbox" id="compManualToggle" onchange="toggleManualSource('${key}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
             </label>
             <div class="field" id="manualSourceField" style="display:none;margin-bottom:14px;max-width:100%;overflow:hidden;">
@@ -3162,7 +3177,7 @@ function pageAddRecord(){
               <button type="button" onclick="setDays('${t.key}Amount',8);updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">8</button>
             </div>
           </div>
-          <div class="convert-hint u-day" id="${t.key}ConvertHint">= <b>${fmt(getHoursPerDay())} 小時</b></div>
+          <div class="convert-hint u-day" id="${t.key}ConvertHint">使用 <b>${fmt(getHoursPerDay())} 小時</b></div>
         </div>
         <div class="field note"><label>備註</label><input type="text" id="${t.key}Note" placeholder="原因或備註"></div>
         <button type="submit" class="btn-${t.c}">登記使用</button>
@@ -3239,7 +3254,7 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
       </div>
       <div id="editUsePreview-${r.id}">${initialPreview}</div>
       <div id="editManualSourceWrap-${r.id}" style="${r.type==='use'?'':'display:none;'}width:100%;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:-4px 0 8px;cursor:pointer;color:var(--ink-soft);">
+        <label class="manual-source-toggle">
           <input type="checkbox" id="editManualToggle-${r.id}" ${hasManual?'checked':''} onchange="toggleEditManualSource('${r.id}','${category}')"> 手動指定要扣哪幾筆（可複選，預設自動扣最早獲得的那筆）
         </label>
         <div class="field" id="editManualSourceField-${r.id}" style="${hasManual?'':'display:none;'}margin-bottom:14px;max-width:100%;overflow:hidden;">
@@ -3332,6 +3347,11 @@ function quickEditModal(){
       </div>
     </div>`;
 }
+function setAvailBatchYearFilter(category, year){
+  availBatchYearFilter[category] = year;
+  render();
+}
+
 function renderAvailBatchList(category){
   const info = COMP_CATEGORIES[category];
   const todayD = new Date(TODAY);
@@ -3349,7 +3369,7 @@ function renderAvailBatchList(category){
       }
       return true;
     })
-    .map(b=>Object.assign({}, b, {diffDays: b.expiry ? Math.round((new Date(b.expiry)-todayD)/86400000) : null}))
+    .map(b=>Object.assign({}, b, {diffDays: b.expiry ? Math.round((new Date(b.expiry)-todayD)/86400000) : null, earnYear: parseInt(b.date.slice(0,4),10)}))
     .sort((a,b)=>{
       if(a.diffDays===null && b.diffDays===null) return a.date.localeCompare(b.date);
       if(a.diffDays===null) return 1;
@@ -3359,7 +3379,17 @@ function renderAvailBatchList(category){
   if(batches.length===0){
     return `<div class="hint" style="margin-bottom:12px;">目前沒有還能使用的${info.label}紀錄。</div>`;
   }
-  return `<div class="avail-batch-list">${batches.map(b=>{
+  // 依「獲得年份」（西元）產生篩選鈕，只列出目前清單裡實際還有剩餘的年份；只有1個年份時完全不顯示，避免多一排東西擠畫面
+  const distinctYears = Array.from(new Set(batches.map(b=>b.earnYear))).sort((a,b)=>b-a);
+  const currentFilter = availBatchYearFilter[category] || 'all';
+  const effectiveFilter = distinctYears.includes(currentFilter) || currentFilter==='all' ? currentFilter : 'all';
+  const pillsHtml = distinctYears.length>=2 ? `
+    <div class="year-pills" style="--pill-c:var(--${info.c});">
+      <button type="button" class="year-pill ${effectiveFilter==='all'?'active':''}" onclick="setAvailBatchYearFilter('${category}','all')">全部</button>
+      ${distinctYears.map(y=>`<button type="button" class="year-pill ${effectiveFilter===y?'active':''}" onclick="setAvailBatchYearFilter('${category}',${y})">${y}</button>`).join('')}
+    </div>` : '';
+  const shownBatches = effectiveFilter==='all' ? batches : batches.filter(b=>b.earnYear===effectiveFilter);
+  return `${pillsHtml}<div class="avail-batch-list">${shownBatches.map(b=>{
     const urgent = b.diffDays!==null && b.diffDays<=7;
     const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期 ${Math.abs(b.diffDays)} 天` : (b.diffDays===0?'今天到期':`${b.diffDays} 天後到期`));
     return `<div class="avail-batch-item">
@@ -3465,10 +3495,10 @@ function customSectionHtml(){
         <div class="field field-days" style="margin-bottom:12px;">
           <label>數量</label>
           <div class="days-row">
-            <input type="number" id="customAmount" value="1" min="0.5" step="0.5" oninput="updateUnitColor('customAmount','customUnit','customConvertHint');">
-            <select id="customUnit" class="unit-select u-day" onchange="updateUnitColor('customAmount','customUnit','customConvertHint');"><option value="day">天</option><option value="hour">小時</option></select>
+            <input type="number" id="customAmount" value="1" min="0.5" step="0.5" oninput="updateUnitColor('customAmount','customUnit','customConvertHint','${customAddType==='use'?'使用':'獲得'}');">
+            <select id="customUnit" class="unit-select u-day" onchange="updateUnitColor('customAmount','customUnit','customConvertHint','${customAddType==='use'?'使用':'獲得'}');"><option value="day">天</option><option value="hour">小時</option></select>
           </div>
-          <div class="convert-hint u-day" id="customConvertHint">= <b>${fmt(getHoursPerDay())} 小時</b></div>
+          <div class="convert-hint u-day" id="customConvertHint">${customAddType==='use'?'使用':'獲得'} <b>${fmt(getHoursPerDay())} 小時</b></div>
         </div>
         ${customAddType==='earn' ? `
           <div class="field" style="margin-bottom:12px;">
@@ -3586,13 +3616,21 @@ function compSectionHtml(category){
           return `<div class="overview-expiry">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
         })() : ''}
         <div class="avail-batch-section">
-          <div class="avail-batch-list-label">🗂️ 還沒用完的紀錄</div>
+          <div class="avail-batch-list-label" style="color:var(--brick);">🗂️ ${info.label}尚未使用的日期</div>
           ${renderAvailBatchList(category)}
         </div>
       </div>
 
-      <button type="button" class="btn-${info.c}" style="margin-bottom:14px;" onclick="openAddRecord('${category}')">＋ 新增一筆</button>
-      <div class="history-divider"><span>📖 以下是<button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button>年的歷史紀錄</span></div>
+      <button type="button" class="btn-${info.c}" style="margin-bottom:4px;" onclick="openAddRecord('${category}')">＋ 新增一筆</button>
+    </section>
+
+    <div class="search-sort-row" style="margin:0 4px 10px;">
+      <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="searchQuery=this.value" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="renderSearchResult();">
+      <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
+    </div>
+
+    <section class="block">
+      <div class="history-divider" style="margin-top:0;"><span>📖 <button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}年</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button>全部紀錄</span></div>
       ${listHtml}
       <div style="margin-top:16px;">
         <button type="button" class="ghost" onclick="toggleResetPanel('${category}')">${resetPanelOpen[category]?'▲ 收起':'⋯ 更多操作'}</button>
@@ -3644,18 +3682,15 @@ function pageHome(justEntered){
 
 function pageLeaves(){
   return `
-    <div class="toolbar">
-      <div class="toolbar-row">
-        <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="searchQuery=this.value" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="renderSearchResult();">
-        <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 12px 10px;">
+      <div></div>
+      <div class="year-switch">
+        <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
+        <div class="year-label">${selectedYear}年</div>
+        <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
       </div>
-      <div class="toolbar-row year-toolbar-row">
-        <div class="year-switch">
-          <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
-          <div class="year-label">${selectedYear}年</div>
-          <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
-        </div>
-        ${selectedYear!==CUR_YEAR ? `<button type="button" class="back-to-today-btn" onclick="setYear(${CUR_YEAR})">回今年</button>` : ''}
+      <div style="justify-self:start;margin-left:8px;">
+        ${selectedYear!==CUR_YEAR ? `<button type="button" class="back-to-today-btn" style="padding:7px 12px;font-size:13px;min-height:0;" onclick="setYear(${CUR_YEAR})">回今年</button>` : ''}
       </div>
     </div>
     ${leaveTabBar()}
@@ -4205,7 +4240,7 @@ async function updateQuota(key){
 
 // 共用函式：更新單位下拉選單的顏色（天=綠色系、小時=琥珀色系），並顯示即時換算結果，
 // 讓使用者能一眼確認目前選的單位，換算數字也能幫忙抓到「單位選錯」這種容易被忽略的錯誤
-function updateUnitColor(amountId, unitId, hintId){
+function updateUnitColor(amountId, unitId, hintId, verbOrSelectId){
   const amountEl = document.getElementById(amountId);
   const unitEl = document.getElementById(unitId);
   const hintEl = document.getElementById(hintId);
@@ -4216,7 +4251,16 @@ function updateUnitColor(amountId, unitId, hintId){
   unitEl.classList.toggle('u-hour', unit==='hour');
   const converted = unit==='day' ? amount*getHoursPerDay() : amount/getHoursPerDay();
   const convertedLabel = unit==='day' ? '小時' : '天';
-  hintEl.textContent = `= ${fmt(converted)} ${convertedLabel}`;
+  // verbOrSelectId：可直接傳「獲得」/「使用」字面值（例如其他假別表單，切換時會整頁重繪，字面值一定是最新的），
+  // 或傳一個 <select> 的 id（例如補休/換休的 compType，切換不會整頁重繪，所以每次都要重新讀 DOM 現值）
+  let verb = '';
+  if(verbOrSelectId==='獲得' || verbOrSelectId==='使用'){
+    verb = verbOrSelectId;
+  } else if(verbOrSelectId){
+    const verbEl = document.getElementById(verbOrSelectId);
+    if(verbEl) verb = verbEl.value==='use' ? '使用' : '獲得';
+  }
+  hintEl.innerHTML = verb ? `${verb} <b>${fmt(converted)} ${convertedLabel}</b>` : `使用 <b>${fmt(converted)} ${convertedLabel}</b>`;
   hintEl.classList.toggle('u-day', unit==='day');
   hintEl.classList.toggle('u-hour', unit==='hour');
 }
