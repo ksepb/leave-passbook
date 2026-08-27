@@ -77,7 +77,7 @@
     border-radius:16px; transition:color .15s ease;
   }
   .nav-item .nav-icon-wrap{
-    width:44px; height:40px; border-radius:14px;
+    width:52px; height:44px; border-radius:16px;
     display:flex; align-items:center; justify-content:center;
     transition:background .15s ease, transform .15s ease;
   }
@@ -502,7 +502,13 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.27-13';
+const APP_VERSION = 'v2026.08.27-15';
+
+// 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
+// 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
+const ICON_NOTE = `<svg width="19" height="19" viewBox="0 0 32 32" style="vertical-align:-5px;margin-right:2px;"><rect x="6" y="4" width="16" height="24" rx="2" fill="#F5F1E6" stroke="#6B6459" stroke-width="2.4"/><line x1="9" y1="10" x2="19" y2="10" stroke="#9BA5AE" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="14" x2="19" y2="14" stroke="#9BA5AE" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="18" x2="15" y2="18" stroke="#9BA5AE" stroke-width="2" stroke-linecap="round"/><path d="M18 20L27 11L30 14L21 23L17 24Z" fill="#F6C453" stroke="#6B6459" stroke-width="2.2" stroke-linejoin="round"/><path d="M25 13L28 16" stroke="#6B6459" stroke-width="1.8"/></svg>`;
+const ICON_FOLDER = `<svg width="20" height="20" viewBox="0 0 32 32" style="vertical-align:-5px;margin-right:2px;"><path d="M3 10C3 8.9 3.9 8 5 8H12L15 11H27C28.1 11 29 11.9 29 13V24C29 25.1 28.1 26 27 26H5C3.9 26 3 25.1 3 24V10Z" fill="#E0A458" stroke="#1F1F1F" stroke-width="2.4" stroke-linejoin="round"/><rect x="7" y="14" width="6" height="8" rx="0.8" fill="#E76A5E" stroke="#1F1F1F" stroke-width="1.8"/><rect x="14" y="14" width="6" height="8" rx="0.8" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="1.8"/><rect x="21" y="14" width="5" height="8" rx="0.8" fill="#2A9D8F" stroke="#1F1F1F" stroke-width="1.8"/></svg>`;
+const ICON_CAMERA = `<svg width="19" height="19" viewBox="0 0 32 32" style="vertical-align:-5px;margin-right:2px;"><path d="M10 9L12 5H20L22 9H27C28.1 9 29 9.9 29 11V24C29 25.1 28.1 26 27 26H5C3.9 26 3 25.1 3 24V11C3 9.9 3.9 9 5 9H10Z" fill="#B7A9D4" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="17" r="6" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/><circle cx="16" cy="17" r="2.6" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="1.6"/><circle cx="24" cy="13" r="1.3" fill="#F6C453" stroke="#1F1F1F" stroke-width="1.2"/></svg>`;
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2086,7 +2092,7 @@ function pageYearRecord(){
         <span class="amt">${r.amountText}</span>
       </div>
       ${r.note ? `<div class="home-detail-note-tag" style="display:inline-block;margin-top:4px;">${escapeHtml(r.note)}</div>` : ''}
-      ${r.breakdown ? `<div class="hint" style="margin-top:4px;font-size:12.5px;">🗂️ 扣自：${r.breakdown}</div>` : ''}
+      ${r.breakdown ? `<div class="hint" style="margin-top:4px;font-size:12.5px;">${ICON_FOLDER}扣自：${r.breakdown}</div>` : ''}
     </li>`;
 
   const groups = {};
@@ -2960,7 +2966,7 @@ function buildLeaveLi(t, r, dMin, dMax){
       <span class="tag" style="background:var(--${t.c}-soft);color:var(--${t.c});">用</span>
       <span class="days" style="color:var(--${t.c});">${displayAmount(r)}</span>
     </div>
-    ${r.note? `<div class="ledger-note-row">📝 ${escapeHtml(r.note)}</div>` : ''}
+    ${r.note? `<div class="ledger-note-row">${ICON_NOTE}${escapeHtml(r.note)}</div>` : ''}
     <div class="ledger-bottom">
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditRecord('${t.key}','${r.id}')">✎ 編輯</button>
@@ -3185,7 +3191,7 @@ function pageAddRecord(){
           </div>
           <div class="form-row">
             <div class="field" style="flex:1;">
-              <label>📷 上傳照片（選填：加一補一才需要證明）</label>
+              <label>${ICON_CAMERA}上傳照片（選填：加一補一才需要證明）</label>
               ${currentUser ? `<input type="file" id="compPhotoInput" accept="image/*">` : `<p class="hint" style="margin:0;">需要先登入雲端帳號才能使用這個功能（到「設定」分頁）</p>`}
             </div>
           </div>
@@ -3281,7 +3287,7 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
         <input type="text" id="editCompNote-${r.id}" value="${escapeAttr(r.note||'')}">
       </div>
       <div class="field" style="width:100%;">
-        <label>📷 照片</label>
+        <label>${ICON_CAMERA}照片</label>
         ${r.photoUrl && !editPhotoRemoved[r.id] ? `
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
             <img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" style="width:56px;height:56px;" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="目前的照片">
@@ -3339,14 +3345,14 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
       <span class="tag" style="background:var(--${info.c}-soft);color:var(--${info.c});">${r.type==='earn'?'獲得':'使用'}</span>
       <span class="days" style="color:var(--${info.c});">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
     </div>
-    ${r.note? `<div class="ledger-note-row">📝 ${escapeHtml(r.note)}</div>` : ''}
+    ${r.note? `<div class="ledger-note-row">${ICON_NOTE}${escapeHtml(r.note)}</div>` : ''}
     <div class="ledger-bottom">
       ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>` : (() => {
         if(r.type!=='use') return '<div></div>';
         const usage = compUsageBreakdown(category, r.id);
         if(!usage.length) return '<div></div>';
         const isManual = (Array.isArray(r.sourceAllocations) && r.sourceAllocations.length) || !!r.sourceEarnId;
-        const label = isManual ? '🗂️ 指定扣：' : '🗂️ 扣自：';
+        const label = isManual ? '${ICON_FOLDER}指定扣：' : '${ICON_FOLDER}扣自：';
         const parts = usage.map(u=> `${toROC(u.date)}${u.note?`（${escapeHtml(u.note)}）`:''} ${fmt(u.take*getHoursPerDay())}小時`);
         return `<div class="expiry alloc-list">${label}${parts.map(p=>`<div class="alloc-line">${p}</div>`).join('')}</div>`;
       })()}
@@ -3440,7 +3446,7 @@ function renderAvailBatchList(category){
     return `<div class="avail-batch-item">
       ${b.id===lastEditedId ? `<span class="edit-confirm-badge">✓ 已編輯</span>` : ''}
       <button type="button" class="avail-batch-edit-btn" onclick="openQuickEditModal('${category}','${b.id}')" title="編輯">✎</button>
-      <div class="avail-batch-title"><span class="avail-batch-date">${toROC(b.date)}</span>${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}${b.photoUrl?` <span class="photo-badge" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')">📷 附件</span>`:''}</div>
+      <div class="avail-batch-title"><span class="avail-batch-date">${toROC(b.date)}</span>${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}${b.photoUrl?` <span class="photo-badge" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')">${ICON_CAMERA}附件</span>`:''}</div>
       <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours-strong">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">⏳ 到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
     </div>`;
@@ -3508,7 +3514,7 @@ function customSectionHtml(){
   const activeLabels = getActiveCustomLabels();
   const unusedListHtml = activeLabels.length ? `
     <div class="overview-panel" style="background:var(--plum-soft);margin-bottom:16px;">
-      <h3 class="section-title">🗂️ 還沒用完的紀錄</h3>
+      <h3 class="section-title">${ICON_FOLDER}還沒用完的紀錄</h3>
       <div class="avail-batch-list">${activeLabels.map(x=>`
         <div class="avail-batch-item">
           <div class="avail-batch-title"><span class="avail-batch-note-tag" style="background:var(--plum-soft);color:var(--plum);">${escapeHtml(x.label)}</span></div>
@@ -3570,7 +3576,7 @@ function customSectionHtml(){
         <span class="tag" style="background:var(--plum-soft);color:var(--plum);">${escapeHtml(r.customLabel||'其他假別')}・${r.type==='earn'?'獲得':'使用'}</span>
         <span class="days" style="color:var(--plum);">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
       </div>
-      ${r.note? `<div class="ledger-note-row">📝 ${escapeHtml(r.note)}</div>` : ''}
+      ${r.note? `<div class="ledger-note-row">${ICON_NOTE}${escapeHtml(r.note)}</div>` : ''}
       <div class="ledger-bottom">
         <div class="ledger-actions">
           <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
@@ -3661,7 +3667,7 @@ function compSectionHtml(category){
           return `<div class="overview-expiry">⏳ 最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
         })() : ''}
         <div class="avail-batch-section">
-          <div class="avail-batch-list-label" style="color:var(--brick);">🗂️ ${info.label}尚未使用的日期</div>
+          <div class="avail-batch-list-label" style="color:var(--brick);">${ICON_FOLDER}${info.label}尚未使用的日期</div>
           ${renderAvailBatchList(category)}
         </div>
       </div>
@@ -4090,11 +4096,11 @@ function pageData(){
 }
 
 function bottomNav(){
-  const svgHome = `<svg viewBox="0 0 32 32" width="34" height="34"><path d="M4 15L16 5L28 15V27C28 27.55 27.55 28 27 28H19V20H13V28H5C4.45 28 4 27.55 4 27V15Z" fill="#F6C453" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><rect x="13" y="20" width="6" height="8" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
-  const svgCal = `<svg viewBox="0 0 32 32" width="34" height="34"><rect x="4" y="6" width="24" height="22" rx="3" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="2.2"/><rect x="4" y="6" width="24" height="7" rx="3" fill="#4FA8E0" stroke="#1F1F1F" stroke-width="2.2"/><rect x="10" y="2" width="3" height="7" rx="1.2" fill="#5C5C5C" stroke="#1F1F1F" stroke-width="1.8"/><rect x="19" y="2" width="3" height="7" rx="1.2" fill="#5C5C5C" stroke="#1F1F1F" stroke-width="1.8"/><rect x="9" y="17" width="4.5" height="4" rx="1" fill="#E76A5E"/><rect x="18.5" y="17" width="4.5" height="4" rx="1" fill="#F6C453"/></svg>`;
-  const svgKeyboard = `<svg viewBox="0 0 32 32" width="34" height="34"><rect x="3" y="9" width="26" height="16" rx="3" fill="#B7A9D4" stroke="#1F1F1F" stroke-width="2.2"/><rect x="7" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="12" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="17" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="22" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="9" y="18" width="14" height="3" rx="1" fill="#fff"/></svg>`;
-  const svgClipboard = `<svg viewBox="0 0 32 32" width="34" height="34"><rect x="7" y="4" width="18" height="25" rx="2.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/><rect x="12" y="2" width="8" height="5" rx="1.5" fill="#E76A5E" stroke="#1F1F1F" stroke-width="2"/><path d="M11 15L14 18L21 11" stroke="#2A9D8F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><line x1="11" y1="22" x2="21" y2="22" stroke="#1F1F1F" stroke-width="2" stroke-linecap="round"/></svg>`;
-  const svgGear = `<svg viewBox="0 0 32 32" width="34" height="34"><path d="M18.5 4L19.5 7.2L22.8 6.3L22.3 9.7L25.7 10.2L23.8 13L26.6 15L23.8 17L25.7 19.8L22.3 20.3L22.8 23.7L19.5 22.8L18.5 26L16 23.8L13.5 26L12.5 22.8L9.2 23.7L9.7 20.3L6.3 19.8L8.2 17L5.4 15L8.2 13L6.3 10.2L9.7 9.7L9.2 6.3L12.5 7.2L13.5 4L16 6.2Z" fill="#9BA5AE" stroke="#1F1F1F" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="15" r="4.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/></svg>`;
+  const svgHome = `<svg viewBox="0 0 32 32" width="40" height="40"><path d="M4 15L16 5L28 15V27C28 27.55 27.55 28 27 28H19V20H13V28H5C4.45 28 4 27.55 4 27V15Z" fill="#F6C453" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><rect x="13" y="20" width="6" height="8" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+  const svgCal = `<svg viewBox="0 0 32 32" width="40" height="40"><rect x="4" y="6" width="24" height="22" rx="3" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="2.2"/><rect x="4" y="6" width="24" height="7" rx="3" fill="#4FA8E0" stroke="#1F1F1F" stroke-width="2.2"/><rect x="10" y="2" width="3" height="7" rx="1.2" fill="#5C5C5C" stroke="#1F1F1F" stroke-width="1.8"/><rect x="19" y="2" width="3" height="7" rx="1.2" fill="#5C5C5C" stroke="#1F1F1F" stroke-width="1.8"/><rect x="9" y="17" width="4.5" height="4" rx="1" fill="#E76A5E"/><rect x="18.5" y="17" width="4.5" height="4" rx="1" fill="#F6C453"/></svg>`;
+  const svgKeyboard = `<svg viewBox="0 0 32 32" width="40" height="40"><rect x="3" y="9" width="26" height="16" rx="3" fill="#B7A9D4" stroke="#1F1F1F" stroke-width="2.2"/><rect x="7" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="12" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="17" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="22" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="9" y="18" width="14" height="3" rx="1" fill="#fff"/></svg>`;
+  const svgClipboard = `<svg viewBox="0 0 32 32" width="40" height="40"><rect x="7" y="4" width="18" height="25" rx="2.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/><rect x="12" y="2" width="8" height="5" rx="1.5" fill="#E76A5E" stroke="#1F1F1F" stroke-width="2"/><path d="M11 15L14 18L21 11" stroke="#2A9D8F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><line x1="11" y1="22" x2="21" y2="22" stroke="#1F1F1F" stroke-width="2" stroke-linecap="round"/></svg>`;
+  const svgGear = `<svg viewBox="0 0 32 32" width="40" height="40"><path d="M18.5 4L19.5 7.2L22.8 6.3L22.3 9.7L25.7 10.2L23.8 13L26.6 15L23.8 17L25.7 19.8L22.3 20.3L22.8 23.7L19.5 22.8L18.5 26L16 23.8L13.5 26L12.5 22.8L9.2 23.7L9.7 20.3L6.3 19.8L8.2 17L5.4 15L8.2 13L6.3 10.2L9.7 9.7L9.2 6.3L12.5 7.2L13.5 4L16 6.2Z" fill="#9BA5AE" stroke="#1F1F1F" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="15" r="4.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/></svg>`;
   const items = [
     {key:'home', icon:svgHome, label:'首頁'},
     {key:'viz', icon:svgCal, label:'行事曆'},
