@@ -333,6 +333,8 @@
   ul.ledger .tag{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;padding:2px 6px;border-radius:3px;text-align:center;}
   ul.ledger .days{font-family:'IBM Plex Mono',monospace;font-weight:700;}
   ul.ledger .note{color:var(--ink);font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+  ul.ledger .ledger-note-row{color:var(--ink);font-weight:700;font-size:15.5px;margin-top:6px;overflow-wrap:break-word;max-width:100%;}
+  ul.ledger .days{font-size:17px;}
   ul.ledger .expiry{font-size:14.5px;color:var(--amber);font-weight:700;font-family:'IBM Plex Mono',monospace;flex:1 1 100%;background:var(--amber-soft, #FBEFDC);padding:5px 9px;border-radius:6px;}
   ul.ledger .alloc-list{font-family:'Noto Sans TC', sans-serif;}
   ul.ledger .alloc-line{padding:2px 0;font-size:13.5px;}
@@ -500,7 +502,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.27-01';
+const APP_VERSION = 'v2026.08.27-06';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1185,6 +1187,7 @@ let chartMode = true;
 let utilizationMode = true;
 let overviewUnit = 'day'; // 假別紀錄頁「總天數/已用/剩餘」面板要顯示天還是小時
 let expiryTouched = false;
+let compNoteTouched = false; // 使用者是否已手動編輯過備註；true的話就不再自動帶入被扣批次的備註，避免蓋掉使用者自己打的字
 let editExpiryTouched = false;
 let editPhotoRemoved = {}; // {recordId: true} 編輯時使用者按了「移除照片」但還沒存檔
 let kwPendingItems = [];
@@ -1904,7 +1907,12 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
     const skippedList = skippedPins.map(b=>`${toROC(b.date)}${b.note?`（${b.note}）`:''}`).join('、');
     skipHtml = `⚠️ 已選超過需求，未用到：${skippedList}`;
   }
-  return { previewHtml: html, skipHtml };
+  // 「使用」通常是一換一，備註常常就跟被扣那筆的備註一樣，這裡把被扣批次的備註整理起來，方便畫面自動帶入
+  // 用Set去重複：同一個備註如果因為額度不夠被拆成兩筆扣，不要在建議備註裡重複出現兩次
+  // 前面加「使用 」讓備註看起來更明確是「這筆是為了用掉哪個假別」，沒有任何備註可帶時就留空，不要顯示單獨一個「使用」沒有意義
+  const notesJoined = Array.from(new Set(consumed.map(c=>c.note).filter(Boolean))).join('｜');
+  const suggestedNote = notesJoined ? `使用 ${notesJoined}` : '';
+  return { previewHtml: html, skipHtml, suggestedNote };
 }
 
 function gatherCompSrcPins(listElId, hoursPerDay){
@@ -1994,6 +2002,10 @@ function updateUsePreview(category){
   const pins = isManualOn ? gatherCompSrcPins('compSrcBatchList') : [];
   const result = computeUsePreviewHtml(category, amount, unit, pins, null);
   previewEl.innerHTML = result.previewHtml;
+  if(!compNoteTouched){
+    const noteEl = document.getElementById('compNote');
+    if(noteEl) noteEl.value = result.suggestedNote || '';
+  }
   if(skipEl){
     if(result.skipHtml){ skipEl.style.display = ''; skipEl.textContent = result.skipHtml; }
     else { skipEl.style.display = 'none'; }
@@ -2939,9 +2951,9 @@ function buildLeaveLi(t, r, dMin, dMax){
     <div class="ledger-top">
       <span class="d">${toROC(r.date)}</span>
       <span class="tag" style="background:var(--${t.c}-soft);color:var(--${t.c});">用</span>
-      <span class="days">${displayAmount(r)}</span>
-      ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
+      <span class="days" style="color:var(--${t.c});">${displayAmount(r)}</span>
     </div>
+    ${r.note? `<div class="ledger-note-row">📝 ${escapeHtml(r.note)}</div>` : ''}
     <div class="ledger-bottom">
       <div class="ledger-actions">
         <button class="del" title="編輯" onclick="startEditRecord('${t.key}','${r.id}')">✎ 編輯</button>
@@ -3162,7 +3174,7 @@ function pageAddRecord(){
             </div>
           </div>
           <div class="form-row">
-            <div class="field note"><label>備註</label><input type="text" id="compNote" placeholder="例如：假日加班換休"></div>
+            <div class="field note"><label>備註</label><input type="text" id="compNote" placeholder="例如：假日加班換休" oninput="compNoteTouched=true;"></div>
           </div>
           <div class="form-row">
             <div class="field" style="flex:1;">
@@ -3318,9 +3330,9 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
     <div class="ledger-top">
       <span class="d">${toROC(r.date)}</span>
       <span class="tag" style="background:var(--${info.c}-soft);color:var(--${info.c});">${r.type==='earn'?'獲得':'使用'}</span>
-      <span class="days">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
-      ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
+      <span class="days" style="color:var(--${info.c});">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
     </div>
+    ${r.note? `<div class="ledger-note-row">📝 ${escapeHtml(r.note)}</div>` : ''}
     <div class="ledger-bottom">
       ${r.expiry? `<div class="expiry">⏳ ${info.label}到期日：${toROC(r.expiry)}</div>` : (() => {
         if(r.type!=='use') return '<div></div>';
@@ -3549,9 +3561,9 @@ function customSectionHtml(){
       <div class="ledger-top">
         <span class="d">${toROC(r.date)}</span>
         <span class="tag" style="background:var(--plum-soft);color:var(--plum);">${escapeHtml(r.customLabel||'其他假別')}・${r.type==='earn'?'獲得':'使用'}</span>
-        <span class="days">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
-        ${r.note? `<span class="note">📝 ${escapeHtml(r.note)}</span>` : ''}
+        <span class="days" style="color:var(--plum);">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
       </div>
+      ${r.note? `<div class="ledger-note-row">📝 ${escapeHtml(r.note)}</div>` : ''}
       <div class="ledger-bottom">
         <div class="ledger-actions">
           <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
@@ -3720,7 +3732,7 @@ function pageLeaves(){
       </div>
     </div>
     ${leaveTabBar()}
-    <div id="leaveSectionContent">
+    <div id="leaveSectionContent" class="cal-swipe-area" ontouchstart="leaveTouchStart(event)" ontouchend="leaveTouchEnd(event)">
       ${activeLeaveTab==='comp' ? compSectionHtml('comp') : activeLeaveTab==='exchange' ? compSectionHtml('exchange') : activeLeaveTab==='custom' ? customSectionHtml() : leaveSection(LEAVE_TYPES.find(t=>t.key===activeLeaveTab) || LEAVE_TYPES[0])}
     </div>
   `;
@@ -4091,6 +4103,7 @@ function bottomNav(){
 
 function render(){
   expiryTouched = false;
+  compNoteTouched = false;
 
   const isPageChange = lastRenderedPage !== activePage;
   lastRenderedPage = activePage;
@@ -4189,6 +4202,28 @@ function jumpToToday(){
 }
 let calTouchStartX = null;
 let calTouchStartY = null;
+let leaveTouchStartX = null;
+let leaveTouchStartY = null;
+function leaveTouchStart(e){
+  if(!e.touches || !e.touches[0]) return;
+  leaveTouchStartX = e.touches[0].clientX;
+  leaveTouchStartY = e.touches[0].clientY;
+}
+function leaveTouchEnd(e){
+  if(leaveTouchStartX===null || !e.changedTouches || !e.changedTouches[0]) return;
+  const endX = e.changedTouches[0].clientX;
+  const endY = e.changedTouches[0].clientY;
+  const deltaX = endX - leaveTouchStartX;
+  const deltaY = endY - leaveTouchStartY;
+  leaveTouchStartX = null;
+  leaveTouchStartY = null;
+  // 橫向滑動幅度要明顯大於縱向，避免跟上下捲動衝突（跟行事曆滑動判斷邏輯一致）
+  // 滑年份、不滑假別：假別分頁本身已經是可以左右滑動的分頁列，內容區再滑會互搶手勢，
+  // 年份則是跟行事曆一樣的「時間序列」概念，滑動起來邏輯一致、也沒有既有的橫向滑動搶手勢
+  if(Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)*1.5){
+    if(deltaX < 0) changeYear(1); else changeYear(-1);
+  }
+}
 function calTouchStart(e){
   if(!e.touches || !e.touches[0]) return;
   calTouchStartX = e.touches[0].clientX;
