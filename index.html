@@ -77,11 +77,11 @@
     border-radius:16px; transition:color .15s ease;
   }
   .nav-item .nav-icon-wrap{
-    width:52px; height:44px; border-radius:16px;
+    width:44px; height:40px; border-radius:14px;
     display:flex; align-items:center; justify-content:center;
     transition:background .15s ease, transform .15s ease;
   }
-  .nav-item .nav-icon{font-size:28px; line-height:1;}
+  .nav-item .nav-icon{display:flex;align-items:center;justify-content:center;line-height:1;}
   .nav-item.active{color:var(--jade);}
   .nav-item.active .nav-icon-wrap{background:var(--jade-soft);}
   .nav-item:active .nav-icon-wrap{transform:scale(.9);}
@@ -258,7 +258,7 @@
   .src-batch-remain{color:var(--jade);font-weight:700;font-size:16px;flex-shrink:0;white-space:nowrap;}
   .src-batch-row:has(input[type="checkbox"]:checked) .src-batch-remain{display:none;}
   .src-batch-check input[type="checkbox"]{flex-shrink:0;width:22px;height:22px;accent-color:var(--jade);}
-  .src-batch-days{width:72px;box-sizing:border-box;padding:8px 6px;font-size:17px;font-weight:700;text-align:center;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
+  .src-batch-days{width:92px;box-sizing:border-box;padding:8px 10px 8px 6px;font-size:17px;font-weight:700;text-align:right;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
   .src-batch-input-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;}
   .src-batch-unit{font-size:15.5px;font-weight:600;color:var(--ink);flex-shrink:0;}
   .avail-batch-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
@@ -502,7 +502,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.27-07';
+const APP_VERSION = 'v2026.08.27-13';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1415,7 +1415,7 @@ function compHourOptions(maxHours, selectedVal){
   // 極少數舊資料的天數不是0.5的整數倍，這裡確保原本選定的值一定會出現在選項裡，不會編輯時選取狀態默默消失
   if(selectedVal && !values.includes(selectedVal)) values.push(selectedVal);
   values.sort((a,b)=>parseFloat(a)-parseFloat(b));
-  values.forEach(v=>{ opts += `<option value="${v}" ${selectedVal===v?'selected':''}>${v} 小時</option>`; });
+  values.forEach(v=>{ opts += `<option value="${v}" ${selectedVal===v?'selected':''}>${v}</option>`; });
   return opts;
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -4090,12 +4090,17 @@ function pageData(){
 }
 
 function bottomNav(){
+  const svgHome = `<svg viewBox="0 0 32 32" width="34" height="34"><path d="M4 15L16 5L28 15V27C28 27.55 27.55 28 27 28H19V20H13V28H5C4.45 28 4 27.55 4 27V15Z" fill="#F6C453" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><rect x="13" y="20" width="6" height="8" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+  const svgCal = `<svg viewBox="0 0 32 32" width="34" height="34"><rect x="4" y="6" width="24" height="22" rx="3" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="2.2"/><rect x="4" y="6" width="24" height="7" rx="3" fill="#4FA8E0" stroke="#1F1F1F" stroke-width="2.2"/><rect x="10" y="2" width="3" height="7" rx="1.2" fill="#5C5C5C" stroke="#1F1F1F" stroke-width="1.8"/><rect x="19" y="2" width="3" height="7" rx="1.2" fill="#5C5C5C" stroke="#1F1F1F" stroke-width="1.8"/><rect x="9" y="17" width="4.5" height="4" rx="1" fill="#E76A5E"/><rect x="18.5" y="17" width="4.5" height="4" rx="1" fill="#F6C453"/></svg>`;
+  const svgKeyboard = `<svg viewBox="0 0 32 32" width="34" height="34"><rect x="3" y="9" width="26" height="16" rx="3" fill="#B7A9D4" stroke="#1F1F1F" stroke-width="2.2"/><rect x="7" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="12" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="17" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="22" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="9" y="18" width="14" height="3" rx="1" fill="#fff"/></svg>`;
+  const svgClipboard = `<svg viewBox="0 0 32 32" width="34" height="34"><rect x="7" y="4" width="18" height="25" rx="2.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/><rect x="12" y="2" width="8" height="5" rx="1.5" fill="#E76A5E" stroke="#1F1F1F" stroke-width="2"/><path d="M11 15L14 18L21 11" stroke="#2A9D8F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><line x1="11" y1="22" x2="21" y2="22" stroke="#1F1F1F" stroke-width="2" stroke-linecap="round"/></svg>`;
+  const svgGear = `<svg viewBox="0 0 32 32" width="34" height="34"><path d="M18.5 4L19.5 7.2L22.8 6.3L22.3 9.7L25.7 10.2L23.8 13L26.6 15L23.8 17L25.7 19.8L22.3 20.3L22.8 23.7L19.5 22.8L18.5 26L16 23.8L13.5 26L12.5 22.8L9.2 23.7L9.7 20.3L6.3 19.8L8.2 17L5.4 15L8.2 13L6.3 10.2L9.7 9.7L9.2 6.3L12.5 7.2L13.5 4L16 6.2Z" fill="#9BA5AE" stroke="#1F1F1F" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="15" r="4.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/></svg>`;
   const items = [
-    {key:'home', icon:'🏠', label:'首頁'},
-    {key:'viz', icon:'📅', label:'行事曆'},
-    {key:'quick', icon:'⌨️', label:'快速輸入'},
-    {key:'leaves', icon:'📋', label:'假別紀錄'},
-    {key:'data', icon:'⚙️', label:'設定'}
+    {key:'home', icon:svgHome, label:'首頁'},
+    {key:'viz', icon:svgCal, label:'行事曆'},
+    {key:'quick', icon:svgKeyboard, label:'快速輸入'},
+    {key:'leaves', icon:svgClipboard, label:'假別紀錄'},
+    {key:'data', icon:svgGear, label:'設定'}
   ];
   const effectiveActive = activePage==='addRecord' ? 'leaves' : (activePage==='yearRecord' ? 'home' : activePage);
   return `
