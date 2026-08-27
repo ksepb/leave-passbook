@@ -502,7 +502,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.27-06';
+const APP_VERSION = 'v2026.08.27-07';
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1912,7 +1912,14 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
   // 前面加「使用 」讓備註看起來更明確是「這筆是為了用掉哪個假別」，沒有任何備註可帶時就留空，不要顯示單獨一個「使用」沒有意義
   const notesJoined = Array.from(new Set(consumed.map(c=>c.note).filter(Boolean))).join('｜');
   const suggestedNote = notesJoined ? `使用 ${notesJoined}` : '';
-  return { previewHtml: html, skipHtml, suggestedNote };
+  // 手動模式下，即時建議只看使用者「真的有勾選」的那幾筆，不要把自動接續補缺口的批次也算進去，
+  // 避免使用者明明只選了一筆、備註卻莫名其妙多出一個沒選過的批次備註，搞不清楚是怎麼跑出來的
+  // 用pinnedIds（使用者實際勾選的id）判斷，不是用consumed裡的pinned欄位——
+  // 因為第二階段「已指定但還有剩」的批次接續補缺口時，也會被標成pinned:true，但那不是使用者自己選的
+  const manualNotesJoined = Array.from(new Set(consumed.filter(c=>c._id && pinnedIds.has(c._id)).map(c=>c.note).filter(Boolean))).join('｜');
+  const manualNote = manualNotesJoined ? `使用 ${manualNotesJoined}` : '';
+  const fallbackNotesJoined = Array.from(new Set(consumed.filter(c=>!(c._id && pinnedIds.has(c._id))).map(c=>c.note).filter(Boolean))).join('｜');
+  return { previewHtml: html, skipHtml, suggestedNote, manualNote, fallbackNote: fallbackNotesJoined };
 }
 
 function gatherCompSrcPins(listElId, hoursPerDay){
@@ -2004,7 +2011,7 @@ function updateUsePreview(category){
   previewEl.innerHTML = result.previewHtml;
   if(!compNoteTouched){
     const noteEl = document.getElementById('compNote');
-    if(noteEl) noteEl.value = result.suggestedNote || '';
+    if(noteEl) noteEl.value = isManualOn ? (result.manualNote || '') : (result.suggestedNote || '');
   }
   if(skipEl){
     if(result.skipHtml){ skipEl.style.display = ''; skipEl.textContent = result.skipHtml; }
@@ -4725,10 +4732,22 @@ async function addComp(e, category){
     const unit = document.getElementById('compUnit').value;
     const amount = parseFloat(document.getElementById('compAmount').value);
     const expiry = parseFlexibleDate(document.getElementById('compExpiry').value) || null;
-    const note = document.getElementById('compNote').value.trim();
+    let note = document.getElementById('compNote').value.trim();
     if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫日期與數量', false); return; }
     const daysEquiv = unit==='hour' ? amount/getHoursPerDay() : amount;
+    let manualPins = [];
     if(type==='use'){
+      const manualOn = document.getElementById('compManualToggle');
+      if(manualOn && manualOn.checked) manualPins = gatherCompSrcPins('compSrcBatchList');
+      // 手動模式下，備註只即時顯示使用者自己勾選的那幾筆；如果使用者沒有另外自己改過備註（compNoteTouched還是false），
+      // 送出前用同一套FIFO邏輯重新算一次實際會扣到哪些批次，缺口若真的接到手動沒選過的批次，把那筆的備註也一併補進來，
+      // 避免存檔後備註跟實際扣款狀況兜不起來
+      if(manualPins.length && !compNoteTouched){
+        const finalResult = computeUsePreviewHtml(category, amount, unit, manualPins, null);
+        if(finalResult.fallbackNote){
+          note = note ? `${note}｜${finalResult.fallbackNote}` : `使用 ${finalResult.fallbackNote}`;
+        }
+      }
       const balAsOfDate = compBalanceAsOf(category, date, null);
       if(balAsOfDate - daysEquiv < 0){
         if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmt(balAsOfDate)} 天（可能是因為這筆使用的日期比對應的獲得日期早），登記後會變負數，仍要登記嗎？`)) return;
@@ -4737,13 +4756,7 @@ async function addComp(e, category){
     const id = uid();
     const record = { id, type, date, unit, amount, note, category };
     if(type==='earn' && expiry) record.expiry = expiry;
-    if(type==='use'){
-      const manualOn = document.getElementById('compManualToggle');
-      if(manualOn && manualOn.checked){
-        const pins = gatherCompSrcPins('compSrcBatchList');
-        if(pins.length) record.sourceAllocations = pins;
-      }
-    }
+    if(type==='use' && manualPins.length) record.sourceAllocations = manualPins;
     const photoInput = document.getElementById('compPhotoInput');
     const photoFile = photoInput && photoInput.files && photoInput.files[0];
     const submitBtn = e.submitter || (e.target && e.target.querySelector('button[type="submit"]'));
