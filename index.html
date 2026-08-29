@@ -112,6 +112,14 @@
   .ack-btn:active{box-shadow:0 1px 2px rgba(0,0,0,.14);}
 
   .stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;align-items:start;}
+  .home-order-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
+  .home-order-item{display:flex;flex-direction:column;gap:6px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:border-color .12s ease, background .12s ease;}
+  .home-order-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .home-order-item.selected{border-color:var(--jade);background:var(--jade-soft);}
+  .home-order-item.hidden-item{opacity:.55;}
+  .home-order-label{font-size:14.5px;font-weight:700;color:var(--ink);}
+  .home-order-visibility-btn{flex-shrink:0;background:none;border:none;padding:2px 4px;min-height:0;display:flex;align-items:center;gap:3px;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
+  .home-order-empty-tag{align-self:flex-start;font-size:12px;font-weight:700;color:var(--amber);background:var(--amber-soft, #FBEFDC);border:none;border-radius:10px;padding:3px 9px;min-height:0;}
   .stamp-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px 16px;overflow:hidden;box-shadow:0 2px 6px rgba(43,42,40,.05);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;}
   .stamp-card:active{transform:scale(.97);}
   .stamp-card .label{font-size:14px;font-weight:700;color:var(--ink-soft);letter-spacing:.03em;}
@@ -268,7 +276,35 @@
   .avail-batch-date{font-weight:700;font-size:14.5px;color:var(--ink);}
   .avail-batch-note-tag{display:inline-block;background:var(--plum-soft);color:var(--plum);font-weight:700;padding:2px 9px;border-radius:8px;font-size:13.5px;}
   .avail-batch-list-label{font-size:16.5px;font-weight:800;color:var(--jade);margin:0 0 10px;letter-spacing:.2px;}
-  .avail-batch-section{margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);}
+  .avail-batch-stack-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;padding:0;margin:0 0 10px;min-height:0;text-align:left;}
+  .avail-batch-stack-toggle .avail-batch-list-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px;}
+  .avail-batch-stack-right{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+  .avail-batch-stack-count{font-size:12px;font-weight:700;color:var(--ink-soft);}
+  /* 標題列小圖示：最初那版，純色塊交疊，不帶文字，收合/展開時攤開角度變化 */
+  .avail-batch-stack-icon{position:relative;width:26px;height:20px;flex-shrink:0;}
+  .stack-card{position:absolute;top:1px;left:2px;width:20px;height:14px;border-radius:3px;border:1.5px solid #1F1F1F;background:#fff;transition:transform .3s ease;}
+  .stack-card-2{background:var(--brick-soft);}
+  .stack-card-3{background:var(--amber-soft, #FBEFDC);}
+  .avail-batch-stack-icon .stack-card-1{transform:rotate(-6deg) translate(-1px,1px);}
+  .avail-batch-stack-icon .stack-card-2{transform:rotate(0deg) translate(0,0);}
+  .avail-batch-stack-icon .stack-card-3{transform:rotate(6deg) translate(1px,-1px);}
+  .avail-batch-stack-icon.is-open .stack-card-1{transform:rotate(0deg) translate(-6px,3px);}
+  .avail-batch-stack-icon.is-open .stack-card-2{transform:rotate(0deg) translate(0,0);}
+  .avail-batch-stack-icon.is-open .stack-card-3{transform:rotate(0deg) translate(6px,-3px);}
+  /* 內容區真實卡片堆疊預覽：等大卡片，後面的卡片從上方露出一截真實資訊（不是縮小、不是純色條），
+     像Apple Wallet卡片疊在一起的手感；文字靠卡片頂部對齊，這樣露出的那一截剛好是完整一行文字，不會卡在文字中間 */
+  .avail-batch-stack-preview{position:relative;margin-bottom:14px;cursor:pointer;}
+  .avail-batch-stack-preview.is-hidden{display:none;}
+  .stack-preview-layer{position:absolute;left:0;right:0;top:0;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px 4px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;box-shadow:0 2px 6px rgba(43,42,40,.08);transition:transform .3s ease;overflow:hidden;white-space:nowrap;}
+  .stack-preview-layer .avail-batch-note-tag{overflow:hidden;text-overflow:ellipsis;max-width:90px;}
+  .stack-preview-layer-front{align-items:center;padding:6px 12px;}
+  .stack-preview-layer-front .avail-batch-date{font-size:17px;}
+  .stack-preview-remain{font-size:13px;font-weight:700;color:var(--ink-soft);margin-left:auto;}
+  /* 用grid-template-rows從0fr到1fr做展開/收合動畫：比起猜一個max-height，這個寫法對「內容筆數不固定、高度不一樣」更穩定，不會animation時間跟實際高度對不上 */
+  .avail-batch-collapse-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s ease;}
+  .avail-batch-collapse-wrap.is-expanded{grid-template-rows:1fr;}
+  .avail-batch-collapse-inner{overflow:hidden;min-height:0;}
+  .avail-batch-section{margin-top:14px;padding:14px;background:#fff;border-radius:10px;}
   .avail-batch-remain{font-size:14px;color:var(--ink-soft);font-weight:700;white-space:nowrap;overflow-x:auto;}
   /* 小時的顯示樣式故意拆成兩個class：
      .avail-batch-hours（低調小字）用在首頁明細彈窗、到期倒數文字等4個地方，這些地方要維持不搶眼
@@ -433,10 +469,10 @@
   .month-header .month-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;flex-shrink:0;}
   .month-header .month-meta{font-size:14.5px;font-weight:700;color:var(--ink);font-family:'IBM Plex Mono',monospace;margin-left:auto;flex-shrink:1;min-width:0;text-align:right;}
   .month-header-sub{font-size:13.5px;color:var(--ink-soft);font-weight:600;margin-top:4px;text-align:right;padding-right:40px;}
-  .month-header .chevron{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;flex:none;background:#fff;box-shadow:0 1px 3px rgba(43,42,40,.15);}
-  .month-header .chevron svg{display:block;}
-  .month-header .chevron-open{color:var(--jade);border:2px solid var(--jade);}
-  .month-header .chevron-closed{color:var(--amber);border:2px solid var(--amber);}
+  .chevron{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;flex:none;background:#fff;box-shadow:0 1px 3px rgba(43,42,40,.15);}
+  .chevron svg{display:block;}
+  .chevron-open{color:var(--jade);border:2px solid var(--jade);}
+  .chevron-closed{color:var(--amber);border:2px solid var(--amber);}
   .month-body{background:#EFF6F3;border:1px solid #B9D6C9;border-top:none;border-radius:0 0 10px 10px;padding:10px 8px 4px;}
   .month-body ul.ledger{margin:0;}
   .month-group .ledger{margin-top:8px;}
@@ -502,7 +538,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.27-18';
+const APP_VERSION = 'v2026.08.29-01';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -512,6 +548,8 @@ const ICON_CAMERA = `<svg width="19" height="19" viewBox="0 0 32 32" style="vert
 const ICON_HOURGLASS = `<svg width="18" height="18" viewBox="0 0 32 32" style="vertical-align:-4px;margin-right:2px;"><path d="M8 4H24V9C24 12 21 14 16 16C21 18 24 20 24 23V28H8V23C8 20 11 18 16 16C11 14 8 12 8 9V4Z" fill="#F1DFDA" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><line x1="6" y1="4" x2="26" y2="4" stroke="#1F1F1F" stroke-width="2.4" stroke-linecap="round"/><line x1="6" y1="28" x2="26" y2="28" stroke="#1F1F1F" stroke-width="2.4" stroke-linecap="round"/><path d="M11 8C11.5 10 13 11.5 16 13C19 11.5 20.5 10 21 8" stroke="#A03B3B" stroke-width="1.6" fill="none"/><path d="M12 24C12.5 22 14 20.5 16 19.5C18 20.5 19.5 22 20 24" fill="#A03B3B"/></svg>`;
 const ICON_BOOK = `<svg width="18" height="18" viewBox="0 0 32 32" style="vertical-align:-4px;margin-right:2px;"><path d="M4 7C4 6 5 5.5 6 5.5C10 5.5 13 6.5 15 8.5V26C13 24 10 23 6 23C5 23 4 22.5 4 21.5V7Z" fill="#DBEBE9" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><path d="M28 7C28 6 27 5.5 26 5.5C22 5.5 19 6.5 17 8.5V26C19 24 22 23 26 23C27 23 28 22.5 28 21.5V7Z" fill="#E1E0EE" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
 const ICON_SWITCH = `<svg width="17" height="17" viewBox="0 0 32 32" style="vertical-align:-3px;margin-right:2px;"><path d="M6 12C7 8 11 5 16 5C20 5 23.5 7 25.5 10.5" stroke="#2F5D50" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M25 6V11H20" stroke="#2F5D50" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 20C25 24 21 27 16 27C12 27 8.5 25 6.5 21.5" stroke="#B5761A" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M7 26V21H12" stroke="#B5761A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const ICON_EYE_OPEN = `<svg width="20" height="20" viewBox="0 0 32 32" style="vertical-align:-5px;"><path d="M2 16C5 9 10 6 16 6C22 6 27 9 30 16C27 23 22 26 16 26C10 26 5 23 2 16Z" fill="#DBEBE9" stroke="#1F1F1F" stroke-width="2"/><circle cx="16" cy="16" r="5.5" fill="#2F5D50" stroke="#1F1F1F" stroke-width="1.8"/></svg>`;
+const ICON_EYE_CLOSED = `<svg width="20" height="20" viewBox="0 0 32 32" style="vertical-align:-5px;"><path d="M2 16C5 9 10 6 16 6C22 6 27 9 30 16C27 23 22 26 16 26C10 26 5 23 2 16Z" fill="#F1DFDA" stroke="#1F1F1F" stroke-width="2" opacity="0.5"/><circle cx="16" cy="16" r="5.5" fill="#9BA5AE" stroke="#1F1F1F" stroke-width="1.8" opacity="0.6"/><line x1="4" y1="26" x2="28" y2="6" stroke="#1F1F1F" stroke-width="2.2" stroke-linecap="round"/></svg>`;
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -1012,6 +1050,69 @@ const LEAVE_TYPES = [
   {key:'menstrual', label:'生理假', seal:'生', c:'rose', defaultQuota:12, hint:'每月至多1天；全年前3天不併入病假，超過部分自動併入病假計算（性平法第14條）'},
   {key:'mentalCare', label:'身心照顧假', seal:'心', c:'rust', defaultQuota:3, hint:'依公司規定，預設 3 天，可自行調整'}
 ];
+// 首頁卡片可自訂排序的九個項目（六種一般假別 + 補休 + 換休 + 其他假別）。
+// 「其他假別」比較特殊：使用者完全沒有任何其他假別紀錄時，卡片本身不會顯示（renderHomeCard回傳空字串），
+// 但排序清單裡還是要能看到、能排它的位置，這樣以後使用者一旦新增了其他假別紀錄，卡片才會直接照使用者原本排好的位置出現，
+// 不會因為「當初排序時它是空的」就被排到最後面
+const HOME_CARD_KEYS = ['annual','comp','exchange','sick','personal','familyCare','menstrual','mentalCare','custom'];
+const HOME_CARD_LABELS = { annual:'特休', comp:'補休', exchange:'換休', custom:'其他假別', sick:'病假', personal:'事假', familyCare:'家庭照顧', menstrual:'生理假', mentalCare:'身心照顧' };
+function renderHomeCard(key){
+  if(key==='comp') return compStampCard('comp');
+  if(key==='exchange') return compStampCard('exchange');
+  if(key==='custom') return customStampCard();
+  const t = LEAVE_TYPES.find(x=>x.key===key);
+  return t ? stampCard(t) : '';
+}
+// 防呆：把使用者存的排序清單跟目前這個版本實際存在的九個項目對一遍——
+// 少的（例如舊資料存的時候還沒有「其他假別」這個項目）自動補到最後面；
+// 多出來的、不認得的值（可能是資料損毀或未來版本拿掉的項目）直接濾掉，不會讓畫面爆掉
+function getHomeCardOrder(){
+  const saved = Array.isArray(state.homeCardOrder) ? state.homeCardOrder : [];
+  const valid = saved.filter(k=>HOME_CARD_KEYS.includes(k));
+  const missing = HOME_CARD_KEYS.filter(k=>!valid.includes(k));
+  return valid.concat(missing);
+}
+let homeOrderSwapSelected = null; // 首頁卡片排序：目前選中準備交換位置的key，null代表沒有選取中。
+// 用「先選一張、再選另一張互換」取代原本的上下移動鈕：因為畫面是兩欄，「往前移一格」有時候是跟正上方換、
+// 有時候卻是跟右上方換，使用者不容易預判會跳到哪裡；改成「指到哪、換到哪」不管兩欄怎麼排都是同一種直覺操作
+function selectHomeCardForSwap(key){
+  if(homeOrderSwapSelected === null){
+    homeOrderSwapSelected = key;
+  } else if(homeOrderSwapSelected === key){
+    homeOrderSwapSelected = null; // 點同一張，取消選取
+  } else {
+    const order = getHomeCardOrder();
+    const i1 = order.indexOf(homeOrderSwapSelected);
+    const i2 = order.indexOf(key);
+    if(i1>-1 && i2>-1){
+      [order[i1], order[i2]] = [order[i2], order[i1]];
+      state.homeCardOrder = order;
+      saveState();
+    }
+    homeOrderSwapSelected = null;
+  }
+  render();
+}
+function isHomeCardHidden(key){
+  return Array.isArray(state.hiddenHomeCards) && state.hiddenHomeCards.includes(key);
+}
+function toggleHomeCardHidden(key, event){
+  if(event){ event.stopPropagation(); } // 避免這個按鈕的點擊事件也觸發外層卡片的「選取準備交換位置」
+  const hidden = Array.isArray(state.hiddenHomeCards) ? state.hiddenHomeCards.slice() : [];
+  const idx = hidden.indexOf(key);
+  if(idx>-1) hidden.splice(idx,1); else hidden.push(key);
+  state.hiddenHomeCards = hidden;
+  saveState();
+  render();
+}
+// 從設定頁的「首頁卡片順序」直接跳去新增一筆其他假別紀錄，讓「尚無紀錄」不會是死路一條
+function goAddCustomFromSettings(event){
+  if(event){ event.stopPropagation(); }
+  activeLeaveTab = 'custom';
+  state.activeLeaveTab = 'custom';
+  switchPage('leaves');
+  saveState();
+}
 // 「快速登記今天」只適用臨時性、當天才知道要請的假別；特休/補休/換休都是預先排定，不需要這個捷徑
 const QUICK_LOG_ELIGIBLE_TYPES = ['sick', 'personal', 'familyCare', 'menstrual', 'mentalCare'];
 
@@ -1131,7 +1232,7 @@ let forgotPasswordMode = false;
 let forgotPasswordSent = false;
 let emailPwEmailVal = '';
 let emailPwPasswordVal = '';
-function toggleSettingsExpand(key){ settingsExpandedKey = (settingsExpandedKey===key) ? null : key; render(); }
+function toggleSettingsExpand(key){ settingsExpandedKey = (settingsExpandedKey===key) ? null : key; homeOrderSwapSelected = null; render(); }
 function openAddRecord(key){
   activeLeaveTab = key;
   addRecordDate = null;
@@ -1221,6 +1322,7 @@ let activePage = 'home';
 function switchPage(page){
   if(editing){ editing = null; editExpiryTouched = false; editPhotoRemoved = {}; }
   deviceNameEditing = false;
+  homeOrderSwapSelected = null;
   activePage = page;
   window.scrollTo(0,0);
   render();
@@ -1351,7 +1453,7 @@ function addMonths(dateStr, n){
 function defaultState(){
   const records={};
   LEAVE_TYPES.forEach(t=>{ records[t.key]=[]; });
-  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1, annualMinDays: DEFAULT_ANNUAL_MIN_DAYS, autoDeleteExpiredPhotos: true, overviewUnit:'day', sortAsc:false, yearRecordSortAsc:true, activeLeaveTab:'annual' };
+  return { quotaByYear:{}, records, compRecords:[], hoursPerDay: DEFAULT_HOURS_PER_DAY, personalPaidDays: DEFAULT_PERSONAL_PAID_DAYS, uiScale: 1, annualMinDays: DEFAULT_ANNUAL_MIN_DAYS, autoDeleteExpiredPhotos: true, overviewUnit:'day', sortAsc:false, yearRecordSortAsc:true, activeLeaveTab:'annual', homeCardOrder: HOME_CARD_KEYS.slice(), hiddenHomeCards: [], availBatchCollapsed: {} };
 }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -1489,6 +1591,9 @@ async function loadState(){
         const validTabKeys = LEAVE_TYPES.map(t=>t.key).concat(['comp','exchange','custom']);
         if(validTabKeys.includes(parsed.activeLeaveTab)){ state.activeLeaveTab = parsed.activeLeaveTab; activeLeaveTab = parsed.activeLeaveTab; }
       }
+      if(Array.isArray(parsed.homeCardOrder)){ state.homeCardOrder = parsed.homeCardOrder; }
+      if(Array.isArray(parsed.hiddenHomeCards)){ state.hiddenHomeCards = parsed.hiddenHomeCards.filter(k=>HOME_CARD_KEYS.includes(k)); }
+      if(parsed.availBatchCollapsed && typeof parsed.availBatchCollapsed==='object'){ state.availBatchCollapsed = parsed.availBatchCollapsed; }
     }
   }catch(e){ /* 無資料，使用預設值 */ }
 }
@@ -2633,7 +2738,7 @@ function reminderBanner(){
   const compHtml = list.length? (()=>{
     const hasUrgent = list.some(r=>r.diffDays<=7);
     const items = list.map(r=>{
-      const statusTxt = r.diffDays < 0 ? `已過期 ${Math.abs(r.diffDays)} 天` : (r.diffDays===0? '今天到期' : `${r.diffDays} 天後到期`);
+      const statusTxt = r.diffDays < 0 ? `已過期${Math.abs(r.diffDays)}天` : (r.diffDays===0? '今天到期' : `${r.diffDays}天後到期`);
       const catLabel = COMP_CATEGORIES[r.category||'comp'].label;
       const lineClass = r.diffDays<=7 ? 'urgent-line' : '';
       return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
@@ -3406,6 +3511,21 @@ function setAvailBatchYearFilter(category, year){
   render();
 }
 
+// 「尚未使用的日期」清單收合狀態：使用者手動點過就永遠照使用者的選擇；
+// 沒手動選過時，用筆數決定預設（超過3筆太長，預設收合；3筆以內直接展開，不用多點一次）
+function isAvailBatchCollapsed(category, count){
+  if(!state.availBatchCollapsed) state.availBatchCollapsed = {};
+  const manual = state.availBatchCollapsed[category];
+  if(manual !== undefined) return manual;
+  return count > 3;
+}
+function toggleAvailBatchCollapse(category, currentlyCollapsed){
+  if(!state.availBatchCollapsed) state.availBatchCollapsed = {};
+  state.availBatchCollapsed[category] = !currentlyCollapsed;
+  saveState();
+  render();
+}
+
 function renderAvailBatchList(category){
   const info = COMP_CATEGORIES[category];
   const todayD = new Date(TODAY);
@@ -3431,8 +3551,22 @@ function renderAvailBatchList(category){
       return a.diffDays-b.diffDays;
     });
   if(batches.length===0){
-    return `<div class="hint" style="margin-bottom:12px;">目前沒有還能使用的${info.label}紀錄。</div>`;
+    return `<div class="avail-batch-list-label" style="color:var(--brick);">${ICON_FOLDER}${info.label}未使用日期</div><div class="hint" style="margin-bottom:12px;">目前沒有還能使用的${info.label}紀錄。</div>`;
   }
+  const collapsed = isAvailBatchCollapsed(category, batches.length);
+  const stackHeader = `
+    <button type="button" class="avail-batch-stack-toggle" onclick="toggleAvailBatchCollapse('${category}', ${collapsed})">
+      <span class="avail-batch-list-label" style="color:var(--brick);margin:0;">${ICON_FOLDER}${info.label}未使用日期</span>
+      <span class="avail-batch-stack-right">
+        <span class="avail-batch-stack-icon ${collapsed?'':'is-open'}">
+          <span class="stack-card stack-card-1"></span>
+          <span class="stack-card stack-card-2"></span>
+          <span class="stack-card stack-card-3"></span>
+        </span>
+        <span class="avail-batch-stack-count">共 ${batches.length} 筆</span>
+        <span class="chevron ${collapsed?'chevron-closed':'chevron-open'}">${collapsed?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'}</span>
+      </span>
+    </button>`;
   // 依「獲得年份」（西元）產生篩選鈕，只列出目前清單裡實際還有剩餘的年份；只有1個年份時完全不顯示，避免多一排東西擠畫面
   const distinctYears = Array.from(new Set(batches.map(b=>b.earnYear))).sort((a,b)=>a-b);
   const currentFilter = availBatchYearFilter[category] || 'all';
@@ -3443,9 +3577,9 @@ function renderAvailBatchList(category){
       ${distinctYears.map(y=>`<button type="button" class="year-pill ${effectiveFilter===y?'active':''}" onclick="setAvailBatchYearFilter('${category}',${y})">${y}</button>`).join('')}
     </div>` : '';
   const shownBatches = effectiveFilter==='all' ? batches : batches.filter(b=>b.earnYear===effectiveFilter);
-  return `${pillsHtml}<div class="avail-batch-list">${shownBatches.map(b=>{
+  const listHtml = `${pillsHtml}<div class="avail-batch-list">${shownBatches.map(b=>{
     const urgent = b.diffDays!==null && b.diffDays<=7;
-    const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期 ${Math.abs(b.diffDays)} 天` : (b.diffDays===0?'今天到期':`${b.diffDays} 天後到期`));
+    const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期${Math.abs(b.diffDays)}天` : (b.diffDays===0?'今天到期':`${b.diffDays}天後到期`));
     return `<div class="avail-batch-item">
       ${b.id===lastEditedId ? `<span class="edit-confirm-badge">✓ 已編輯</span>` : ''}
       <button type="button" class="avail-batch-edit-btn" onclick="openQuickEditModal('${category}','${b.id}')" title="編輯">✎</button>
@@ -3454,6 +3588,27 @@ function renderAvailBatchList(category){
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">${ICON_HOURGLASS}到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
     </div>`;
   }).join('')}</div>`;
+  // 收合時，實際內容區顯示「真的疊在一起」的預覽——只有最上面那張顯示完整真實內容（日期/備註/剩餘天數），
+  // 下面幾張改成純色實心窄條（不放文字），避免好幾張卡片的文字疊在同個位置糊成一團看不清楚；最多疊5張
+  const previewBatches = shownBatches.slice(0,3);
+  const n = previewBatches.length;
+  const peek = 34; // 每張後面的卡片露出的高度
+  const overlap = 8; // 每兩張相鄰卡片之間固定重疊這麼多，才會有「疊在一起」的感覺；文字會靠內距往下挪開這個重疊區，不會被蓋到
+  const cardH = peek + overlap; // 每張卡片（含最上面那張）都用同一個高度，重疊幅度才會一致，看起來才會像同一疊
+  const frontH = cardH;
+  // 後面幾張用該假別自己的主題色，越後面越淡（呼應之前的配色邏輯，但這次整張卡片淡淡上色，不是純色窄條），
+  // 淡到文字還是看得清楚（第一張永遠白底黑字最清楚；後面幾張文字顏色也跟著調深一點，避免淡底配淡字看不到）
+  const layerBg = i => i===0 ? '#fff' : `color-mix(in srgb, #B5761A ${22-i*5}%, white)`;
+  const stackPreviewHtml = n ? `
+    <div class="avail-batch-stack-preview ${collapsed?'':'is-hidden'}" onclick="toggleAvailBatchCollapse('${category}', ${collapsed})" style="height:${n>1?(n-1)*peek+cardH:frontH}px;">
+      ${previewBatches.map((b,i)=>`
+        <div class="stack-preview-layer ${i===0?'stack-preview-layer-front':''}" style="height:${i===0?frontH:cardH}px;transform:translateY(${i*peek}px) scale(${1-i*0.02});z-index:${n-i};background:${layerBg(i)};">
+          <span class="avail-batch-date">${toROC(b.date)}</span>
+          ${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}
+          <span class="stack-preview-remain">剩 ${fmt(b.remainDays)} 天</span>
+        </div>`).join('')}
+    </div>` : '';
+  return `${stackHeader}${stackPreviewHtml}<div class="avail-batch-collapse-wrap ${collapsed?'':'is-expanded'}"><div class="avail-batch-collapse-inner">${listHtml}</div></div>`;
 }
 
 function toggleCustomAdd(){ customAddOpen = !customAddOpen; render(); }
@@ -3666,11 +3821,10 @@ function compSectionHtml(category){
         ${nearestExpiry ? (()=>{
           const isUrgent = nearestExpiry.diffDays<=90;
           const color = nearestExpiry.diffDays<=7 ? 'var(--brick)' : (isUrgent ? 'var(--amber)' : 'var(--ink)');
-          const countdown = nearestExpiry.diffDays<0?`已過期 ${Math.abs(nearestExpiry.diffDays)} 天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays} 天後到期`);
+          const countdown = nearestExpiry.diffDays<0?`已過期${Math.abs(nearestExpiry.diffDays)}天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays}天後到期`);
           return `<div class="overview-expiry">${ICON_HOURGLASS}最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
         })() : ''}
         <div class="avail-batch-section">
-          <div class="avail-batch-list-label" style="color:var(--brick);">${ICON_FOLDER}${info.label}尚未使用的日期</div>
           ${renderAvailBatchList(category)}
         </div>
       </div>
@@ -3723,11 +3877,7 @@ function pageHome(justEntered){
     </div>
 
     <div class="stamps">
-      ${stampCard(LEAVE_TYPES[0])}
-      ${compStampCard('comp')}
-      ${compStampCard('exchange')}
-      ${customStampCard()}
-      ${LEAVE_TYPES.slice(1).map(stampCard).join('')}
+      ${getHomeCardOrder().filter(k=>!isHomeCardHidden(k)).map(renderHomeCard).join('')}
     </div>
 
     <div class="eyebrow" style="text-align:center;margin-top:20px;">Leave Passbook · ${APP_VERSION}</div>
@@ -3800,7 +3950,29 @@ function pageData(){
         ` : ''}
       </div>
       <div class="backup">
-        <h2>📐 各假別總天數設定</h2>
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('homeOrder')">
+          <span>🔀 首頁卡片順序</span>
+          <span>${settingsExpandedKey==='homeOrder'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='homeOrder' ? `
+        <p class="hint" style="margin-bottom:10px;">下面排列方式跟首頁一樣是兩欄並排。<strong>點一張卡片再點另一張</strong>可以互換位置；點眼睛圖示可以把不用的假別藏起來（不會刪除任何紀錄，再點一次就會恢復顯示）。</p>
+        <div class="home-order-grid">
+          ${getHomeCardOrder().map(key=>{
+            const hidden = isHomeCardHidden(key);
+            const selected = homeOrderSwapSelected===key;
+            const isEmptyCustom = key==='custom' && getActiveCustomLabels().length===0;
+            return `
+            <div class="home-order-item ${selected?'selected':''} ${hidden?'hidden-item':''}" onclick="selectHomeCardForSwap('${key}')">
+              <div class="home-order-item-top">
+                <span class="home-order-label">${HOME_CARD_LABELS[key]}</span>
+                <button type="button" class="home-order-visibility-btn" onclick="toggleHomeCardHidden('${key}', event)" aria-label="${hidden?'目前隱藏，點擊顯示':'目前顯示，點擊隱藏'}">${hidden?ICON_EYE_CLOSED:ICON_EYE_OPEN}<span>${hidden?'隱藏':'顯示'}</span></button>
+              </div>
+              ${isEmptyCustom ? `<button type="button" class="home-order-empty-tag" onclick="goAddCustomFromSettings(event)">尚無紀錄　＋新增</button>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+        ` : ''}
+      </div>
         <p class="hint" style="margin-bottom:8px;">這是每個假別今年（${selectedYear} 年）的總天數上限，通常一年只需要調整一兩次。點假別名稱展開調整。</p>
         ${LEAVE_TYPES.map(t=>{
           const isOpen = quotaExpandedKey===t.key;
