@@ -540,7 +540,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.29-09';
+const APP_VERSION = 'v2026.08.29-10';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -1720,7 +1720,7 @@ function toDays(r){
   return Number(r.days)||0;
 }
 function displayAmount(r){
-  return `${fmt(toDays(r)*getHoursPerDay())} 小時`;
+  return `${fmt(toDays(r)*getHoursPerDay())}小時`;
 }
 function compBalanceAsOf(category, date, excludeId, customLabel){
   return state.compRecords
