@@ -245,8 +245,8 @@
   button.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;}
 
   .total-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
-  .quota-accordion-item{border-bottom:1px solid var(--line);}
-  .quota-accordion-item:last-child{border-bottom:none;}
+  .quota-accordion-item{border:1px solid var(--line);border-radius:10px;padding:2px 10px;margin-bottom:10px;background:#fff;}
+  .quota-accordion-item:last-child{margin-bottom:0;}
   .quota-accordion-head{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;padding:12px 2px;font-family:'Noto Sans TC',sans-serif;font-size:16.5px;font-weight:700;cursor:pointer;color:var(--ink);}
   .quota-accordion-body{padding:0 2px 14px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;}
   .auth-option{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:#fff;}
@@ -279,7 +279,7 @@
   .avail-batch-stack-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;padding:0;margin:0 0 10px;min-height:0;text-align:left;}
   .avail-batch-stack-toggle .avail-batch-list-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px;}
   .avail-batch-stack-right{display:flex;align-items:center;gap:5px;flex-shrink:0;}
-  .avail-batch-stack-count{font-size:12px;font-weight:700;color:var(--ink-soft);}
+  .avail-batch-stack-count{font-size:14px;font-weight:800;color:var(--ink-soft);}
   /* 標題列小圖示：最初那版，純色塊交疊，不帶文字，收合/展開時攤開角度變化 */
   .avail-batch-stack-icon{position:relative;width:26px;height:20px;flex-shrink:0;}
   .stack-card{position:absolute;top:1px;left:2px;width:20px;height:14px;border-radius:3px;border:1.5px solid #1F1F1F;background:#fff;transition:transform .3s ease;}
@@ -538,7 +538,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.29-01';
+const APP_VERSION = 'v2026.08.29-05';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3973,6 +3973,12 @@ function pageData(){
         </div>
         ` : ''}
       </div>
+      <div class="backup">
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('quota')">
+          <span>📐 設定假別天數</span>
+          <span>${settingsExpandedKey==='quota'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='quota' ? `
         <p class="hint" style="margin-bottom:8px;">這是每個假別今年（${selectedYear} 年）的總天數上限，通常一年只需要調整一兩次。點假別名稱展開調整。</p>
         ${LEAVE_TYPES.map(t=>{
           const isOpen = quotaExpandedKey===t.key;
@@ -3994,6 +4000,7 @@ function pageData(){
             ` : ''}
           </div>`;
         }).join('')}
+        ` : ''}
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('hours')">
