@@ -242,6 +242,12 @@
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
   .btn-jade{background:var(--jade);} .btn-brick{background:var(--brick);} .btn-blue{background:var(--blue);} .btn-olive{background:var(--olive);} .btn-plum{background:var(--plum);} .btn-rust{background:var(--rust);} .btn-rose{background:var(--rose);} .btn-teal{background:var(--teal);}
+  .btn-outline-jade,.btn-outline-brick,.btn-outline-blue,.btn-outline-olive,.btn-outline-plum,.btn-outline-rust,.btn-outline-rose,.btn-outline-teal{background:#fff;border-style:solid;border-width:1.2px;font-weight:700;}
+  .btn-outline-jade{color:var(--jade);border-color:var(--jade);} .btn-outline-brick{color:var(--brick);border-color:var(--brick);} .btn-outline-blue{color:var(--blue);border-color:var(--blue);} .btn-outline-olive{color:var(--olive);border-color:var(--olive);} .btn-outline-plum{color:var(--plum);border-color:var(--plum);} .btn-outline-rust{color:var(--rust);border-color:var(--rust);} .btn-outline-rose{color:var(--rose);border-color:var(--rose);} .btn-outline-teal{color:var(--teal);border-color:var(--teal);}
+  .btn-with-badge{display:flex;align-items:center;justify-content:center;gap:4px;padding-left:8px;padding-right:8px;white-space:nowrap;min-height:34px;box-sizing:border-box;}
+  .btn-badge-circle{width:18px;height:18px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;line-height:1;}
+  .btn-badge-circle-solid{background:rgba(255,255,255,.9);}
+  .btn-badge-circle-outline{background:rgba(0,0,0,.06);}
   button.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);font-weight:500;}
 
   .total-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
@@ -379,6 +385,7 @@
   ul.ledger li.editrow{display:flex;flex-wrap:wrap;align-items:flex-start;background:#fffaf0;border-radius:12px;padding:14px 12px;gap:12px;}
   li.editrow input,li.editrow select{font-family:'Noto Sans TC',sans-serif;font-size:16px;padding:8px 10px;border:1.5px solid var(--line);border-radius:12px;}
   li.editrow > .field{flex:1 1 140px;}
+  .row{display:flex;flex-wrap:wrap;gap:8px;}
   li.editrow > .row{width:100%;gap:8px;}
   .empty{font-size:14px;color:var(--ink-soft);padding:14px 2px;line-height:1.6;text-align:center;}
 
@@ -540,7 +547,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.29-10';
+const APP_VERSION = 'v2026.08.29-20';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -1165,6 +1172,7 @@ function selectCalDay(dateStr){
 }
 let addRecordDate = null;
 let addRecordFrom = 'leaves';
+let addRecordCompDefaultType = null; // 補休/換休登記表單預設帶入的類型（'use'代表直接預選使用，null則照原本預設獲得）
 let quotaExpandedKey = null;
 let quotaEditModalOpen = null;
 let homeDetailModalOpen = null; // null | 'remain' | 'month' —— 首頁摘要卡三格點進去的明細彈窗（年度已經改成獨立頁面，見switchPage('yearRecord')）
@@ -1242,6 +1250,16 @@ function openAddRecord(key){
   activeLeaveTab = key;
   addRecordDate = null;
   addRecordFrom = 'leaves';
+  addRecordCompDefaultType = null;
+  switchPage('addRecord');
+}
+// 補休/換休專用：直接開登記表單、預設選「使用」，不用自己手動切換下拉選單
+// （原本「＋新增一筆」固定預設「獲得」，但實務上要記「用掉了」的情境也很常見，各自一個按鈕比較快）
+function openAddRecordAsUse(key){
+  activeLeaveTab = key;
+  addRecordDate = null;
+  addRecordFrom = 'leaves';
+  addRecordCompDefaultType = 'use';
   switchPage('addRecord');
 }
 function openAddRecordFromHome(key){
@@ -3154,9 +3172,9 @@ function leaveSection(t){
         </div>
       </div>
 
-      <div class="row" style="margin-bottom:14px;">
-        <button type="button" class="btn-${t.c}" onclick="openAddRecord('${t.key}')">＋ 新增一筆</button>
-        <button type="button" class="ghost" onclick="openQuotaEditModal('${t.key}')">✎ 編輯總天數</button>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+        <button type="button" class="btn-${t.c} btn-with-badge" onclick="openAddRecord('${t.key}')"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--${t.c});"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增一筆</button>
+        <button type="button" class="btn-outline-${t.c} btn-with-badge" onclick="openQuotaEditModal('${t.key}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> 編輯總天數</button>
       </div>
       ${quotaEditModalOpen===t.key ? `
       <div class="modal-overlay" onclick="closeQuotaEditModal()">
@@ -3240,8 +3258,8 @@ function pageAddRecord(){
           <div class="form-row">
             <div class="field" style="flex:0 0 160px;"><label>類型</label>
               <select id="compType" onchange="updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint','compType');">
-                <option value="earn">獲得${info.label}</option>
-                <option value="use">使用${info.label}</option>
+                <option value="earn" ${addRecordCompDefaultType!=='use'?'selected':''}>獲得${info.label}</option>
+                <option value="use" ${addRecordCompDefaultType==='use'?'selected':''}>使用${info.label}</option>
               </select>
             </div>
           </div>
@@ -3266,7 +3284,7 @@ function pageAddRecord(){
                   ${compHourQuickBtns.map(h=>`<button type="button" onclick="setDays('compAmount',${h});updateUsePreview('${key}');updateUnitColor('compAmount','compUnit','compConvertHint','compType');">${h}</button>`).join('')}
                 </div>
               </div>
-              <div class="convert-hint ${compDefaultUnit==='day'?'u-day':'u-hour'}" id="compConvertHint">獲得 <b>${compDefaultUnit==='day'?fmt(getHoursPerDay())+' 小時':fmt(1/getHoursPerDay())+' 天'}</b></div>
+              <div class="convert-hint ${compDefaultUnit==='day'?'u-day':'u-hour'}" id="compConvertHint">${addRecordCompDefaultType==='use'?'使用':'獲得'} <b>${compDefaultUnit==='day'?fmt(getHoursPerDay())+' 小時':fmt(1/getHoursPerDay())+' 天'}</b></div>
             </div>
           </div>
           <div id="usePreview"></div>
@@ -3728,7 +3746,7 @@ function customSectionHtml(){
           <button type="submit" class="btn-plum" style="flex:1;">儲存</button>
         </div>
       </form>
-    </div>` : `<button type="button" class="btn-plum" style="width:100%;margin-bottom:16px;" onclick="toggleCustomAdd()">＋ 新增其他假別</button>`;
+    </div>` : `<button type="button" class="btn-plum btn-with-badge" style="width:100%;margin-bottom:16px;" onclick="toggleCustomAdd()"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--plum);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增其他假別</button>`;
 
   const historyRows = state.compRecords.filter(r=>(r.category||'comp')==='custom' && r.date.startsWith(String(year)));
   const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r)*getHoursPerDay(),0))}小時`;
@@ -3834,7 +3852,10 @@ function compSectionHtml(category){
         </div>
       </div>
 
-      <button type="button" class="btn-${info.c}" style="margin-bottom:4px;" onclick="openAddRecord('${category}')">＋ 新增一筆</button>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn-${info.c} btn-with-badge" style="margin-bottom:4px;" onclick="openAddRecord('${category}')"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--${info.c});"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增一筆</button>
+        <button type="button" class="btn-outline-${info.c} btn-with-badge" style="margin-bottom:4px;" onclick="openAddRecordAsUse('${category}')"><span class="btn-badge-circle btn-badge-circle-outline"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span> 使用一筆</button>
+      </div>
     </section>
 
     <div class="search-sort-row" style="margin:0 4px 10px;">
@@ -3877,7 +3898,7 @@ function pageHome(justEntered){
     ${dashboardPanel()}
 
     <div style="margin-bottom:16px;">
-      <button type="button" class="btn-jade${justEntered?' shimmer-once':''}" style="width:100%;font-size:16px;padding:14px 16px;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')">＋ 登記休假／補休紀錄</button>
+      <button type="button" class="btn-jade${justEntered?' shimmer-once':''}" style="width:100%;font-size:16px;padding:14px 16px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> 登記休假／補休紀錄</button>
       ${(state.lastUsedType && QUICK_LOG_ELIGIBLE_TYPES.includes(state.lastUsedType)) ? `<button type="button" style="width:100%;margin-top:8px;font-size:16px;padding:14px 16px;background:var(--jade-soft);color:var(--jade);border:1.5px solid var(--jade);" onclick="quickLogToday()">⚡ 快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
     </div>
 
@@ -4340,6 +4361,12 @@ function render(){
   lastAddedId = null;
   lastEditedId = null;
   document.getElementById('bottomNavHolder').innerHTML = bottomNav();
+  // 用「使用」捷徑進來的話，預覽區塊平常只在下拉選單onchange時才會更新，
+  // 但這裡是直接用selected屬性預選好的，不會觸發onchange，要手動補呼叫一次，
+  // 不然畫面會顯示「使用」但底下的扣款預覽、手動指定區塊還停留在空白的初始狀態
+  if(activePage==='addRecord' && addRecordCompDefaultType==='use' && (activeLeaveTab==='comp' || activeLeaveTab==='exchange')){
+    updateUsePreview(activeLeaveTab);
+  }
 }
 
 function setStatus(msg, ok){
