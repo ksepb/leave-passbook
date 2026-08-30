@@ -306,6 +306,9 @@
   .stack-preview-layer-front{align-items:center;padding:6px 12px;}
   .stack-preview-layer-front .avail-batch-date{font-size:17px;}
   .stack-preview-remain{font-size:13px;font-weight:700;color:var(--ink-soft);margin-left:auto;}
+  .stack-preview-layer-empty{border-style:solid;}
+  /* 純裝飾用的「下面還有」提示：不放內容，只是一條窄窄的陰影色塊，暗示堆疊還沒完，只有真的還有更多資料時才會出現 */
+  .stack-preview-more-hint{position:absolute;left:12px;right:12px;height:10px;border-radius:0 0 8px 8px;background:rgba(43,42,40,.08);z-index:0;}
   /* 用grid-template-rows從0fr到1fr做展開/收合動畫：比起猜一個max-height，這個寫法對「內容筆數不固定、高度不一樣」更穩定，不會animation時間跟實際高度對不上 */
   .avail-batch-collapse-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s ease;}
   .avail-batch-collapse-wrap.is-expanded{grid-template-rows:1fr;}
@@ -547,7 +550,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.29-20';
+const APP_VERSION = 'v2026.08.29-32';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3172,7 +3175,7 @@ function leaveSection(t){
         </div>
       </div>
 
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
         <button type="button" class="btn-${t.c} btn-with-badge" onclick="openAddRecord('${t.key}')"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--${t.c});"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增一筆</button>
         <button type="button" class="btn-outline-${t.c} btn-with-badge" onclick="openQuotaEditModal('${t.key}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> 編輯總天數</button>
       </div>
@@ -3191,11 +3194,15 @@ function leaveSection(t){
         </div>
       </div>
       ` : ''}
-      <div class="search-sort-row">
-        <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="searchQuery=this.value" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="renderSearchResult();">
-        <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
-      </div>
-      <div class="history-divider"><span>${ICON_BOOK}<button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}年</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button>全部紀錄</span></div>
+    </section>
+
+    <div class="search-sort-row" style="margin:0 4px 10px;">
+      <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="searchQuery=this.value" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="renderSearchResult();">
+      <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
+    </div>
+
+    <section class="block">
+      <div class="history-divider" style="margin-top:0;"><span>${ICON_BOOK}<button type="button" class="divider-year-btn" onclick="changeYear(-1)" aria-label="上一年">‹</button><span class="divider-year-num">${selectedYear}年</span><button type="button" class="divider-year-btn" onclick="changeYear(1)" aria-label="下一年">›</button>全部紀錄</span></div>
       ${listHtml}
       <div style="margin-top:16px;">
         <button type="button" class="ghost" onclick="toggleResetPanel('${t.key}')">${resetPanelOpen[t.key]?'▲ 收起':'⋯ 更多操作'}</button>
@@ -3622,14 +3629,26 @@ function renderAvailBatchList(category){
   // 後面幾張用該假別自己的主題色，越後面越淡（呼應之前的配色邏輯，但這次整張卡片淡淡上色，不是純色窄條），
   // 淡到文字還是看得清楚（第一張永遠白底黑字最清楚；後面幾張文字顏色也跟著調深一點，避免淡底配淡字看不到）
   const layerBg = i => i===0 ? '#fff' : `color-mix(in srgb, #B5761A ${22-i*5}%, white)`;
+  // 第4筆：給一個看得出卡片形狀（有邊框、有陰影）但不放內容的空卡片，比純陰影更有「真的有一張卡在那裡」的實感；
+  // 第5筆以上：只用模糊陰影暗示「還有更多」，不用讓人知道確切幾筆，畢竟疊到那麼多層已經不需要一一交代
+  const totalCount = shownBatches.length;
+  const has4th = totalCount >= 4;
+  const has5th = totalCount >= 5;
+  const emptyLayerReveal = 18; // 露出這麼多像素，數字越小露出越少
+  const emptyLayerTop = 2*peek + emptyLayerReveal;
+  const emptyLayerHtml = has4th ? `<div class="stack-preview-layer stack-preview-layer-empty" style="height:${cardH}px;transform:translateY(${emptyLayerTop}px) scale(${1-3*0.02});z-index:0;background:${layerBg(3)};"></div>` : '';
+  const moreHintTop = has4th ? emptyLayerTop+cardH : (n>0 ? (n-1)*peek+cardH : 0);
+  const moreHintHtml = has5th ? `<div class="stack-preview-more-hint" style="top:${moreHintTop}px;"></div>` : '';
   const stackPreviewHtml = n ? `
-    <div class="avail-batch-stack-preview ${collapsed?'':'is-hidden'}" onclick="toggleAvailBatchCollapse('${category}', ${collapsed})" style="height:${n>1?(n-1)*peek+cardH:frontH}px;">
+    <div class="avail-batch-stack-preview ${collapsed?'':'is-hidden'}" onclick="toggleAvailBatchCollapse('${category}', ${collapsed})" style="height:${(has4th?emptyLayerTop+cardH:(n>1?(n-1)*peek+cardH:frontH))+(has5th?10:0)}px;">
       ${previewBatches.map((b,i)=>`
         <div class="stack-preview-layer ${i===0?'stack-preview-layer-front':''}" style="height:${i===0?frontH:cardH}px;transform:translateY(${i*peek}px) scale(${1-i*0.02});z-index:${n-i};background:${layerBg(i)};">
           <span class="avail-batch-date">${toROC(b.date)}</span>
           ${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}
           <span class="stack-preview-remain">剩 ${fmt(b.remainDays)} 天</span>
         </div>`).join('')}
+      ${emptyLayerHtml}
+      ${moreHintHtml}
     </div>` : '';
   return `${stackHeader}${stackPreviewHtml}<div class="avail-batch-collapse-wrap ${collapsed?'':'is-expanded'}"><div class="avail-batch-collapse-inner">${listHtml}</div></div>`;
 }
