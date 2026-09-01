@@ -371,6 +371,7 @@
   ul.ledger{list-style:none;margin:0;padding:0;}
   ul.ledger li{display:block;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:15.5px;margin-bottom:8px;}
   ul.ledger li:nth-child(even){border-style:dashed;border-width:2px;}
+  .year-record-month ul.ledger li:nth-child(even){border-style:solid;border-width:1px;}
   ul.ledger li:last-child{margin-bottom:0;}
   ul.ledger .ledger-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   ul.ledger .ledger-bottom{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
@@ -551,7 +552,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.08.29-42';
+const APP_VERSION = 'v2026.09.01-01';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
