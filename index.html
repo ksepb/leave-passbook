@@ -560,7 +560,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-18';
+const APP_VERSION = 'v2026.09.03-19';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3204,11 +3204,16 @@ function buildLeaveLi(t, r, dMin, dMax){
 }
 
 function leaveTabBar(){
-  const tabs = [
-    {key:LEAVE_TYPES[0].key, label:LEAVE_TYPES[0].label, c:LEAVE_TYPES[0].c},
-    {key:'comp', label:'補休', c:'brick'},
-    {key:'exchange', label:'換休', c:'teal'}
-  ].concat(LEAVE_TYPES.slice(1).map(t=>({key:t.key, label:t.label, c:t.c}))).concat([{key:'custom', label:'其他假別', c:'plum'}]);
+  // 分頁順序跟首頁卡片排序共用同一份設定（getHomeCardOrder()），這樣首頁調整過的順序這裡也會一致；
+  // 但「隱藏」不套用在這裡——首頁隱藏只是少看一眼摘要，分頁是實際的操作入口，藏起來就等於斷了登記/查詢那個假別的路，
+  // 所以這裡固定顯示全部分頁，只有排序共用，隱藏各自獨立
+  const tabMeta = {
+    comp: {label:'補休', c:'brick'},
+    exchange: {label:'換休', c:'teal'},
+    custom: {label:'其他假別', c:'plum'},
+  };
+  LEAVE_TYPES.forEach(t=>{ tabMeta[t.key] = {label:t.label, c:t.c}; });
+  const tabs = getHomeCardOrder().map(key=>({key, label:tabMeta[key].label, c:tabMeta[key].c}));
   return `
     <div class="leave-tabs">
       ${tabs.map(t=>{
