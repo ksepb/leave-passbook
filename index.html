@@ -560,7 +560,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-22';
+const APP_VERSION = 'v2026.09.03-23';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -2952,9 +2952,9 @@ function calendarPanel(){
       else if(h.isHoliday===false && h.description) makeupCount++; // 補行上班
     });
     const bits = [];
-    if(holidayCount>0) bits.push(`<span class="mini-chip cal-holiday-chip-lg" style="background:var(--brick-soft);color:var(--brick);">國定假日${holidayCount}天</span>`);
-    if(makeupHolidayCount>0) bits.push(`<span class="mini-chip cal-holiday-chip-lg" style="background:var(--brick-soft);color:var(--brick);">補假${makeupHolidayCount}天</span>`);
-    if(makeupCount>0) bits.push(`<span class="mini-chip cal-holiday-chip-lg" style="background:var(--blue-soft);color:var(--blue);">補班${makeupCount}天</span>`);
+    if(holidayCount>0) bits.push(`<span class="mini-chip cal-holiday-chip-lg" style="background:#fff;border:1.5px solid var(--brick);color:var(--brick);">國定假日${holidayCount}天</span>`);
+    if(makeupHolidayCount>0) bits.push(`<span class="mini-chip cal-holiday-chip-lg" style="background:#fff;border:1.5px solid var(--brick);color:var(--brick);">補假${makeupHolidayCount}天</span>`);
+    if(makeupCount>0) bits.push(`<span class="mini-chip cal-holiday-chip-lg" style="background:#fff;border:1.5px solid var(--blue);color:var(--blue);">補班${makeupCount}天</span>`);
     if(bits.length) holidayNote = bits.join(' ');
   }
   const monthSummary = monthSummaryParts.length ? `本月已用：${monthSummaryParts.join('、')}` : '本月尚無請假紀錄';
