@@ -557,7 +557,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-15';
+const APP_VERSION = 'v2026.09.03-16';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -2943,7 +2943,7 @@ function calendarPanel(){
     if(holidayCount>0) bits.push(`國定假日${holidayCount}天`);
     if(makeupHolidayCount>0) bits.push(`補假${makeupHolidayCount}天`);
     if(makeupCount>0) bits.push(`補班${makeupCount}天`);
-    if(bits.length) holidayNote = `　｜　${bits.join('、')}`;
+    if(bits.length) holidayNote = ` ｜ ${bits.join('、')}`;
   }
   const monthSummary = (monthSummaryParts.length ? `本月已用：${monthSummaryParts.join('、')}` : '本月尚無請假紀錄') + holidayNote;
   const selectedInfo = calSelectedDate && calSelectedDate.startsWith(ymPrefix) ? (()=>{
