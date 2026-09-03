@@ -419,10 +419,10 @@
   .cal-cell.empty{background:transparent;}
   .cal-cell.adjacent{background:transparent;cursor:default;}
   .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
-  .cal-cell.today .cal-daynum{background:var(--ink);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;font-weight:700;}
+  .cal-cell.today .cal-daynum{background:var(--amber);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;font-weight:700;}
   .cal-cell.selected{background:color-mix(in srgb, var(--blue) 30%, var(--blue-soft));}
   .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
-  .cal-cell.selected.today .cal-daynum{background:var(--ink);color:#fff;}
+  .cal-cell.selected.today .cal-daynum{background:var(--amber);color:#fff;}
   .cal-daynum{font-size:13px;color:var(--ink-soft);font-weight:700;}
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
@@ -432,7 +432,7 @@
   .cal-cell:not(.empty):not(.adjacent):active{background:var(--paper-soft, #F4EEE2);}
   .cal-cell.weekend, .cal-cell.holiday-bg{background:var(--rose-soft);}
   .cal-cell.weekend.selected, .cal-cell.holiday-bg.selected{background:var(--blue-soft);}
-  .cal-month-summary{font-size:15px;color:var(--ink);font-weight:700;margin:8px 0 10px;}
+  .cal-month-summary{font-size:15px;color:color-mix(in srgb, var(--amber) 55%, var(--ink-soft));font-weight:600;margin:8px 0 10px;}
   .cal-picker-row{display:flex;gap:8px;justify-content:center;margin:8px 0;}
   .cal-picker-row select{padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-today-btn{margin:6px 0 4px;font-size:12.5px;padding:6px 12px;}
@@ -557,7 +557,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-10';
+const APP_VERSION = 'v2026.09.03-13';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -2925,7 +2925,22 @@ function calendarPanel(){
   const monthUsageLabels = LEAVE_TYPES.concat([{key:'comp',label:'補休'},{key:'exchange',label:'換休'}]);
   const customUsageParts = Object.keys(monthUsage).filter(k=>k.startsWith('custom:') && monthUsage[k]>0).map(k=>`${k.slice(7)} ${fmt(monthUsage[k])}天`);
   const monthSummaryParts = monthUsageLabels.filter(t=>monthUsage[t.key]>0).map(t=>`${t.label} ${fmt(monthUsage[t.key])}天`).concat(customUsageParts);
-  const monthSummary = monthSummaryParts.length ? `本月已用：${monthSummaryParts.join('、')}` : '本月尚無請假紀錄';
+  // 本月國定假日／補班提醒：資料來源跟月曆紅字用的是同一份人事行政行事曆快取，不管日期是過去還是未來，只要在這個月份範圍內都算
+  let holidayNote = '';
+  if(holidays){
+    let holidayCount = 0, makeupCount = 0;
+    Object.keys(holidays).forEach(dateStr=>{
+      if(!dateStr.startsWith(ymPrefix)) return;
+      const h = holidays[dateStr];
+      if(h.isHoliday && h.description) holidayCount++; // 只算「有名字」的假日（國定假日/補假等），跟月曆紅字用同一套判斷，一般週六日不算
+      else if(h.isHoliday===false && h.description) makeupCount++; // 補行上班
+    });
+    const bits = [];
+    if(holidayCount>0) bits.push(`${holidayCount} 個假日`);
+    if(makeupCount>0) bits.push(`${makeupCount} 天補班`);
+    if(bits.length) holidayNote = `　｜　本月${bits.join('、')}`;
+  }
+  const monthSummary = (monthSummaryParts.length ? `本月已用：${monthSummaryParts.join('、')}` : '本月尚無請假紀錄') + holidayNote;
   const selectedInfo = calSelectedDate && calSelectedDate.startsWith(ymPrefix) ? (()=>{
     const dNum = parseInt(calSelectedDate.slice(8,10),10);
     const items = dayMap[dNum]||[];
