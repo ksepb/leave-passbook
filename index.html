@@ -436,6 +436,7 @@
   .cal-holiday-refresh-btn{display:block;margin-top:6px;background:none;border:none;padding:0;color:var(--jade);font-size:12.5px;font-weight:700;text-decoration:underline;text-underline-offset:2px;}
   .cal-holiday-note-red{color:var(--brick);}
   .cal-holiday-note-blue{color:var(--blue);}
+  .cal-month-summary-divider{display:inline-block;width:1.5px;height:14px;background:var(--line);margin:0 8px;vertical-align:-2px;}
   .cal-picker-row{display:flex;gap:8px;justify-content:center;margin:8px 0;}
   .cal-picker-row select{padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-today-btn{margin:6px 0 4px;font-size:12.5px;padding:6px 12px;}
@@ -560,7 +561,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-19';
+const APP_VERSION = 'v2026.09.03-20';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -2955,7 +2956,7 @@ function calendarPanel(){
     if(holidayCount>0) bits.push(`<span class="cal-holiday-note-red">國定假日${holidayCount}天</span>`);
     if(makeupHolidayCount>0) bits.push(`<span class="cal-holiday-note-red">補假${makeupHolidayCount}天</span>`);
     if(makeupCount>0) bits.push(`<span class="cal-holiday-note-blue">補班${makeupCount}天</span>`);
-    if(bits.length) holidayNote = ` ｜ ${bits.join('、')}`;
+    if(bits.length) holidayNote = `<span class="cal-month-summary-divider"></span>${bits.join('、')}`;
   }
   const monthSummary = (monthSummaryParts.length ? `本月已用：${monthSummaryParts.join('、')}` : '本月尚無請假紀錄') + holidayNote;
   const selectedInfo = calSelectedDate && calSelectedDate.startsWith(ymPrefix) ? (()=>{
