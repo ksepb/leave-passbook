@@ -288,7 +288,7 @@
   .avail-batch-note-tag{display:inline-block;background:var(--plum-soft);color:var(--plum);font-weight:700;padding:2px 9px;border-radius:8px;font-size:13.5px;}
   .avail-batch-list-label{font-size:16.5px;font-weight:800;color:var(--jade);margin:0 0 10px;letter-spacing:.2px;}
   .avail-batch-stack-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;padding:0;margin:0 0 10px;min-height:0;text-align:left;}
-  .avail-batch-stack-toggle .avail-batch-list-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px;}
+  .avail-batch-stack-toggle .avail-batch-list-label{min-width:0;white-space:normal;font-size:14.5px;line-height:1.3;}
   .avail-batch-stack-right{display:flex;align-items:center;gap:5px;flex-shrink:0;}
   .avail-batch-stack-count{font-size:14px;font-weight:800;color:var(--ink-soft);}
   /* 標題列小圖示：最初那版，純色塊交疊，不帶文字，收合/展開時攤開角度變化 */
@@ -557,7 +557,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-02';
+const APP_VERSION = 'v2026.09.03-06';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -572,6 +572,13 @@ const ICON_DOT_RED = `<svg width="14" height="14" viewBox="0 0 32 32" style="ver
 const ICON_DOT_BLUE = `<svg width="14" height="14" viewBox="0 0 32 32" style="vertical-align:-2px;margin-right:2px;"><circle cx="16" cy="16" r="11" fill="#4FA8E0" stroke="#1F1F1F" stroke-width="2.2"/></svg>`;
 const ICON_EYE_OPEN = `<svg width="20" height="20" viewBox="0 0 32 32" style="vertical-align:-5px;"><path d="M2 16C5 9 10 6 16 6C22 6 27 9 30 16C27 23 22 26 16 26C10 26 5 23 2 16Z" fill="#DBEBE9" stroke="#1F1F1F" stroke-width="2"/><circle cx="16" cy="16" r="5.5" fill="#2F5D50" stroke="#1F1F1F" stroke-width="1.8"/></svg>`;
 const ICON_EYE_CLOSED = `<svg width="20" height="20" viewBox="0 0 32 32" style="vertical-align:-5px;"><path d="M2 16C5 9 10 6 16 6C22 6 27 9 30 16C27 23 22 26 16 26C10 26 5 23 2 16Z" fill="#F1DFDA" stroke="#1F1F1F" stroke-width="2" opacity="0.5"/><circle cx="16" cy="16" r="5.5" fill="#9BA5AE" stroke="#1F1F1F" stroke-width="1.8" opacity="0.6"/><line x1="4" y1="26" x2="28" y2="6" stroke="#1F1F1F" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+const ICON_MONEY = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:2px;"><circle cx="12" cy="12" r="9"/><path d="M9.5 15c0 1.1 1 2 2.5 2s2.5-.7 2.5-1.8c0-1.1-1-1.5-2.5-1.9-1.5-.4-2.5-.9-2.5-1.9C9.5 10.4 10.5 9.5 12 9.5s2.5.6 2.5 1.7M12 8v1M12 15v1"/></svg>`;
+const ICON_STAR = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:2px;"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3l-6.1 3.3 1.4-6.8-5.1-4.7 6.9-.8z"/></svg>`;
+const ICON_WARNING = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;color:var(--brick);"><path d="M12 3L2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>`;
+const ICON_CLOUD = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;"><path d="M6.5 19a4.5 4.5 0 0 1-1-8.9A6 6 0 0 1 17 8a4.5 4.5 0 0 1 .5 9H6.5z"/></svg>`;
+const ICON_PHONE = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>`;
+const ICON_MAIL = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>`;
+const ICON_REFRESH = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;"><path d="M4 12a8 8 0 0 1 14-5.3M4 12a8 8 0 0 0 14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>`;
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2073,12 +2080,12 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
   }
   let html = '<div class="use-preview-box">';
   if(consumed.length===0){
-    html += `<p class="hint" style="color:var(--brick);margin:0;">⚠️ 目前沒有可扣的${info.label}結餘，這筆送出後結餘會變負數。</p>`;
+    html += `<p class="hint" style="color:var(--brick);margin:0;">${ICON_WARNING} 目前沒有可扣的${info.label}結餘，這筆送出後結餘會變負數。</p>`;
   } else {
     html += `<p class="hint" style="margin:0 0 6px;font-weight:700;color:var(--ink);">這筆會${pins.length?'先扣你指定的那幾筆，不夠再':'自動'}扣最早獲得的那幾筆：</p>`;
     html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?'⭐ ':''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''}　－${fmt(c.take)} 天，扣完後這筆還剩 ${fmt(c.remainAfter)} 天</div>`).join('');
     if(toDeduct>0.0001){
-      html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">⚠️ 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
+      html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">${ICON_WARNING} 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
     }
   }
   html += '</div>';
@@ -2340,7 +2347,7 @@ function stampCard(t){
     const fc = usedOf('familyCare', selectedYear);
     if(fc>0) chips.push(`<span class="mini-chip" style="background:var(--plum-soft);color:var(--plum);">家照併入 ${fmt(fc)}天</span>`);
     const paid = personalPaidUsed(selectedYear), unpaid = personalUnpaidUsed(selectedYear);
-    if(paid>0) chips.push(`<span class="mini-chip" style="background:var(--jade-soft);color:var(--jade);">💰有薪 ${fmt(paid)}天</span>`);
+    if(paid>0) chips.push(`<span class="mini-chip" style="background:var(--jade-soft);color:var(--jade);">${ICON_MONEY}有薪 ${fmt(paid)}天</span>`);
     if(unpaid>0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">無薪 ${fmt(unpaid)}天</span>`);
   }
   if(t.key==='annual' && minDaysBorder) chips.push(`<span class="mini-chip" style="background:${minDaysBorder.includes('brick')?'var(--brick-soft);color:var(--brick);':'var(--amber-soft, #FBEFDC);color:var(--amber);'}">還沒用滿最低 ${fmt(getAnnualMinDays())} 天</span>`);
@@ -2435,7 +2442,7 @@ function dashboardPanel(){
     return `
       <p class="hint" style="margin:0 0 10px;">只顯示目前還有效(沒過期、沒用完)。</p>
       <div class="home-detail-group">
-        <div class="home-detail-group-title c-jade">🌴 特休　剩 ${fmt(annualRemain)} 天</div>
+        <div class="home-detail-group-title c-jade">${ICON_STAR}特休　剩 ${fmt(annualRemain)} 天</div>
         <p class="hint" style="margin:2px 0 0;">今年度額度共 ${fmt(annualQuota)} 天</p>
       </div>
       <div class="home-detail-group">
@@ -2768,7 +2775,7 @@ function keywordPanel(){
     ${kwUnmatchedModalOpen ? `
     <div class="modal-overlay" onclick="closeKwUnmatchedModal()">
       <div class="modal-box" style="max-width:380px;max-height:75vh;overflow-y:auto;" onclick="event.stopPropagation()">
-        <h3>⚠️ 有 ${kwUnmatchedLines.length} 行看不懂</h3>
+        <h3>${ICON_WARNING} 有 ${kwUnmatchedLines.length} 行看不懂</h3>
         <p class="hint" style="margin:0 0 10px;">可能是格式不符，這幾行不會被登記，可以自行手動新增：</p>
         <div style="background:var(--brick-soft);border-radius:10px;padding:10px 12px;color:var(--brick);font-size:14px;line-height:1.8;">
           ${kwUnmatchedLines.map(l=>escapeHtml(l)).join('<br>')}
@@ -2811,7 +2818,7 @@ function reminderBanner(){
       const lineClass = r.diffDays<=7 ? 'urgent-line' : '';
       return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
     }).join('');
-    return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>⚠️ 補休／換休到期提醒</strong>${items}</div>`;
+    return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>${ICON_WARNING} 補休／換休到期提醒</strong>${items}</div>`;
   })() : '';
 
   const month = NOW.getMonth()+1;
@@ -2821,7 +2828,7 @@ function reminderBanner(){
   const daysLeftInYear = Math.round((new Date(CUR_YEAR,11,31) - new Date(TODAY+'T00:00:00')) / 86400000);
   const annualHtml = (month>=10 && shortfall>0) ? (()=>{
     const urgent = daysLeftInYear <= 30;
-    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>🌴 特休最低使用天數提醒</strong>今年（${CUR_YEAR}）特休已使用 ${fmt(annualUsed)} 天，未達最低要求 ${fmt(annualMin)} 天，尚需再休 ${fmt(shortfall)} 天，建議儘早排定（可在「設定」分頁調整門檻）。</div>`;
+    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>${ICON_STAR}特休最低使用天數提醒</strong>今年（${CUR_YEAR}）特休已使用 ${fmt(annualUsed)} 天，未達最低要求 ${fmt(annualMin)} 天，尚需再休 ${fmt(shortfall)} 天，建議儘早排定（可在「設定」分頁調整門檻）。</div>`;
   })() : '';
 
   return compHtml + annualHtml;
@@ -3188,10 +3195,10 @@ function leaveSection(t){
         <button type="button" class="overview-unit-toggle" onclick="toggleOverviewUnit()"><span class="overview-unit-arrow-icon">↓</span>${overviewUnit==='day' ? `顯示：天　${ICON_SWITCH}切換小時` : `顯示：小時　${ICON_SWITCH}切換天`}</button>
       </h2>
       ${infoHintExpanded[t.key] ? `
-      ${t.key==='sick' && menstrualExcess(selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 生理假併入病假提醒</strong>${selectedYear} 年生理假已使用超過 ${MENSTRUAL_FREE_DAYS} 天，超過的 ${fmt(menstrualExcess(selectedYear))} 天已自動計入病假已使用天數。</div>` : ''}
-      ${t.key==='sick' && remainOf('sick',selectedYear)<0 ? `<div class="reminder-bar"><strong>⚠️ 病假超額提醒</strong>${selectedYear} 年病假已超過總天數 ${fmt(-remainOf('sick',selectedYear))} 天，依規定可用事假或特別休假擇一抵銷，請自行決定後手動在事假或特休登記這幾天（本系統不會自動幫你決定要扣哪一邊）。</div>` : ''}
-      ${t.key==='personal' && usedOf('familyCare',selectedYear)>0 ? `<div class="reminder-bar"><strong>⚠️ 併入事假提醒</strong>${selectedYear} 年家庭照顧假 ${fmt(usedOf('familyCare',selectedYear))} 天已全額自動計入事假已使用天數。</div>` : ''}
-      ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>💰 有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))} 天，其中有薪 ${fmt(personalPaidUsed(selectedYear))} 天、無薪 ${fmt(personalUnpaidUsed(selectedYear))} 天（門檻：每年前 ${fmt(getPersonalPaidDays())} 天有薪，可在「設定」分頁調整）。</div>` : ''}
+      ${t.key==='sick' && menstrualExcess(selectedYear)>0 ? `<div class="reminder-bar"><strong>${ICON_WARNING} 生理假併入病假提醒</strong>${selectedYear} 年生理假已使用超過 ${MENSTRUAL_FREE_DAYS} 天，超過的 ${fmt(menstrualExcess(selectedYear))} 天已自動計入病假已使用天數。</div>` : ''}
+      ${t.key==='sick' && remainOf('sick',selectedYear)<0 ? `<div class="reminder-bar"><strong>${ICON_WARNING} 病假超額提醒</strong>${selectedYear} 年病假已超過總天數 ${fmt(-remainOf('sick',selectedYear))} 天，依規定可用事假或特別休假擇一抵銷，請自行決定後手動在事假或特休登記這幾天（本系統不會自動幫你決定要扣哪一邊）。</div>` : ''}
+      ${t.key==='personal' && usedOf('familyCare',selectedYear)>0 ? `<div class="reminder-bar"><strong>${ICON_WARNING} 併入事假提醒</strong>${selectedYear} 年家庭照顧假 ${fmt(usedOf('familyCare',selectedYear))} 天已全額自動計入事假已使用天數。</div>` : ''}
+      ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>${ICON_MONEY}有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))} 天，其中有薪 ${fmt(personalPaidUsed(selectedYear))} 天、無薪 ${fmt(personalUnpaidUsed(selectedYear))} 天（門檻：每年前 ${fmt(getPersonalPaidDays())} 天有薪，可在「設定」分頁調整）。</div>` : ''}
       ` : ''}
 
       <div class="overview-panel">
@@ -3754,6 +3761,7 @@ async function addCustomRecord(e){
     }
     state.compRecords.push(record);
     lastAddedId = id;
+    expandedMonths[`custom-${date.slice(0,7)}`] = true; // 剛新增的月份要展開，不然還是停在原本展開的那個月，看不到新加的
     customAddOpen = false;
     await saveState();
     render();
@@ -3913,7 +3921,7 @@ function compSectionHtml(category){
               : `<div class="overview-stat-value">${fmt(curBalance*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
         </div>
-        ${carryOver>0.001 ? `<div class="overview-carryover-note">🔄 結餘中有 ${overviewUnit==='day' ? `${fmt(carryOver)} 天` : `${fmt(carryOver*getHoursPerDay())} 小時`}是以前年度結轉下來的，不是今年新獲得的</div>` : ''}
+        ${carryOver>0.001 ? `<div class="overview-carryover-note">${ICON_REFRESH} 結餘中有 ${overviewUnit==='day' ? `${fmt(carryOver)} 天` : `${fmt(carryOver*getHoursPerDay())} 小時`}是以前年度結轉下來的，不是今年新獲得的</div>` : ''}
         ${nearestExpiry ? (()=>{
           const isUrgent = nearestExpiry.diffDays<=90;
           const color = nearestExpiry.diffDays<=7 ? 'var(--brick)' : (isUrgent ? 'var(--amber)' : 'var(--ink)');
@@ -4119,7 +4127,7 @@ function pageData(){
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('paid')">
-          <span>💰 事假有薪天數設定</span>
+          <span>${ICON_MONEY}事假有薪天數設定</span>
           <span>${fmt(getPersonalPaidDays())} 天　${settingsExpandedKey==='paid'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='paid' ? `
@@ -4135,7 +4143,7 @@ function pageData(){
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('annualMin')">
-          <span>🌴 特休最低使用天數</span>
+          <span>${ICON_STAR}特休最低使用天數</span>
           <span>${fmt(getAnnualMinDays())} 天　${settingsExpandedKey==='annualMin'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='annualMin' ? `
@@ -4151,7 +4159,7 @@ function pageData(){
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('cloud')">
-          <span>☁️ 雲端同步（跨裝置）</span>
+          <span>${ICON_CLOUD} 雲端同步（跨裝置）</span>
           <span>${currentUser?'已登入':'未登入'}　${settingsExpandedKey==='cloud'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='cloud' ? (currentUser ? `
@@ -4159,15 +4167,15 @@ function pageData(){
           <p style="margin:0 0 10px;">已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}（登入方式：${getSignInMethodLabel()}）。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。</p>
           <div class="sync-status-box ${!isOnline ? 'sync-status-syncing' : `sync-status-${cloudSyncStatus}`}" style="margin:0;">
             ${!isOnline ? `<span>📴 離線中，已在本機排隊，恢復網路後自動同步</span>` :
-              cloudSyncStatus==='syncing' ? `<span>🔄 同步中…</span>` : ''}
-            ${isOnline && cloudSyncStatus==='synced' ? `<span>☁️ 已同步${lastSyncTime? `　最後同步：${lastSyncTime.toLocaleTimeString('zh-TW',{hour12:false})}` : ''}</span>` : ''}
-            ${isOnline && cloudSyncStatus==='error' ? `<span>⚠️ 尚未同步成功，本機資料已安全保留，不會遺失</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即重試</button>` : ''}
-            ${isOnline && cloudSyncStatus==='idle' ? `<span>☁️ 尚未有同步紀錄</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即同步</button>` : ''}
+              cloudSyncStatus==='syncing' ? `<span>${ICON_REFRESH} 同步中…</span>` : ''}
+            ${isOnline && cloudSyncStatus==='synced' ? `<span>${ICON_CLOUD} 已同步${lastSyncTime? `　最後同步：${lastSyncTime.toLocaleTimeString('zh-TW',{hour12:false})}` : ''}</span>` : ''}
+            ${isOnline && cloudSyncStatus==='error' ? `<span>${ICON_WARNING} 尚未同步成功，本機資料已安全保留，不會遺失</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即重試</button>` : ''}
+            ${isOnline && cloudSyncStatus==='idle' ? `<span>${ICON_CLOUD} 尚未有同步紀錄</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即同步</button>` : ''}
           </div>
         </div>
         <div class="auth-option">
           <div style="font-size:13px;color:var(--ink-soft);">
-            📱 這台裝置目前叫做：<strong style="color:var(--ink);">${escapeHtml(getDeviceName())}</strong>
+            ${ICON_PHONE} 這台裝置目前叫做：<strong style="color:var(--ink);">${escapeHtml(getDeviceName())}</strong>
             ${deviceNameEditing ? `
               <div class="row" style="margin-top:8px;">
                 <input type="text" id="deviceNameInput" value="${escapeAttr(getDeviceName())}" placeholder="例如：阿水的 iPhone" style="flex:1;">
@@ -4233,7 +4241,7 @@ function pageData(){
         </div>
 
         <div class="auth-option">
-          <div class="auth-option-title">📧 Email 連結（免密碼）</div>
+          <div class="auth-option-title">${ICON_MAIL} Email 連結（免密碼）</div>
           <p class="hint">不用記密碼，但要跳去信箱點連結才能完成，比較適合在 Safari 分頁裡使用，不建議搭配「加入主畫面」的圖示。</p>
           <button class="ghost" style="width:100%;" onclick="toggleEmailAuthForm(${emailAuthMode==='link'? 'null':"'link'"})">${emailAuthMode==='link'? '取消' : '用 Email 連結登入'}</button>
           ${emailAuthMode==='link' ? `
@@ -4320,7 +4328,7 @@ function pageData(){
         <div class="row">
           <button class="ghost" onclick="downloadBackup()">下載備份檔（.json）</button>
           <button class="ghost" onclick="copyBackup(this)">複製備份文字</button>
-          <button class="ghost" onclick="emailBackup()">📧 Email 備份給自己</button>
+          <button class="ghost" onclick="emailBackup()">${ICON_MAIL} Email 備份給自己</button>
           <button class="ghost" onclick="toggleImport()">還原備份</button>
         </div>
         <div id="importArea" style="display:none;margin-top:6px;">
@@ -4357,7 +4365,7 @@ function pageData(){
 
     <div class="backup danger-zone">
       <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('reset')" style="color:var(--brick);">
-        <span>⚠️ 整體重置</span>
+        <span>${ICON_WARNING} 整體重置</span>
         <span>${settingsExpandedKey==='reset'?'▲':'▼'}</span>
       </button>
       ${settingsExpandedKey==='reset' ? `
@@ -4420,7 +4428,7 @@ function render(){
     ${activePage==='home' ? `<header><h1>假期存摺</h1></header>` : ''}
 
     ${lastDeleted? `<div class="undo-bar"><span>已刪除：${escapeHtml(lastDeleted.label)}</span><button onclick="undoDelete()">復原</button></div>` : ''}
-    ${getResetSnapshot()? `<div class="undo-bar"><span>⚠️ 曾重置：${escapeHtml(getResetSnapshot().label)}（30分鐘內可復原）</span><button onclick="restoreResetSnapshot()">復原</button></div>` : ''}
+    ${getResetSnapshot()? `<div class="undo-bar"><span>${ICON_WARNING} 曾重置：${escapeHtml(getResetSnapshot().label)}（30分鐘內可復原）</span><button onclick="restoreResetSnapshot()">復原</button></div>` : ''}
 
     <div class="${isPageChange ? 'page-fade' : ''}">
       ${pageContent}
@@ -4701,6 +4709,7 @@ async function addRecord(key, e){
         const id = uid();
         state.records[key].push({ id, date, unit, amount, note });
         lastId = id;
+        expandedMonths[`${key}-${date.slice(0,7)}`] = true; // 剛新增的月份要展開，不然還是停在原本展開的那個月，看不到新加的
       }
       lastAddedId = lastId;
       state.lastUsedType = key;
@@ -4723,6 +4732,7 @@ async function addRecord(key, e){
     if(!state.records[key]) state.records[key]=[];
     state.records[key].push({ id, date, unit, amount, note });
     lastAddedId = id;
+    expandedMonths[`${key}-${date.slice(0,7)}`] = true; // 剛新增的月份要展開，不然還是停在原本展開的那個月，看不到新加的
     state.lastUsedType = key;
     await saveState();
     setStatus('已登記使用', true);
@@ -5107,6 +5117,7 @@ async function addComp(e, category){
     }
     state.compRecords.push(record);
     lastAddedId = id;
+    expandedMonths[`${category}-${date.slice(0,7)}`] = true; // 剛新增的月份要展開，不然還是停在原本展開的那個月，看不到新加的
     state.lastUsedType = category;
     await saveState();
     setStatus(`已登記${info.label}`, true);
