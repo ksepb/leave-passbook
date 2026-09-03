@@ -190,7 +190,7 @@
 
   .block{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;margin-bottom:20px;}
   section.block h2{font-family:'Noto Serif TC',serif;font-size:19px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
-  section.block h2 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  section.block h2 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px;}
   .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);} .dot-rose{background:var(--rose);} .dot-teal{background:var(--teal);}
 
   form.entry{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:flex-end;}
@@ -557,7 +557,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-06';
+const APP_VERSION = 'v2026.09.03-10';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -565,7 +565,7 @@ const ICON_NOTE = `<svg width="19" height="19" viewBox="0 0 32 32" style="vertic
 const ICON_FOLDER = `<svg width="20" height="20" viewBox="0 0 32 32" style="vertical-align:-5px;margin-right:2px;"><path d="M3 10C3 8.9 3.9 8 5 8H12L15 11H27C28.1 11 29 11.9 29 13V24C29 25.1 28.1 26 27 26H5C3.9 26 3 25.1 3 24V10Z" fill="#B5761A" fill-opacity="0.55" stroke="#1F1F1F" stroke-width="2.4" stroke-linejoin="round"/><rect x="7" y="14" width="6" height="8" rx="0.8" fill="#F1DFDA" stroke="#1F1F1F" stroke-width="1.8"/><rect x="14" y="14" width="6" height="8" rx="0.8" fill="#DBEBE9" stroke="#1F1F1F" stroke-width="1.8"/><rect x="21" y="14" width="5" height="8" rx="0.8" fill="#E1E0EE" stroke="#1F1F1F" stroke-width="1.8"/></svg>`;
 const ICON_CAMERA = `<svg width="19" height="19" viewBox="0 0 32 32" style="vertical-align:-5px;margin-right:2px;"><path d="M10 9L12 5H20L22 9H27C28.1 9 29 9.9 29 11V24C29 25.1 28.1 26 27 26H5C3.9 26 3 25.1 3 24V11C3 9.9 3.9 9 5 9H10Z" fill="#9BA5AE" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="17" r="6" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/><circle cx="16" cy="17" r="2.6" fill="#2A7A75" stroke="#1F1F1F" stroke-width="1.6"/><circle cx="24" cy="13" r="1.3" fill="#B5761A" stroke="#1F1F1F" stroke-width="1.2"/></svg>`;
 const ICON_HOURGLASS = `<svg width="18" height="18" viewBox="0 0 32 32" style="vertical-align:-4px;margin-right:2px;"><path d="M8 4H24V9C24 12 21 14 16 16C21 18 24 20 24 23V28H8V23C8 20 11 18 16 16C11 14 8 12 8 9V4Z" fill="#F1DFDA" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><line x1="6" y1="4" x2="26" y2="4" stroke="#1F1F1F" stroke-width="2.4" stroke-linecap="round"/><line x1="6" y1="28" x2="26" y2="28" stroke="#1F1F1F" stroke-width="2.4" stroke-linecap="round"/><path d="M11 8C11.5 10 13 11.5 16 13C19 11.5 20.5 10 21 8" stroke="#A03B3B" stroke-width="1.6" fill="none"/><path d="M12 24C12.5 22 14 20.5 16 19.5C18 20.5 19.5 22 20 24" fill="#A03B3B"/></svg>`;
-const ICON_BOOK = `<svg width="18" height="18" viewBox="0 0 32 32" style="vertical-align:-4px;margin-right:2px;"><path d="M4 7C4 6 5 5.5 6 5.5C10 5.5 13 6.5 15 8.5V26C13 24 10 23 6 23C5 23 4 22.5 4 21.5V7Z" fill="#DBEBE9" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><path d="M28 7C28 6 27 5.5 26 5.5C22 5.5 19 6.5 17 8.5V26C19 24 22 23 26 23C27 23 28 22.5 28 21.5V7Z" fill="#E1E0EE" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+const ICON_BOOK = `<svg width="24" height="24" viewBox="0 0 32 32" style="vertical-align:-6px;margin-right:2px;"><path d="M4 7C4 6 5 5.5 6 5.5C10 5.5 13 6.5 15 8.5V26C13 24 10 23 6 23C5 23 4 22.5 4 21.5V7Z" fill="#DBEBE9" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><path d="M28 7C28 6 27 5.5 26 5.5C22 5.5 19 6.5 17 8.5V26C19 24 22 23 26 23C27 23 28 22.5 28 21.5V7Z" fill="#E1E0EE" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
 const ICON_SWITCH = `<svg width="17" height="17" viewBox="0 0 32 32" style="vertical-align:-3px;margin-right:2px;"><path d="M6 12C7 8 11 5 16 5C20 5 23.5 7 25.5 10.5" stroke="#2F5D50" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M25 6V11H20" stroke="#2F5D50" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 20C25 24 21 27 16 27C12 27 8.5 25 6.5 21.5" stroke="#B5761A" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M7 26V21H12" stroke="#B5761A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const ICON_PIN = `<svg width="16" height="16" viewBox="0 0 32 32" style="vertical-align:-3px;margin-right:2px;"><path d="M16 3C10.5 3 6 7.5 6 13C6 20 16 29 16 29C16 29 26 20 26 13C26 7.5 21.5 3 16 3Z" fill="#A03B3B" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="13" r="4.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="1.8"/></svg>`;
 const ICON_DOT_RED = `<svg width="14" height="14" viewBox="0 0 32 32" style="vertical-align:-2px;margin-right:2px;"><circle cx="16" cy="16" r="11" fill="#A03B3B" stroke="#1F1F1F" stroke-width="2.2"/></svg>`;
@@ -579,6 +579,18 @@ const ICON_CLOUD = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" 
 const ICON_PHONE = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>`;
 const ICON_MAIL = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>`;
 const ICON_REFRESH = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;"><path d="M4 12a8 8 0 0 1 14-5.3M4 12a8 8 0 0 0 14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>`;
+const ICON_SEARCH = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
+const ICON_SHUFFLE = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><path d="M3 6h18M14 3l3 3-3 3M3 18h18M10 15l-3 3 3 3"/></svg>`;
+const ICON_RULER = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><path d="M3 21L21 3M3 21h6v-6M3 21l7-7"/></svg>`;
+const ICON_STOPWATCH = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4M12 2v2"/></svg>`;
+const ICON_WRENCH = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><path d="M20 5.5l-3.5 3.5-2-2L18 3.5c-2-1-4.5-.3-5.7 1.7-1 1.7-.8 3.8.3 5.2L4 19l1 1 8.6-8.6c1.4 1.1 3.5 1.3 5.2.3 2-1.2 2.7-3.7 1.7-5.7z"/></svg>`;
+const ICON_BUG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><rect x="8" y="7" width="8" height="12" rx="4"/><path d="M8 11H4M20 11h-4M8 15H5M19 15h-3M12 7V4M9.5 4.5L12 2l2.5 2.5"/></svg>`;
+// 這4個是設定頁手風琴主標題專用的加大版（跟上面幾個新圖示統一22px），
+// 原本的小尺寸常數（ICON_MONEY/ICON_STAR/ICON_CLOUD/ICON_WARNING）在別的地方（提示橫幅、首頁小標籤、狀態文字）還在用，不能直接改大小
+const ICON_MONEY_LG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><circle cx="12" cy="12" r="9"/><path d="M9.5 15c0 1.1 1 2 2.5 2s2.5-.7 2.5-1.8c0-1.1-1-1.5-2.5-1.9-1.5-.4-2.5-.9-2.5-1.9C9.5 10.4 10.5 9.5 12 9.5s2.5.6 2.5 1.7M12 8v1M12 15v1"/></svg>`;
+const ICON_STAR_LG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3l-6.1 3.3 1.4-6.8-5.1-4.7 6.9-.8z"/></svg>`;
+const ICON_CLOUD_LG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><path d="M6.5 19a4.5 4.5 0 0 1-1-8.9A6 6 0 0 1 17 8a4.5 4.5 0 0 1 .5 9H6.5z"/></svg>`;
+const ICON_WARNING_LG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;color:var(--brick);"><path d="M12 3L2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>`;
 const STORAGE_KEY = 'leave-passbook-data';
 
 // 每次交付新版時手動更新這個字串（見上方 const APP_VERSION 宣告），方便使用者確認瀏覽器有沒有讀到最新版本
@@ -2083,7 +2095,7 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
     html += `<p class="hint" style="color:var(--brick);margin:0;">${ICON_WARNING} 目前沒有可扣的${info.label}結餘，這筆送出後結餘會變負數。</p>`;
   } else {
     html += `<p class="hint" style="margin:0 0 6px;font-weight:700;color:var(--ink);">這筆會${pins.length?'先扣你指定的那幾筆，不夠再':'自動'}扣最早獲得的那幾筆：</p>`;
-    html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?'⭐ ':''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''}　－${fmt(c.take)} 天，扣完後這筆還剩 ${fmt(c.remainAfter)} 天</div>`).join('');
+    html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?ICON_STAR:''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''}　－${fmt(c.take)} 天，扣完後這筆還剩 ${fmt(c.remainAfter)} 天</div>`).join('');
     if(toDeduct>0.0001){
       html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">${ICON_WARNING} 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
     }
@@ -4043,7 +4055,7 @@ function pageData(){
     <div class="manage-grid">
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('scale')">
-          <span>🔍 畫面大小</span>
+          <span>${ICON_SEARCH}畫面大小</span>
           <span>${settingsExpandedKey==='scale'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='scale' ? `
@@ -4058,7 +4070,7 @@ function pageData(){
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('homeOrder')">
-          <span>🔀 首頁卡片順序</span>
+          <span>${ICON_SHUFFLE}首頁卡片順序</span>
           <span>${settingsExpandedKey==='homeOrder'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='homeOrder' ? `
@@ -4082,7 +4094,7 @@ function pageData(){
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('quota')">
-          <span>📐 設定假別天數</span>
+          <span>${ICON_RULER}設定假別天數</span>
           <span>${settingsExpandedKey==='quota'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='quota' ? `
@@ -4111,7 +4123,7 @@ function pageData(){
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('hours')">
-          <span>⏱️ 每日工時設定</span>
+          <span>${ICON_STOPWATCH}每日工時設定</span>
           <span>${fmt(getHoursPerDay())} 小時／天　${settingsExpandedKey==='hours'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='hours' ? `
@@ -4127,7 +4139,7 @@ function pageData(){
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('paid')">
-          <span>${ICON_MONEY}事假有薪天數設定</span>
+          <span>${ICON_MONEY_LG}事假有薪天數設定</span>
           <span>${fmt(getPersonalPaidDays())} 天　${settingsExpandedKey==='paid'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='paid' ? `
@@ -4143,7 +4155,7 @@ function pageData(){
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('annualMin')">
-          <span>${ICON_STAR}特休最低使用天數</span>
+          <span>${ICON_STAR_LG}特休最低使用天數</span>
           <span>${fmt(getAnnualMinDays())} 天　${settingsExpandedKey==='annualMin'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='annualMin' ? `
@@ -4159,7 +4171,7 @@ function pageData(){
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('cloud')">
-          <span>${ICON_CLOUD} 雲端同步（跨裝置）</span>
+          <span>${ICON_CLOUD_LG} 雲端同步（跨裝置）</span>
           <span>${currentUser?'已登入':'未登入'}　${settingsExpandedKey==='cloud'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='cloud' ? (currentUser ? `
@@ -4275,7 +4287,7 @@ function pageData(){
 
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('exportFilter')">
-          <span>🔧 篩選匯出範圍（選填）</span>
+          <span>${ICON_WRENCH}篩選匯出範圍（選填）</span>
           <span>${settingsExpandedKey==='exportFilter'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='exportFilter' ? `
@@ -4342,7 +4354,7 @@ function pageData(){
 
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('errorLog')">
-          <span>🐛 錯誤記錄</span>
+          <span>${ICON_BUG}錯誤記錄</span>
           <span>${errorLog.length>0 ? `${errorLog.length} 筆` : '無'}　${settingsExpandedKey==='errorLog'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='errorLog' ? `
@@ -4365,7 +4377,7 @@ function pageData(){
 
     <div class="backup danger-zone">
       <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('reset')" style="color:var(--brick);">
-        <span>${ICON_WARNING} 整體重置</span>
+        <span>${ICON_WARNING_LG} 整體重置</span>
         <span>${settingsExpandedKey==='reset'?'▲':'▼'}</span>
       </button>
       ${settingsExpandedKey==='reset' ? `
