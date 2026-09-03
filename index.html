@@ -433,6 +433,7 @@
   .cal-cell.weekend, .cal-cell.holiday-bg{background:var(--rose-soft);}
   .cal-cell.weekend.selected, .cal-cell.holiday-bg.selected{background:var(--blue-soft);}
   .cal-month-summary{font-size:15px;color:color-mix(in srgb, var(--amber) 55%, var(--ink-soft));font-weight:600;margin:8px 0 10px;}
+  .cal-holiday-refresh-btn{display:block;margin-top:6px;background:none;border:none;padding:0;color:var(--jade);font-size:12.5px;font-weight:700;text-decoration:underline;text-underline-offset:2px;}
   .cal-picker-row{display:flex;gap:8px;justify-content:center;margin:8px 0;}
   .cal-picker-row select{padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-today-btn{margin:6px 0 4px;font-size:12.5px;padding:6px 12px;}
@@ -557,7 +558,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-16';
+const APP_VERSION = 'v2026.09.03-17';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -1376,6 +1377,15 @@ async function ensureHolidayYear(year){
   }catch(e){
     holidayCache[year] = false; // 標記失敗，避免同一年一直重複嘗試
   }
+}
+// 手動重新整理：清掉本機快取（只清這一年的假日資料，不動任何其他資料）跟記憶體裡的快取，強制重新抓一次最新的，
+// 因為人事總處的辦公日曆表偶爾會在年度中途修正（例如114年就修正過），原本的機制是抓過一次就永久用同一份，不會自動同步最新公告
+async function refreshHolidayData(year){
+  try{ localStorage.removeItem('taiwanHolidays:' + year); }catch(e){}
+  delete holidayCache[year];
+  render(); // 先讓畫面顯示「讀取中」
+  await ensureHolidayYear(year);
+  render();
 }
 let chartMode = true;
 let utilizationMode = true;
@@ -2987,7 +2997,7 @@ function calendarPanel(){
         <div class="cal-grid">${cells}</div>
       </div>
       ${selectedInfo}
-      <p class="hint" style="margin-top:10px;">${ICON_DOT_RED}紅字日期為政府公告國定假日／補假，點日期可看名稱與當天紀錄，純參考用，不影響假別計算。${holidays===null ? '國定假日資料讀取中…' : (holidayCache[y]===false ? '國定假日資料讀取失敗，可能是離線中，稍後重新整理再試。' : '')}</p>
+      <p class="hint" style="margin-top:10px;">${ICON_DOT_RED}紅字日期為政府公告國定假日／補假，點日期可看名稱與當天紀錄，純參考用，不影響假別計算。${holidays===null ? '國定假日資料讀取中…' : (holidayCache[y]===false ? '國定假日資料讀取失敗，可能是離線中，稍後重新整理再試。' : '')}<button type="button" class="cal-holiday-refresh-btn" onclick="refreshHolidayData(${y})">${ICON_REFRESH}重新整理國定假日資料</button></p>
     </div>`;
 }
 
