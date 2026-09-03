@@ -427,7 +427,7 @@
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
   .cal-makeup-badge{display:inline-block;font-size:7px;font-weight:700;color:#fff;background:var(--blue);border-radius:3px;padding:0 2px;margin-left:2px;vertical-align:middle;}
-  .cal-detail-makeup{font-size:13px;color:var(--blue);margin-bottom:6px;}
+  .cal-detail-makeup{font-size:16px;font-weight:700;color:var(--blue);margin-bottom:6px;}
   .cal-cell:not(.empty):not(.adjacent){cursor:pointer;transition:background .1s ease;}
   .cal-cell:not(.empty):not(.adjacent):active{background:var(--paper-soft, #F4EEE2);}
   .cal-cell.weekend, .cal-cell.holiday-bg{background:var(--rose-soft);}
@@ -440,7 +440,7 @@
   .cal-detail-panel{margin-top:12px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;}
   .cal-detail-date{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
   .cal-detail-today-badge{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;color:var(--jade);background:var(--jade-soft);padding:3px 10px;border-radius:10px;}
-  .cal-detail-holiday{font-size:13px;color:var(--brick);margin-bottom:6px;}
+  .cal-detail-holiday{font-size:16px;font-weight:700;color:var(--brick);margin-bottom:6px;}
   .cal-detail-chips{display:flex;flex-wrap:wrap;gap:6px;}
   .cal-detail-chip{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:700;padding:7px 7px 7px 12px;border-radius:16px;}
   .cal-detail-chip span{cursor:pointer;}
@@ -557,7 +557,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-13';
+const APP_VERSION = 'v2026.09.03-14';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -2928,15 +2928,20 @@ function calendarPanel(){
   // 本月國定假日／補班提醒：資料來源跟月曆紅字用的是同一份人事行政行事曆快取，不管日期是過去還是未來，只要在這個月份範圍內都算
   let holidayNote = '';
   if(holidays){
-    let holidayCount = 0, makeupCount = 0;
+    let holidayCount = 0, makeupHolidayCount = 0, makeupCount = 0;
     Object.keys(holidays).forEach(dateStr=>{
       if(!dateStr.startsWith(ymPrefix)) return;
       const h = holidays[dateStr];
-      if(h.isHoliday && h.description) holidayCount++; // 只算「有名字」的假日（國定假日/補假等），跟月曆紅字用同一套判斷，一般週六日不算
+      if(h.isHoliday && h.description){
+        // 「補假」是因為國定假日剛好碰到週末，另外補一天放假；跟「真正的國定假日」分開算，才不會把中秋節這種節日跟補假混在一起講
+        if(h.description.includes('補假')) makeupHolidayCount++;
+        else holidayCount++;
+      }
       else if(h.isHoliday===false && h.description) makeupCount++; // 補行上班
     });
     const bits = [];
-    if(holidayCount>0) bits.push(`${holidayCount} 個假日`);
+    if(holidayCount>0) bits.push(`${holidayCount} 個國定假日`);
+    if(makeupHolidayCount>0) bits.push(`${makeupHolidayCount} 天補假`);
     if(makeupCount>0) bits.push(`${makeupCount} 天補班`);
     if(bits.length) holidayNote = `　｜　本月${bits.join('、')}`;
   }
