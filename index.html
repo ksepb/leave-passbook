@@ -236,6 +236,11 @@
   .date-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .date-row input{flex:1;min-width:130px;}
   .date-toggle{padding:8px 9px;min-height:44px;min-width:44px;font-size:11.5px;background:transparent;color:var(--ink-soft);border:1px solid var(--line);border-radius:10px;font-weight:600;flex:none;box-sizing:border-box;}
+  .multi-date-toggle{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;}
+  .multi-date-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .multi-date-chip{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;padding:6px 8px 6px 10px;border-radius:8px;font-family:'IBM Plex Mono',monospace;}
+  .multi-date-chip-x{cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-weight:900;opacity:.6;padding:0 2px;}
+  .multi-date-chip-x:active{opacity:1;}
   .date-toggle:active{color:var(--jade);border-color:var(--jade);}
   .days-row input[type=number]{width:66px;flex:none;border-radius:12px;}
   .field-days{flex:1 1 220px;min-width:220px;}
@@ -414,10 +419,10 @@
   .cal-cell.empty{background:transparent;}
   .cal-cell.adjacent{background:transparent;cursor:default;}
   .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
-  .cal-cell.today .cal-daynum{background:var(--jade);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;font-weight:700;}
+  .cal-cell.today .cal-daynum{background:var(--ink);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;font-weight:700;}
   .cal-cell.selected{background:color-mix(in srgb, var(--blue) 30%, var(--blue-soft));}
   .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
-  .cal-cell.selected.today .cal-daynum{background:var(--jade);color:#fff;}
+  .cal-cell.selected.today .cal-daynum{background:var(--ink);color:#fff;}
   .cal-daynum{font-size:13px;color:var(--ink-soft);font-weight:700;}
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
@@ -427,7 +432,7 @@
   .cal-cell:not(.empty):not(.adjacent):active{background:var(--paper-soft, #F4EEE2);}
   .cal-cell.weekend, .cal-cell.holiday-bg{background:var(--rose-soft);}
   .cal-cell.weekend.selected, .cal-cell.holiday-bg.selected{background:var(--blue-soft);}
-  .cal-month-summary{font-size:12.5px;color:var(--ink-soft);margin:8px 0 10px;}
+  .cal-month-summary{font-size:15px;color:var(--ink);font-weight:700;margin:8px 0 10px;}
   .cal-picker-row{display:flex;gap:8px;justify-content:center;margin:8px 0;}
   .cal-picker-row select{padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-today-btn{margin:6px 0 4px;font-size:12.5px;padding:6px 12px;}
@@ -552,7 +557,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.01-01';
+const APP_VERSION = 'v2026.09.03-02';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -1178,6 +1183,8 @@ function selectCalDay(dateStr){
 let addRecordDate = null;
 let addRecordFrom = 'leaves';
 let addRecordCompDefaultType = null; // 補休/換休登記表單預設帶入的類型（'use'代表直接預選使用，null則照原本預設獲得）
+let multiDateMode = false; // 是否開啟「一次登記多天」模式
+let multiDateList = []; // 多天模式下，使用者陸續加入的日期清單（不一定連續，各自獨立）
 let quotaExpandedKey = null;
 let quotaEditModalOpen = null;
 let homeDetailModalOpen = null; // null | 'remain' | 'month' —— 首頁摘要卡三格點進去的明細彈窗（年度已經改成獨立頁面，見switchPage('yearRecord')）
@@ -1256,6 +1263,8 @@ function openAddRecord(key){
   addRecordDate = null;
   addRecordFrom = 'leaves';
   addRecordCompDefaultType = null;
+  multiDateMode = false;
+  multiDateList = [];
   switchPage('addRecord');
 }
 // 補休/換休專用：直接開登記表單、預設選「使用」，不用自己手動切換下拉選單
@@ -1265,16 +1274,44 @@ function openAddRecordAsUse(key){
   addRecordDate = null;
   addRecordFrom = 'leaves';
   addRecordCompDefaultType = 'use';
+  multiDateMode = false;
+  multiDateList = [];
   switchPage('addRecord');
 }
 function openAddRecordFromHome(key){
   activeLeaveTab = key;
   addRecordDate = null;
   addRecordFrom = 'home';
+  multiDateMode = false;
+  multiDateList = [];
   switchPage('addRecord');
 }
 function changeAddRecordType(key){
   activeLeaveTab = key;
+  multiDateMode = false;
+  multiDateList = [];
+  render();
+}
+// 「一次登記多天」：切換模式時清空已加入的日期清單，避免帶著上次殘留的日期造成混淆
+function toggleMultiDateMode(dateInputId){
+  multiDateMode = !multiDateMode;
+  multiDateList = [];
+  render();
+}
+// 把目前日期輸入框裡的值加進清單；重複日期不重複加入，並依日期排序方便閱讀
+function addMultiDate(dateInputId){
+  const el = document.getElementById(dateInputId);
+  if(!el || !el.value) return;
+  const d = parseFlexibleDate(el.value);
+  if(!d) return;
+  if(!multiDateList.includes(d)){
+    multiDateList.push(d);
+    multiDateList.sort();
+  }
+  render();
+}
+function removeMultiDate(date){
+  multiDateList = multiDateList.filter(d=>d!==date);
   render();
 }
 function addFromCalendar(dateStr){
@@ -3350,9 +3387,19 @@ function pageAddRecord(){
     <section class="block">
       <h2><span class="dot dot-${t.c}"></span>使用${t.label}</h2>
       <form class="entry" onsubmit="addRecord('${t.key}', event)">
-        <div class="field"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" required><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div></div>
+        <div class="field"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" ${multiDateMode?'':'required'}><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div>
+          <label class="multi-date-toggle"><input type="checkbox" ${multiDateMode?'checked':''} onchange="toggleMultiDateMode('${t.key}Date')"> 一次登記多天（可分別指定不連續的日期）</label>
+          ${multiDateMode ? `
+          <div style="margin-top:8px;">
+            <button type="button" class="btn-outline-${t.c} btn-with-badge" onclick="addMultiDate('${t.key}Date')"><span class="btn-badge-circle btn-badge-circle-outline"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 加入這天</button>
+          </div>
+          <div class="multi-date-chips">
+            ${multiDateList.length===0 ? `<span class="hint" style="margin:0;">尚未加入任何日期，選好上面的日期後點「加入這天」</span>` : multiDateList.map(d=>`<span class="multi-date-chip" style="background:var(--${t.c}-soft, var(--jade-soft));color:var(--${t.c});">${toROC(d)}<span class="multi-date-chip-x" onclick="removeMultiDate('${d}')">✕</span></span>`).join('')}
+          </div>
+          ` : ''}
+        </div>
         <div class="field field-days">
-          <label>數量</label>
+          <label>數量${multiDateMode?'（每一天都套用這個數量）':''}</label>
           <div class="days-row">
             <input type="number" id="${t.key}Amount" min="0.5" step="0.5" value="1" required oninput="updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">
             <select id="${t.key}Unit" class="unit-select u-day" onchange="onUnitChange('${t.key}');updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');" style="width:96px;padding:8px 4px;">
@@ -4633,12 +4680,40 @@ function finishAddWithConfirm(message){
 async function addRecord(key, e){
   e.preventDefault();
   try{
-    const date = parseFlexibleDate(document.getElementById(key+'Date').value);
     const unit = document.getElementById(key+'Unit').value;
     const amount = parseFloat(document.getElementById(key+'Amount').value);
     const note = document.getElementById(key+'Note').value.trim();
-    if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫日期與數量', false); return; }
+    if(isNaN(amount) || amount<=0){ setStatus('請填寫數量', false); return; }
     const daysEquiv = unit==='hour' ? amount/getHoursPerDay() : amount;
+
+    if(multiDateMode){
+      if(multiDateList.length===0){ setStatus('請先加入至少一個日期', false); return; }
+      const totalDaysEquiv = daysEquiv * multiDateList.length;
+      const currentRemain = remainOf(key, selectedYear);
+      if(currentRemain - totalDaysEquiv < 0){
+        const label = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || '';
+        if(!window.confirm(`這 ${multiDateList.length} 天加起來會超過可用的${label}天數（目前剩餘 ${fmt(currentRemain)} 天，這次共需要 ${fmt(totalDaysEquiv)} 天），仍要登記嗎？`)) return;
+      }
+      if(!state.records[key]) state.records[key]=[];
+      let lastId = null;
+      const addedCount = multiDateList.length;
+      for(const date of multiDateList){
+        const id = uid();
+        state.records[key].push({ id, date, unit, amount, note });
+        lastId = id;
+      }
+      lastAddedId = lastId;
+      state.lastUsedType = key;
+      multiDateMode = false; multiDateList = [];
+      await saveState();
+      setStatus('已登記使用', true);
+      const tLabel = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || '';
+      finishAddWithConfirm(`已新增 ${addedCount} 筆${tLabel}（每筆 ${displayAmount({unit,amount})}）`);
+      return;
+    }
+
+    const date = parseFlexibleDate(document.getElementById(key+'Date').value);
+    if(!date){ setStatus('請填寫日期', false); return; }
     const currentRemain = remainOf(key, selectedYear);
     if(currentRemain - daysEquiv < 0){
       const label = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || '';
