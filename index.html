@@ -432,7 +432,7 @@
   .cal-cell:not(.empty):not(.adjacent):active{background:var(--paper-soft, #F4EEE2);}
   .cal-cell.weekend, .cal-cell.holiday-bg{background:var(--rose-soft);}
   .cal-cell.weekend.selected, .cal-cell.holiday-bg.selected{background:var(--blue-soft);}
-  .cal-month-summary{font-size:15px;color:color-mix(in srgb, var(--amber) 55%, var(--ink-soft));font-weight:600;margin:8px 0 10px;}
+  .cal-month-summary{font-size:15px;color:var(--blue);font-weight:600;margin:8px 0 10px;}
   .cal-holiday-refresh-btn{display:block;margin-top:6px;background:none;border:none;padding:0;color:var(--jade);font-size:12.5px;font-weight:700;text-decoration:underline;text-underline-offset:2px;}
   .cal-holiday-note-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
   .cal-holiday-chip-lg{font-size:14px;padding:5px 11px;border-radius:9px;}
@@ -560,7 +560,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-24';
+const APP_VERSION = 'v2026.09.03-25';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -2992,7 +2992,7 @@ function calendarPanel(){
         <select onchange="jumpCalYear(this.value)">${Array.from({length:11},(_,i)=>CUR_YEAR-5+i).map(yy=>`<option value="${yy}" ${yy===y?'selected':''}>${yy} 年</option>`).join('')}</select>
         <select onchange="jumpCalMonth(this.value)">${Array.from({length:12},(_,i)=>i+1).map(mm=>`<option value="${mm}" ${mm===m?'selected':''}>${mm} 月</option>`).join('')}</select>
       </div>` : ''}
-      ${(y!==CUR_YEAR || m!==NOW.getMonth()+1) ? `<button type="button" class="ghost cal-today-btn" onclick="jumpToToday()">${ICON_PIN}回到今天</button>` : ''}
+      ${(y!==CUR_YEAR || m!==NOW.getMonth()+1) ? `<button type="button" class="ghost cal-today-btn" onclick="jumpToToday()" ontouchend="event.preventDefault();jumpToToday();">${ICON_PIN}回到今天</button>` : ''}
       <div class="cal-swipe-area" ontouchstart="calTouchStart(event)" ontouchend="calTouchEnd(event)">
         <div class="cal-grid cal-weekdays"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
         <div class="cal-grid">${cells}</div>
