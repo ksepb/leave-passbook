@@ -419,7 +419,6 @@
   .cal-cell.empty{background:transparent;}
   .cal-cell.adjacent{background:transparent;cursor:default;}
   .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
-  .cal-cell.today{border:2px solid var(--plum);box-sizing:border-box;}
   .cal-cell.today .cal-daynum{background:var(--plum);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;font-weight:700;}
   .cal-cell.selected{background:color-mix(in srgb, var(--blue) 30%, var(--blue-soft));}
   .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
@@ -561,7 +560,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.10-01';
+const APP_VERSION = 'v2026.09.10-02';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
