@@ -419,10 +419,11 @@
   .cal-cell.empty{background:transparent;}
   .cal-cell.adjacent{background:transparent;cursor:default;}
   .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
-  .cal-cell.today .cal-daynum{background:var(--amber);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;font-weight:700;}
+  .cal-cell.today{border:2px solid var(--plum);box-sizing:border-box;}
+  .cal-cell.today .cal-daynum{background:var(--plum);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;font-weight:700;}
   .cal-cell.selected{background:color-mix(in srgb, var(--blue) 30%, var(--blue-soft));}
   .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
-  .cal-cell.selected.today .cal-daynum{background:var(--amber);color:#fff;}
+  .cal-cell.selected.today .cal-daynum{background:var(--plum);color:#fff;}
   .cal-daynum{font-size:13px;color:var(--ink-soft);font-weight:700;}
   .cal-daynum.holiday{color:var(--brick);font-weight:700;}
   .cal-holiday-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brick);margin-left:2px;vertical-align:middle;}
@@ -560,7 +561,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.03-25';
+const APP_VERSION = 'v2026.09.10-01';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -4563,6 +4564,7 @@ function changeCalMonth(delta){
 function jumpToToday(){
   calYear = CUR_YEAR;
   calMonth = NOW.getMonth()+1;
+  calSelectedDate = null;
   render();
 }
 let calTouchStartX = null;
