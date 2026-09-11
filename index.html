@@ -560,7 +560,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.10-02';
+const APP_VERSION = 'v2026.09.10-11';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -849,6 +849,25 @@ function validateState(parsed){
   const errors = [];
   if(!parsed || typeof parsed !== 'object'){ errors.push('資料不是有效的物件格式'); return {valid:false, errors}; }
 
+  const seenIds = new Set(); // 跨records跟compRecords全部一起檢查，因為id理論上應該全域唯一（用uid()產生），不分假別類別
+  const VALID_UNITS = ['day','hour'];
+  const MAX_REASONABLE_AMOUNT = 3650; // 抓一個寬鬆但有限的上限（約10年份的天數），純粹擋掉Infinity或誤植的誇張數字，正常使用不可能碰到
+  // 檢查一個數量欄位是不是「合理的正數」：不是NaN、不是Infinity、不是負數或0、不會誇張大、小數位不會異常多
+  function isReasonableAmount(v){
+    if(typeof v !== 'number' || !isFinite(v) || v<=0) return false; // isFinite同時擋掉NaN跟±Infinity
+    if(v > MAX_REASONABLE_AMOUNT) return false;
+    // 小數位最多到小數點後2位就夠用了（例如0.5天、4.25小時），超過視為異常精度，可能是資料損毀或浮點數運算殘留的雜訊
+    const decimalPart = String(v).split('.')[1];
+    if(decimalPart && decimalPart.length > 4) return false; // 留一點寬容度給浮點數運算本身可能產生的極小誤差，但不要離譜
+    return true;
+  }
+  // 檢查id：必須存在、是字串、而且沒有跟其他紀錄重複過
+  function checkId(id, label){
+    if(!id || typeof id !== 'string'){ errors.push(`${label} 缺少有效的id`); return; }
+    if(seenIds.has(id)){ errors.push(`${label} 的id「${id}」跟其他紀錄重複了`); return; }
+    seenIds.add(id);
+  }
+
   if(parsed.records !== undefined){
     if(typeof parsed.records !== 'object' || parsed.records===null){ errors.push('records 假別紀錄區塊格式不對'); }
     else {
@@ -859,9 +878,11 @@ function validateState(parsed){
         if(!Array.isArray(arr)){ errors.push(`「${key}」底下的紀錄不是陣列格式`); return; }
         arr.forEach((r,i)=>{
           if(!r || typeof r !== 'object'){ errors.push(`${key} 第 ${i+1} 筆不是有效的紀錄物件`); return; }
+          checkId(r.id, `${key} 第 ${i+1} 筆`);
           if(!r.date || !/^\d{4}-\d{1,2}-\d{1,2}$/.test(r.date) || isNaN(new Date(r.date).getTime())){ errors.push(`${key} 第 ${i+1} 筆日期不合法（${r.date}）`); }
+          if(r.unit!==undefined && !VALID_UNITS.includes(r.unit)){ errors.push(`${key} 第 ${i+1} 筆的unit「${r.unit}」不是合法的單位（只能是day或hour）`); }
           const amt = r.unit==='hour' ? r.amount : (r.unit==='day' ? r.amount : r.days);
-          if(typeof amt !== 'number' || isNaN(amt) || amt<=0){ errors.push(`${key} 第 ${i+1} 筆的天數／小時數不合法`); }
+          if(!isReasonableAmount(amt)){ errors.push(`${key} 第 ${i+1} 筆的天數／小時數不合法（${amt}）`); }
         });
       });
     }
@@ -872,10 +893,12 @@ function validateState(parsed){
     else {
       parsed.compRecords.forEach((r,i)=>{
         if(!r || typeof r !== 'object'){ errors.push(`補休／換休第 ${i+1} 筆不是有效的紀錄物件`); return; }
+        checkId(r.id, `補休／換休第 ${i+1} 筆`);
         if(!['comp','exchange'].includes(r.category||'comp')){ errors.push(`補休／換休第 ${i+1} 筆的類別不合法`); }
         if(!['earn','use'].includes(r.type)){ errors.push(`補休／換休第 ${i+1} 筆的類型不合法`); }
         if(!r.date || !/^\d{4}-\d{1,2}-\d{1,2}$/.test(r.date) || isNaN(new Date(r.date).getTime())){ errors.push(`補休／換休第 ${i+1} 筆日期不合法`); }
-        if(typeof r.amount !== 'number' || isNaN(r.amount) || r.amount<=0){ errors.push(`補休／換休第 ${i+1} 筆數量不合法`); }
+        if(r.unit!==undefined && !VALID_UNITS.includes(r.unit)){ errors.push(`補休／換休第 ${i+1} 筆的unit「${r.unit}」不是合法的單位（只能是day或hour）`); }
+        if(!isReasonableAmount(r.amount)){ errors.push(`補休／換休第 ${i+1} 筆數量不合法（${r.amount}）`); }
       });
     }
   }
@@ -897,7 +920,14 @@ function applyCloudData(jsonStr){
       setStatus('雲端資料格式異常，已保留本機資料（詳情見設定頁錯誤記錄）', false);
       return false;
     }
+    // 用雲端資料覆蓋本機前，先記下本機現在引用的照片，蓋過去之後比對雲端資料裡還有哪些，
+    // 本機有、雲端沒有的那些照片就是孤兒了（不會再有任何紀錄指向它），直接清掉避免雲端空間一直堆積用不到的照片。
+    // 這裡不像還原/重置那樣給30分鐘反悔時間，因為套用雲端資料本身就是使用者已經做過的選擇（例如已經在「保留哪一份」的對話框選過），不是可能誤觸的操作
+    const oldUrls = (state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl);
     state = Object.assign(defaultState(), parsed);
+    const newUrls = new Set((state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl));
+    const orphanUrls = oldUrls.filter(u=>!newUrls.has(u));
+    orphanUrls.forEach(u=>{ deleteCompPhoto(u); }); // 不用await，背景清就好，不要卡住套用雲端資料這個主流程
     return true;
   }catch(e){
     console.error('雲端資料格式錯誤', e);
@@ -998,14 +1028,17 @@ function initOnlineDetection(){
     });
     // App 從背景切回前景時，順便安靜檢查一次雲端有沒有其他裝置的新資料
     document.addEventListener('visibilitychange', ()=>{
-      if(document.visibilityState === 'visible'){ checkForCloudUpdates(); }
+      if(document.visibilityState === 'visible'){ refreshNowIfDateChanged(); checkForCloudUpdates(); }
     });
     // Safari 的分頁「關掉再開」很多時候其實是從瀏覽器快取（bfcache）還原頁面，不是真的重新整理，
     // 這種情況下 App 的啟動流程（包括登入偵測）根本不會重新跑一次，visibilitychange 也不一定可靠抓到。
     // pageshow 搭配 event.persisted 是瀏覽器規格上專門用來偵測「這頁是從 bfcache 還原回來的」的正規做法。
     window.addEventListener('pageshow', (event)=>{
-      if(event.persisted){ checkForCloudUpdates(); }
+      if(event.persisted){ refreshNowIfDateChanged(); checkForCloudUpdates(); }
     });
+    // 保險機制：就算分頁一直開著、螢幕也沒關過（沒有觸發visibilitychange/pageshow），
+    // 每10分鐘還是會檢查一次日期有沒有跨過午夜，避免「今天」停在舊的那一天停到隔天中午都沒發現
+    setInterval(refreshNowIfDateChanged, 10*60*1000);
   }catch(e){}
 }
 // 安靜檢查雲端有沒有「別台裝置」更新過的新資料，有的話悄悄套用（不跳確認視窗，只在狀態列小提示一下）。
@@ -1160,9 +1193,21 @@ function goAddCustomFromSettings(event){
 // 「快速登記今天」只適用臨時性、當天才知道要請的假別；特休/補休/換休都是預先排定，不需要這個捷徑
 const QUICK_LOG_ELIGIBLE_TYPES = ['sick', 'personal', 'familyCare', 'menstrual', 'mentalCare'];
 
-const NOW = new Date();
-const TODAY = NOW.getFullYear()+'-'+String(NOW.getMonth()+1).padStart(2,'0')+'-'+String(NOW.getDate()).padStart(2,'0');
-const CUR_YEAR = NOW.getFullYear();
+let NOW = new Date();
+let TODAY = NOW.getFullYear()+'-'+String(NOW.getMonth()+1).padStart(2,'0')+'-'+String(NOW.getDate()).padStart(2,'0');
+let CUR_YEAR = NOW.getFullYear();
+// 手機瀏覽器分頁常常開著不會自動重新整理，如果就這樣放過午夜，NOW/TODAY/CUR_YEAR原本是開機當下算一次就固定住，
+// 「今天」的標記、日期選擇器的「今天/昨天」按鈕都會停在舊的那一天，這個函式負責偵測日期是否真的換了、換的話重新算一次並重畫畫面
+function refreshNowIfDateChanged(){
+  const freshNow = new Date();
+  const freshToday = freshNow.getFullYear()+'-'+String(freshNow.getMonth()+1).padStart(2,'0')+'-'+String(freshNow.getDate()).padStart(2,'0');
+  if(freshToday === TODAY) return false; // 還是同一天，不用做事
+  NOW = freshNow;
+  TODAY = freshToday;
+  CUR_YEAR = freshNow.getFullYear();
+  render();
+  return true;
+}
 const DEFAULT_HOURS_PER_DAY = 8;
 function getHoursPerDay(){ return (state && state.hoursPerDay) ? Number(state.hoursPerDay) : DEFAULT_HOURS_PER_DAY; }
 const DEFAULT_PERSONAL_PAID_DAYS = 7;
@@ -1363,7 +1408,15 @@ async function ensureHolidayYear(year){
       if(cached) list = JSON.parse(cached);
     }catch(e){ /* 讀本機快取失敗就當作沒有，繼續往下抓 */ }
     if(!list){
-      const res = await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`);
+      // 用AbortController加個逾時，網路狀況不好、或請求卡住時最多等8秒就放棄，不要無限等待
+      const controller = new AbortController();
+      const timeoutId = setTimeout(()=>controller.abort(), 8000);
+      let res;
+      try{
+        res = await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`, { signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       if(!res.ok) throw new Error('抓取國定假日資料失敗');
       list = await res.json();
       try{ localStorage.setItem(cacheKey, JSON.stringify(list)); }catch(e){ /* 存不下去就算了，不影響功能 */ }
@@ -2886,7 +2939,9 @@ function calendarPanel(){
       const label = isCustom ? (r.customLabel||'其他假別') : COMP_CATEGORIES[cat].label;
       const c = isCustom ? 'plum' : COMP_CATEGORIES[cat].c;
       const sign = r.type==='earn' ? '+' : '－';
-      dayMap[d].push({kind:'comp', key:cat, id:r.id, seal:sign+label, wide:true, c, label:`${label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
+      // seal會被直接塞進行事曆小圓點的HTML裡（沒有再經過escapeHtml），
+      // 自訂假別的名稱（customLabel）是使用者自己打的字，這裡要先跳脫，不然打特殊字元進去可能造成XSS
+      dayMap[d].push({kind:'comp', key:cat, id:r.id, seal:escapeHtml(sign+label), wide:true, c, label:`${label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
     }
   });
   let cells = '';
@@ -3990,7 +4045,7 @@ function compSectionHtml(category){
     </section>
 
     <div class="search-sort-row" style="margin:0 4px 10px;">
-      <input type="text" id="searchInput" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="searchQuery=this.value" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="renderSearchResult();">
+      <input type="text" id="searchInputComp" placeholder="搜尋日期或備註…" value="${escapeAttr(searchQuery)}" oninput="searchQuery=this.value" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="renderSearchResult();">
       <button type="button" class="sortbtn" onclick="toggleSort()">日期 ${sortAsc? '▲ 舊到新':'▼ 新到舊'}</button>
     </div>
 
@@ -4387,6 +4442,7 @@ function pageData(){
             <button style="background:var(--ink-soft);" onclick="restoreBackup()">確認還原（會覆蓋目前資料）</button>
           </div>
         </div>
+        ${getPreRestoreSnapshot()? `<div class="undo-bar"><span>${ICON_WARNING} 曾還原過備份（30分鐘內可換回還原前的版本）</span><button onclick="restorePreRestoreSnapshot()">復原</button></div>` : ''}
         ` : ''}
       </div>
 
@@ -5061,9 +5117,13 @@ async function resetRecords(scope, key){
 // 沒有登入的話不能上傳（因為要對應到你的帳號底下），會回傳 null
 // 上傳前先檢查檔案類型跟大小，選錯馬上知道，不用等上傳到一半才發現
 function validatePhotoFile(file){
-  const allowedTypes = ['image/jpeg','image/png','image/webp'];
-  if(!allowedTypes.includes(file.type)){
-    return { valid:false, message:'請選擇圖片格式的檔案（JPG/PNG/WEBP）' };
+  const allowedTypes = ['image/jpeg','image/png','image/webp','image/heic','image/heif'];
+  // iPhone拍的照片預設就是HEIC格式，但有些情況瀏覽器回報的file.type是空字串或認不得，
+  // 這時候退而求其次看副檔名，避免手機直接拍的照片反而傳不上來
+  const nameLower = (file.name||'').toLowerCase();
+  const looksLikeHeic = nameLower.endsWith('.heic') || nameLower.endsWith('.heif');
+  if(!allowedTypes.includes(file.type) && !looksLikeHeic){
+    return { valid:false, message:'請選擇圖片格式的檔案（JPG/PNG/WEBP/HEIC）' };
   }
   const maxBytes = 5 * 1024 * 1024;
   if(file.size > maxBytes){
@@ -5089,7 +5149,13 @@ async function toggleAutoDeleteExpiredPhotos(checked){
 
 async function deleteCompPhoto(photoUrl){
   if(!fbStorage || !photoUrl) return;
-  try{ await fbStorage.refFromURL(photoUrl).delete(); }catch(e){ console.error('刪除照片失敗', e); }
+  try{ await fbStorage.refFromURL(photoUrl).delete(); }
+  catch(e){
+    console.error('刪除照片失敗', e);
+    // 原本只有console.error，平常完全看不到；照片清理失敗會變成永久孤兒還不自知，
+    // 導進「設定」頁的錯誤記錄，至少之後有機會發現、手動去Firebase Console處理
+    logAppError('照片清理失敗（可能變成雲端孤兒檔案）', (e && e.message ? e.message : String(e)) + '｜網址：' + photoUrl);
+  }
 }
 
 // 到期自動清照片：只清「已經過期的補休/換休獲得紀錄」的照片，
@@ -5554,6 +5620,50 @@ function toggleImport(){
   area.style.display = area.style.display==='none' ? 'block' : 'none';
 }
 
+function savePreRestoreSnapshot(){
+  try{
+    const snapshot = { time: Date.now(), state: state };
+    localStorage.setItem('preRestoreSnapshot', JSON.stringify(snapshot));
+    // 跟重置快照用同一套邏輯：30分鐘後主動清掉，不是等使用者剛好再打開設定頁才順便清，
+    // 不然快照可能永遠留在手機裡；同時把「還原前」那份資料裡、現在已經沒有任何紀錄在用的照片視為孤兒，一併從雲端清掉
+    setTimeout(()=>{ finalizePreRestoreSnapshotCleanup(snapshot.time); }, 30*60*1000);
+  }catch(e){ /* 存不下去就算了，不影響還原本身，只是少了這層保險 */ }
+}
+async function finalizePreRestoreSnapshotCleanup(snapshotTime){
+  try{
+    const raw = localStorage.getItem('preRestoreSnapshot');
+    if(!raw) return; // 已經被復原、或已經清過了，不用處理
+    const snap = JSON.parse(raw);
+    if(snap.time !== snapshotTime) return; // 中途又發生過別次還原，這是舊的排程了，不要誤刪新快照
+    // 「還原前」那份資料裡引用的照片，如果現在（還原後、使用者沒有反悔）已經沒有任何一筆紀錄還在用，就是孤兒照片，清掉
+    const oldUrls = (snap.state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl);
+    const currentUrls = new Set((state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl));
+    const orphanUrls = oldUrls.filter(u=>!currentUrls.has(u));
+    for(const url of orphanUrls){ await deleteCompPhoto(url); }
+    localStorage.removeItem('preRestoreSnapshot');
+  }catch(e){ console.error('清理還原前快照的照片失敗', e); }
+}
+function getPreRestoreSnapshot(){
+  try{
+    const raw = localStorage.getItem('preRestoreSnapshot');
+    if(!raw) return null;
+    const snap = JSON.parse(raw);
+    if(Date.now() - snap.time > 30*60*1000){ localStorage.removeItem('preRestoreSnapshot'); return null; } // 跟重置的復原視窗一樣是30分鐘，維持一致，比較好記
+    return snap;
+  }catch(e){ return null; }
+}
+// 「復原還原前版本」是整包換回去，不是像重置復原那樣一筆一筆比對加回來——
+// 因為「還原」本來就是整包取代，要復原也應該是整包換回原本那份，這樣才符合使用者「反悔剛才那次還原」的預期
+async function restorePreRestoreSnapshot(){
+  const snap = getPreRestoreSnapshot();
+  if(!snap){ setStatus('復原時限已過（30分鐘），或沒有可復原的還原前版本', false); return; }
+  if(!window.confirm('確定要復原到「還原備份」之前的版本嗎？\n（這會把剛才還原進來的資料整個換掉，改回還原前的樣子）')) return;
+  state = snap.state;
+  try{ localStorage.removeItem('preRestoreSnapshot'); }catch(e){}
+  await saveState();
+  render();
+  setStatus('已復原到還原備份之前的版本', true);
+}
 async function restoreBackup(){
   const raw = document.getElementById('importText').value.trim();
   if(!raw){ setStatus('請先貼上備份內容', false); return; }
@@ -5568,6 +5678,7 @@ async function restoreBackup(){
       setStatus('匯入失敗：資料內容有問題', false);
       return;
     }
+    savePreRestoreSnapshot(); // 先把現在這份存起來，萬一還原錯了、或還原完發現不是想要的那份，30分鐘內都可以換回來
     state = Object.assign(defaultState(), parsed);
     lastDeleted = null; editing = null; searchQuery=''; sortAsc=false; expandedMonths={};
     selectedYear = CUR_YEAR; calendarMode=false; chartMode=false;
