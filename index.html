@@ -95,6 +95,7 @@
   .chip{display:inline-flex;align-items:center;gap:4px;padding:5px 13px;border-radius:20px;font-family:'Noto Sans TC',sans-serif;font-size:12px;font-weight:500;color:var(--ink-soft);background:rgba(255,255,255,.5);border:1px solid var(--line);}
 
   .undo-bar{position:fixed;left:16px;right:16px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:250;background:#3A2F22;color:#fff;padding:14px 18px;border-radius:12px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:fadeInPage .2s ease-out;}
+  .storage-warning-banner{background:var(--brick);color:#fff;padding:12px 16px;font-size:14px;font-weight:700;line-height:1.5;position:sticky;top:0;z-index:400;}
   .undo-bar button{font-size:15px;padding:8px 14px;}
   .undo-bar + .undo-bar{bottom:calc(160px + env(safe-area-inset-bottom));}
   .select-summary-bar{position:fixed;left:16px;right:16px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:240;background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;font-size:16.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.3);animation:fadeInPage .15s ease-out;}
@@ -136,6 +137,7 @@
   .tint-rust{background:color-mix(in srgb, var(--rust-soft) 45%, #fff);}
   .tint-rose{background:color-mix(in srgb, var(--rose-soft) 45%, #fff);}
   .tint-teal{background:color-mix(in srgb, var(--teal-soft) 45%, #fff);}
+  .tint-amber{background:color-mix(in srgb, var(--amber-soft, #FBEFDC) 45%, #fff);}
   .stamp-card.warn .num{color:var(--amber);}
   .stamp-card.level-warn{border-color:var(--amber);}
   .stamp-card.level-warn .num{color:var(--amber);}
@@ -246,7 +248,7 @@
   .field-days{flex:1 1 220px;min-width:220px;}
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
-  .btn-jade{background:var(--jade);} .btn-brick{background:var(--brick);} .btn-blue{background:var(--blue);} .btn-olive{background:var(--olive);} .btn-plum{background:var(--plum);} .btn-rust{background:var(--rust);} .btn-rose{background:var(--rose);} .btn-teal{background:var(--teal);}
+  .btn-jade{background:var(--jade);} .btn-brick{background:var(--brick);} .btn-blue{background:var(--blue);} .btn-olive{background:var(--olive);} .btn-plum{background:var(--plum);} .btn-rust{background:var(--rust);} .btn-rose{background:var(--rose);} .btn-teal{background:var(--teal);} .btn-amber{background:var(--amber);}
   .btn-outline-jade,.btn-outline-brick,.btn-outline-blue,.btn-outline-olive,.btn-outline-plum,.btn-outline-rust,.btn-outline-rose,.btn-outline-teal{background:#fff;border-style:solid;border-width:1.2px;font-weight:700;}
   .btn-outline-jade{color:var(--jade);border-color:var(--jade);} .btn-outline-brick{color:var(--brick);border-color:var(--brick);} .btn-outline-blue{color:var(--blue);border-color:var(--blue);} .btn-outline-olive{color:var(--olive);border-color:var(--olive);} .btn-outline-plum{color:var(--plum);border-color:var(--plum);} .btn-outline-rust{color:var(--rust);border-color:var(--rust);} .btn-outline-rose{color:var(--rose);border-color:var(--rose);} .btn-outline-teal{color:var(--teal);border-color:var(--teal);}
   .btn-with-badge{display:flex;align-items:center;justify-content:center;gap:4px;padding-left:8px;padding-right:8px;white-space:nowrap;min-height:34px;box-sizing:border-box;}
@@ -560,7 +562,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.10-11';
+const APP_VERSION = 'v2026.09.13-02';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -894,7 +896,7 @@ function validateState(parsed){
       parsed.compRecords.forEach((r,i)=>{
         if(!r || typeof r !== 'object'){ errors.push(`補休／換休第 ${i+1} 筆不是有效的紀錄物件`); return; }
         checkId(r.id, `補休／換休第 ${i+1} 筆`);
-        if(!['comp','exchange'].includes(r.category||'comp')){ errors.push(`補休／換休第 ${i+1} 筆的類別不合法`); }
+        if(!['comp','exchange','custom'].includes(r.category||'comp')){ errors.push(`補休／換休第 ${i+1} 筆的類別不合法`); }
         if(!['earn','use'].includes(r.type)){ errors.push(`補休／換休第 ${i+1} 筆的類型不合法`); }
         if(!r.date || !/^\d{4}-\d{1,2}-\d{1,2}$/.test(r.date) || isNaN(new Date(r.date).getTime())){ errors.push(`補休／換休第 ${i+1} 筆日期不合法`); }
         if(r.unit!==undefined && !VALID_UNITS.includes(r.unit)){ errors.push(`補休／換休第 ${i+1} 筆的unit「${r.unit}」不是合法的單位（只能是day或hour）`); }
@@ -1225,6 +1227,23 @@ function personalUnpaidUsed(year){
 
 let state = { quotaByYear:{}, records:{}, compRecords:[] };
 let lastAddedId = null;
+let isAddingRecord = false; // 防止手機上快速點兩下「新增」按鈕，造成同一筆被重複送出兩次
+let storageUnavailable = false; // 本機儲存空間完全無法寫入時設為true（例如儲存空間被系統鎖死），會在畫面上方顯示警告
+// 檢查本機儲存是否真的能用：寫一個測試值進去，馬上讀回來比對，再刪掉。
+// 注意：這只能抓到「現在寫入就直接失敗」的情況，沒辦法偵測Safari那種隱私模式（當下寫得進去，但關掉分頁後才會被清空），
+// 因為現代瀏覽器刻意讓網站沒辦法準確分辨「是不是在隱私模式」，這是瀏覽器有意為之的隱私保護，不是我們技術上能繞過的
+function checkStorageAvailable(){
+  try{
+    const testKey = '__storageTest__' + Date.now();
+    localStorage.setItem(testKey, '1');
+    const ok = localStorage.getItem(testKey) === '1';
+    localStorage.removeItem(testKey);
+    storageUnavailable = !ok;
+  }catch(e){
+    storageUnavailable = true;
+  }
+  return !storageUnavailable;
+}
 let lastEditedId = null; // 編輯完成後用這個標記，套用「✓ 已編輯」淡入淡出小標籤，跟新增的放大彈跳效果分開，避免縮放造成視覺失真
 let lastRenderedPage = null;
 let lastDeleted = null;
@@ -1303,7 +1322,7 @@ function closeQuotaEditModal(){ quotaEditModalOpen = null; render(); }
 async function saveQuotaModal(key){
   try{
     const v = parseFloat(document.getElementById('quotaModalInput').value);
-    if(isNaN(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
+    if(!isFinite(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
     setQuota(key, selectedYear, v);
     quotaEditModalOpen = null;
     await saveState();
@@ -1469,7 +1488,12 @@ async function switchLeaveTab(key){
 }
 let activePage = 'home';
 function switchPage(page){
-  if(editing){ editing = null; editExpiryTouched = false; editPhotoRemoved = {}; }
+  // 正在編輯還沒存檔時，切換頁籤（例如點底部導覽）原本會直接靜默清掉編輯狀態，
+  // 跟切換到別筆編輯是同一類問題，這裡也要先確認；但如果點的是目前已經在的頁籤（根本沒有要切換），不用跳確認
+  if(editing && page!==activePage){
+    if(!window.confirm('目前正在編輯的內容還沒儲存，切換頁面會不見，確定要離開嗎？')) return;
+    editing = null; editExpiryTouched = false; editPhotoRemoved = {};
+  }
   deviceNameEditing = false;
   homeOrderSwapSelected = null;
   activePage = page;
@@ -1573,7 +1597,11 @@ function defaultDateFor(y){ return y===CUR_YEAR ? TODAY : y+'-01-01'; }
 function addYears(dateStr, n){
   try{
     const d = new Date(dateStr+'T00:00:00');
+    const targetMonth = d.getMonth(); // 記住原本的月份，加年份理論上月份不該變
     d.setFullYear(d.getFullYear()+n);
+    // 閏年2/29加年數，如果目標年不是閏年，JS原生的setFullYear會直接溢位到3月1日，而不是自動修正回2/28，
+    // 這裡偵測「月份跑掉了」就代表溢位了，改成夾回目標月份的最後一天（例如2026年2月最後一天=2/28）
+    if(d.getMonth() !== targetMonth){ d.setDate(0); }
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }catch(e){ return ''; }
 }
@@ -1594,7 +1622,11 @@ function compDefaultExpiry(category, dateStr){
 function addMonths(dateStr, n){
   try{
     const d = new Date(dateStr+'T00:00:00');
+    const targetMonth = ((d.getMonth()+n)%12+12)%12; // 算出理論上加完之後應該落在哪個月份（正規化到0-11）
     d.setMonth(d.getMonth()+n);
+    // 原本日期是29/30/31號，加完月份如果目標月天數比較少（例如1/31加1個月，2月只有28/29天），
+    // JS原生的setMonth會直接溢位到下下個月初，而不是自動修正回目標月的最後一天，這裡偵測到溢位就夾回去
+    if(d.getMonth() !== targetMonth){ d.setDate(0); }
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }catch(e){ return ''; }
 }
@@ -1614,7 +1646,13 @@ function getDeviceId(){
     let id = localStorage.getItem('devicePersistentId');
     if(!id){ id = uid(); localStorage.setItem('devicePersistentId', id); }
     return id;
-  }catch(e){ return 'unknown'; }
+  }catch(e){
+    // localStorage不可用時（例如某些瀏覽器的隱私模式），不能大家都回傳同一個'unknown'字串，
+    // 不然兩台剛好都遇到這個狀況的不同裝置，會被誤判成同一台，導致互相看不到對方的更新。
+    // 退而求其次，至少同一個session維持同一個隨機id，不會每次呼叫都不一樣
+    if(!window.__sessionFallbackDeviceId){ window.__sessionFallbackDeviceId = 'nostor-' + uid(); }
+    return window.__sessionFallbackDeviceId;
+  }
 }
 // 判斷目前帳號是用哪種方式登入的（Google / Email），方便以後跨裝置比對是不是同一種登入方式
 // 注意：Email密碼登入 跟 Email連結登入 在Firebase底層的providerId都是'password'，沒辦法細分，這是Firebase本身的限制
@@ -1714,10 +1752,45 @@ async function loadState(){
     }
     if(raw){
       const parsed = JSON.parse(raw);
-      state.records = Object.assign(state.records, parsed.records||{});
-      state.compRecords = parsed.compRecords || [];
+      // 跟quotaByYear同樣的道理：這裡是App自己開機讀本機資料，原本完全沒有經過任何檢查，
+      // 只過濾掉「這一筆」有問題的（缺id、id重複、unit不合法、天數是Infinity/NaN/負數），其他正常的紀錄不受影響，
+      // 不會因為一筆壞資料就整批不要或整個載入失敗
+      const seenLoadIds = new Set();
+      function sanitizeRecordArray(arr){
+        if(!Array.isArray(arr)) return [];
+        return arr.filter(r=>{
+          if(!r || typeof r !== 'object') return false;
+          if(!r.id || typeof r.id !== 'string' || seenLoadIds.has(r.id)) return false;
+          if(r.unit!==undefined && r.unit!=='day' && r.unit!=='hour') return false;
+          const amt = r.unit==='hour' ? r.amount : (r.unit==='day' ? r.amount : r.days);
+          const amtNum = Number(amt);
+          if(!isFinite(amtNum) || amtNum<=0 || amtNum>3650) return false;
+          seenLoadIds.add(r.id);
+          return true;
+        });
+      }
+      const sanitizedRecords = {};
+      Object.keys(parsed.records||{}).forEach(key=>{ sanitizedRecords[key] = sanitizeRecordArray(parsed.records[key]); });
+      state.records = Object.assign(state.records, sanitizedRecords);
+      state.compRecords = sanitizeRecordArray(parsed.compRecords);
+      // 把年度天數設定裡任何不合理的數值（Infinity/NaN/負數，可能是更早期版本沒有防呆時寫入的壞資料）清掉，
+      // 不然重新整理App讀到這種舊的壞資料，總天數會直接顯示Infinity，畫面上的統計全部跟著壞掉
+      function sanitizeQuotaByYear(q){
+        const clean = {};
+        Object.keys(q||{}).forEach(year=>{
+          const yearQuotas = q[year];
+          if(!yearQuotas || typeof yearQuotas !== 'object') return;
+          const cleanYear = {};
+          Object.keys(yearQuotas).forEach(k=>{
+            const v = Number(yearQuotas[k]);
+            if(isFinite(v) && v>=0) cleanYear[k] = v;
+          });
+          clean[year] = cleanYear;
+        });
+        return clean;
+      }
       if(parsed.quotaByYear){
-        state.quotaByYear = parsed.quotaByYear;
+        state.quotaByYear = sanitizeQuotaByYear(parsed.quotaByYear);
       } else {
         let flatQuotas = null;
         if(parsed.quotas){ flatQuotas = parsed.quotas; }
@@ -1725,12 +1798,12 @@ async function loadState(){
           flatQuotas = { annual: parsed.annualTotal || 0 };
           state.records.annual = parsed.annualRecords || state.records.annual;
         }
-        if(flatQuotas){ state.quotaByYear[CUR_YEAR] = Object.assign({}, flatQuotas); }
+        if(flatQuotas){ state.quotaByYear[CUR_YEAR] = sanitizeQuotaByYear({[CUR_YEAR]: flatQuotas})[CUR_YEAR]; }
       }
-      if(parsed.hoursPerDay){ state.hoursPerDay = Number(parsed.hoursPerDay); }
-      if(parsed.personalPaidDays !== undefined && parsed.personalPaidDays !== null){ state.personalPaidDays = Number(parsed.personalPaidDays); }
-      if(parsed.annualMinDays !== undefined && parsed.annualMinDays !== null){ state.annualMinDays = Number(parsed.annualMinDays); }
-      if(parsed.uiScale){ state.uiScale = Number(parsed.uiScale); }
+      if(parsed.hoursPerDay && isFinite(Number(parsed.hoursPerDay)) && Number(parsed.hoursPerDay)>0){ state.hoursPerDay = Number(parsed.hoursPerDay); }
+      if(parsed.personalPaidDays !== undefined && parsed.personalPaidDays !== null && isFinite(Number(parsed.personalPaidDays)) && Number(parsed.personalPaidDays)>=0){ state.personalPaidDays = Number(parsed.personalPaidDays); }
+      if(parsed.annualMinDays !== undefined && parsed.annualMinDays !== null && isFinite(Number(parsed.annualMinDays)) && Number(parsed.annualMinDays)>=0){ state.annualMinDays = Number(parsed.annualMinDays); }
+      if(parsed.uiScale && isFinite(Number(parsed.uiScale)) && Number(parsed.uiScale)>0){ state.uiScale = Number(parsed.uiScale); }
       if(parsed.lastUsedType){ state.lastUsedType = String(parsed.lastUsedType); }
       if(parsed.autoDeleteExpiredPhotos !== undefined){ state.autoDeleteExpiredPhotos = !!parsed.autoDeleteExpiredPhotos; }
       if(parsed.overviewUnit==='day' || parsed.overviewUnit==='hour'){ state.overviewUnit = parsed.overviewUnit; overviewUnit = parsed.overviewUnit; }
@@ -1758,7 +1831,17 @@ async function saveState(){
     } else {
       localStorage.setItem(STORAGE_KEY, json);
     }
-  }catch(e){ console.error('儲存失敗', e); }
+    if(storageUnavailable){ storageUnavailable = false; render(); } // 剛才失敗過，這次成功了，警告可以收掉了
+  }catch(e){
+    console.error('儲存失敗', e);
+    // 原本只有console.error，畫面上完全看不出來——使用者會以為東西存好了，其實根本沒真的寫進去，
+    // 這比開機當下就偵測到還嚴重，因為是「操作途中資料正在被默默弄丟」，一定要讓使用者馬上知道
+    if(!storageUnavailable){
+      storageUnavailable = true;
+      logAppError('儲存失敗：本機空間可能已滿，或瀏覽器限制了儲存功能', e && e.message ? e.message : String(e));
+      render();
+    }
+  }
   checkCompLedgerConsistency();
   syncToCloud();
 }
@@ -2013,6 +2096,20 @@ function checkCompLedgerConsistency(){
         );
       }
     });
+    // 「其他假別」原本完全沒有涵蓋到這個一致性安全網，每個自訂名目各自獨立算FIFO，要一個個名目分開查
+    Array.from(new Set(state.compRecords.filter(r=>(r.category||'comp')==='custom' && r.customLabel).map(r=>r.customLabel))).forEach(label=>{
+      const core = _compFifoCore('custom', null, label);
+      const fifoTotal = core.batches.reduce((s,b)=> s + Math.max(0, b.remainDays), 0);
+      const simpleTotal = compBalanceAsOf('custom', '9999-12-31', null, label);
+      const diff = Math.abs(fifoTotal - simpleTotal - core.unfulfilledByKept);
+      if(diff > 0.01){
+        console.warn(`[一致性檢查] 其他假別「${label}」結餘不一致：FIFO加總=${fifoTotal}，簡單加總=${simpleTotal}，保留批次差異=${core.unfulfilledByKept}`);
+        logAppError(
+          `其他假別「${label}」結餘計算不一致`,
+          `FIFO加總＝${fmt(fifoTotal)} 天，簡單加總＝${fmt(simpleTotal)} 天，差異＝${fmt(diff)} 天（已排除保留批次造成的合理差異）。最可能是使用量超過獲得量（超扣）造成的，可以去「假別紀錄」檢查「${label}」紀錄有沒有登記錯誤。`
+        );
+      }
+    });
   }catch(e){ console.error('一致性檢查本身發生錯誤', e); }
 }
 
@@ -2031,19 +2128,37 @@ function getExpiringUndecidedBatches(){
       result.push(Object.assign({category}, b));
     });
   });
+  // 「其他假別」也支援設定到期日，原本這裡完全沒有涵蓋到，導致自訂名目的紀錄過期後永遠不會被提醒去決定要「已使用」還是「保留」。
+  // 因為每個自訂名目各自獨立算FIFO，要一個一個名目分開查
+  Array.from(new Set(state.compRecords.filter(r=>(r.category||'comp')==='custom' && r.customLabel).map(r=>r.customLabel))).forEach(label=>{
+    const batches = compFifoRemaining('custom', null, label);
+    batches.forEach(b=>{
+      if(!b.expiry || b.remainDays<=0.0001) return;
+      if(b.expiry >= TODAY) return;
+      const rec = state.compRecords.find(r=>r.id===b.id);
+      if(rec && rec.expiryDecision==='kept') return;
+      result.push(Object.assign({category:'custom', customLabel:label}, b));
+    });
+  });
   return result.sort((a,b)=> a.expiry.localeCompare(b.expiry));
 }
 // 使用者選「已使用」：自動幫這批補一筆「使用」紀錄，日期用到期日（不是今天，才能讓月份分組正確反映實際失效的月份），
 // 備註固定寫「逾期自動取消」，並且明確指定扣這一批（sourceAllocations），避免FIFO又跑去扣到別批
 async function markExpiredBatchUsed(category, batchId){
-  const batches = compFifoRemaining(category);
+  // customLabel直接從這筆紀錄本身反查（用唯一的id），不需要靠呼叫端額外傳入使用者打的文字，
+  // 這樣onclick那邊就不用把自訂名目（可能包含單引號等特殊字元）塞進JS字串參數裡，避免跳脫字元的風險
+  const sourceRec = state.compRecords.find(r=>r.id===batchId);
+  const customLabel = category==='custom' && sourceRec ? sourceRec.customLabel : undefined;
+  const batches = compFifoRemaining(category, null, customLabel);
   const b = batches.find(x=>x.id===batchId);
-  if(!b) return;
-  state.compRecords.push({
+  if(!b || b.remainDays<=0) return; // 這批已經沒有剩餘（可能是快速點兩下、或已經被別的操作扣完了），不要建出一筆0天或負數的無意義紀錄
+  const record = {
     id: uid(), type:'use', category, date: b.expiry, unit:'day', amount: b.remainDays,
     note: '逾期自動取消',
     sourceAllocations: [{id: batchId, days: b.remainDays}],
-  });
+  };
+  if(category==='custom') record.customLabel = customLabel;
+  state.compRecords.push(record);
   await saveState();
 }
 // 使用者選「保留」：在這批earn紀錄上記一個標記，之後不會再被問到，且系統自動扣抵時會跳過這一批
@@ -2082,10 +2197,10 @@ function expiryDecisionModal(){
         ${list.length>1 ? `<button type="button" class="ghost" style="width:100%;margin-bottom:14px;" onclick="markAllExpiredBatchesUsed()">✓ 全部標記為已使用</button>` : ''}
         <div class="expiry-decision-list">
           ${list.map(b=>{
-            const label = COMP_CATEGORIES[b.category].label;
+            const label = b.category==='custom' ? (b.customLabel||'其他假別') : COMP_CATEGORIES[b.category].label;
             const diffDays = Math.round((new Date(TODAY) - new Date(b.expiry))/86400000);
             return `<div class="expiry-decision-item">
-              <div class="expiry-decision-title">${toROC(b.date)} 獲得的 ${label}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
+              <div class="expiry-decision-title">${toROC(b.date)} 獲得的 ${escapeHtml(label)}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
               <div class="expiry-decision-sub">剩 ${fmt(b.remainDays)} 天，${toROC(b.expiry)} 到期（已過期 ${diffDays} 天）</div>
               <div class="expiry-decision-actions">
                 <button type="button" class="btn-jade" onclick="decideExpiredBatch('${b.category}','${b.id}','used')">已使用</button>
@@ -2441,7 +2556,7 @@ function customStampCard(){
   const activeLabels = getActiveCustomLabels();
   if(!activeLabels.length) return '';
   return `
-    <div class="stamp-card tint-plum" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--plum) 45%, transparent);" onclick="viewLeaveDetail('custom')">
+    <div class="stamp-card tint-amber" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--amber) 45%, transparent);" onclick="viewLeaveDetail('custom')">
       <div class="seal c-plum">他</div>
       <div class="label">其他假別</div>
       ${activeLabels.map(x=>`<div class="num c-plum" style="font-size:16px;margin-top:2px;">${escapeHtml(x.label)}剩餘 ${fmt(x.remainDays)}天</div>`).join('')}
@@ -2620,7 +2735,7 @@ function parseAmountToken(numTok, unitTok){
   if(numTok==='全天' || numTok==='整天') return {amount:1, unit:'day'};
   let amount = parseFloat(numTok);
   if(isNaN(amount) && CN_NUM_MAP[numTok] !== undefined) amount = CN_NUM_MAP[numTok];
-  if(isNaN(amount)) return null;
+  if(!isFinite(amount) || amount<=0) return null; // 原本只擋NaN，沒擋0或負數，打「特休0天」這種會建出無意義的0天紀錄
   const unit = (unitTok==='H'||unitTok==='h'||unitTok==='小時') ? 'hour' : 'day';
   return {amount, unit};
 }
@@ -2631,14 +2746,14 @@ function kwBuildFromRest(rest, defaultCompType, leaveKeywordPattern){
   mm = rest.match(new RegExp(`^加\\s*${KW_NUM_OR_CN}\\s*補\\s*${KW_NUM_OR_CN}\\s*${KW_NOTE_TOKEN}$`));
   if(mm){
     const amount = numOrCn(mm[2]);
-    if(isNaN(amount)) return null;
+    if(!isFinite(amount) || amount<=0) return null;
     return { kind:'comp', category:'comp', compType:'earn', unit:'day', amount, note:(mm[3]||'').trim() };
   }
   // 加X換Y (備註) -> 換休獲得（固定1年）
   mm = rest.match(new RegExp(`^加\\s*${KW_NUM_OR_CN}\\s*換\\s*${KW_NUM_OR_CN}\\s*${KW_NOTE_TOKEN}$`));
   if(mm){
     const amount = numOrCn(mm[2]);
-    if(isNaN(amount)) return null;
+    if(!isFinite(amount) || amount<=0) return null;
     return { kind:'comp', category:'exchange', compType:'earn', unit:'day', amount, note:(mm[3]||'').trim() };
   }
   // (使用|用|獲得|得)? 補休/補 X(H/天/半天/全天) (備註) -> 補休（固定2年）
@@ -2937,7 +3052,7 @@ function calendarPanel(){
       const cat = r.category||'comp';
       const isCustom = cat==='custom';
       const label = isCustom ? (r.customLabel||'其他假別') : COMP_CATEGORIES[cat].label;
-      const c = isCustom ? 'plum' : COMP_CATEGORIES[cat].c;
+      const c = isCustom ? 'amber' : COMP_CATEGORIES[cat].c;
       const sign = r.type==='earn' ? '+' : '－';
       // seal會被直接塞進行事曆小圓點的HTML裡（沒有再經過escapeHtml），
       // 自訂假別的名稱（customLabel）是使用者自己打的字，這裡要先跳脫，不然打特殊字元進去可能造成XSS
@@ -3266,7 +3381,7 @@ function leaveTabBar(){
   const tabMeta = {
     comp: {label:'補休', c:'brick'},
     exchange: {label:'換休', c:'teal'},
-    custom: {label:'其他假別', c:'plum'},
+    custom: {label:'其他假別', c:'amber'},
   };
   LEAVE_TYPES.forEach(t=>{ tabMeta[t.key] = {label:t.label, c:t.c}; });
   const tabs = getHomeCardOrder().map(key=>({key, label:tabMeta[key].label, c:tabMeta[key].c}));
@@ -3835,6 +3950,9 @@ function getActiveCustomLabels(){
 
 async function addCustomRecord(e){
   e.preventDefault();
+  // 跟addRecord/addComp同一個鎖，這個是當初修的時候漏掉的第三個新增入口
+  if(isAddingRecord) return;
+  isAddingRecord = true;
   try{
     const type = customAddType;
     const label = document.getElementById('customLabelInput') ? document.getElementById('customLabelInput').value.trim() : '';
@@ -3842,7 +3960,7 @@ async function addCustomRecord(e){
     const unit = document.getElementById('customUnit').value;
     const amount = parseFloat(document.getElementById('customAmount').value);
     const note = document.getElementById('customNote').value.trim();
-    if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫日期與數量', false); return; }
+    if(!date || !isFinite(amount) || amount<=0){ setStatus('請填寫日期與數量', false); return; }
     if(type==='earn' && !label){ setStatus('請填寫假別名稱（例如：婚假、喪假）', false); return; }
     let useLabel = label;
     if(type==='use'){
@@ -3873,6 +3991,8 @@ async function addCustomRecord(e){
     setStatus(`已新增${type==='earn'?'獲得':'使用'}「${useLabel}」${fmt(amount)}${unit==='hour'?'小時':'天'}`, true);
   }catch(err){
     setStatus('新增失敗：' + (err && err.message ? err.message : String(err)), false);
+  } finally {
+    isAddingRecord = false;
   }
 }
 
@@ -3893,8 +4013,8 @@ function customSectionHtml(){
   const addForm = customAddOpen ? `
     <div class="overview-panel" style="background:#fff;border:1px solid var(--plum-soft);margin-bottom:16px;">
       <div class="row" style="gap:8px;margin-bottom:12px;">
-        <button type="button" class="${customAddType==='earn'?'btn-plum':'ghost'}" onclick="setCustomAddType('earn')" style="flex:1;">獲得</button>
-        <button type="button" class="${customAddType==='use'?'btn-plum':'ghost'}" onclick="setCustomAddType('use')" style="flex:1;">使用</button>
+        <button type="button" class="${customAddType==='earn'?'btn-amber':'ghost'}" onclick="setCustomAddType('earn')" style="flex:1;">獲得</button>
+        <button type="button" class="${customAddType==='use'?'btn-amber':'ghost'}" onclick="setCustomAddType('use')" style="flex:1;">使用</button>
       </div>
       <form onsubmit="addCustomRecord(event)">
         ${customAddType==='earn' ? `
@@ -3932,7 +4052,7 @@ function customSectionHtml(){
           <button type="submit" class="btn-plum" style="flex:1;">儲存</button>
         </div>
       </form>
-    </div>` : `<button type="button" class="btn-plum btn-with-badge" style="width:100%;margin-bottom:16px;" onclick="toggleCustomAdd()"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--plum);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增其他假別</button>`;
+    </div>` : `<button type="button" class="btn-amber btn-with-badge" style="width:100%;margin-bottom:16px;" onclick="toggleCustomAdd()"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--amber);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增其他假別</button>`;
 
   const historyRows = state.compRecords.filter(r=>(r.category||'comp')==='custom' && r.date.startsWith(String(year)));
   const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r)*getHoursPerDay(),0))}小時`;
@@ -3940,7 +4060,7 @@ function customSectionHtml(){
     <li class="ledger">
       <div class="ledger-top">
         <span class="d">${toROC(r.date)}</span>
-        <span class="tag" style="background:var(--plum-soft);color:var(--plum);">${escapeHtml(r.customLabel||'其他假別')}・${r.type==='earn'?'獲得':'使用'}</span>
+        <span class="tag" style="background:var(--amber-soft, #FBEFDC);color:var(--amber);">${escapeHtml(r.customLabel||'其他假別')}・${r.type==='earn'?'獲得':'使用'}</span>
         <span class="days" style="color:var(--plum);">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
       </div>
       ${r.note? `<div class="ledger-note-row">${ICON_NOTE}${escapeHtml(r.note)}</div>` : ''}
@@ -4389,6 +4509,7 @@ function pageData(){
           ${LEAVE_TYPES.map(t=>`<label style="display:flex;align-items:center;gap:4px;font-size:14px;"><input type="checkbox" class="exportTypeChk" value="${t.key}" checked> ${t.label}</label>`).join('')}
           <label style="display:flex;align-items:center;gap:4px;font-size:14px;"><input type="checkbox" class="exportTypeChk" value="comp" checked> 補休</label>
           <label style="display:flex;align-items:center;gap:4px;font-size:14px;"><input type="checkbox" class="exportTypeChk" value="exchange" checked> 換休</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:14px;"><input type="checkbox" class="exportTypeChk" value="custom" checked> 其他假別</label>
         </div>
         <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end;">
           <div class="field" style="max-width:170px;">
@@ -4531,6 +4652,7 @@ function render(){
   else if(activePage==='yearRecord'){ pageContent = pageYearRecord(); }
 
   document.getElementById('app').innerHTML = `
+    ${storageUnavailable ? `<div class="storage-warning-banner">${ICON_WARNING}偵測到目前無法儲存資料到這台裝置，你在這裡做的任何操作都不會被保存！可能是隱私瀏覽模式或儲存空間已滿，請改用一般瀏覽模式重新打開。</div>` : ''}
     ${activePage==='home' ? `<header><h1>假期存摺</h1></header>` : ''}
 
     ${lastDeleted? `<div class="undo-bar"><span>已刪除：${escapeHtml(lastDeleted.label)}</span><button onclick="undoDelete()">復原</button></div>` : ''}
@@ -4671,7 +4793,7 @@ async function toggleOverviewUnit(){ overviewUnit = overviewUnit==='day' ? 'hour
 async function updateHoursPerDay(){
   try{
     const v = parseFloat(document.getElementById('hoursPerDayInput').value);
-    if(isNaN(v) || v<=0){ setStatus('請輸入有效的工時數', false); return; }
+    if(!isFinite(v) || v<=0){ setStatus('請輸入有效的工時數', false); return; }
     state.hoursPerDay = v;
     await saveState();
     render();
@@ -4684,7 +4806,7 @@ async function updateHoursPerDay(){
 async function updatePersonalPaidDays(){
   try{
     const v = parseFloat(document.getElementById('personalPaidDaysInput').value);
-    if(isNaN(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
+    if(!isFinite(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
     state.personalPaidDays = v;
     await saveState();
     render();
@@ -4697,7 +4819,7 @@ async function updatePersonalPaidDays(){
 async function updateAnnualMinDays(){
   try{
     const v = parseFloat(document.getElementById('annualMinDaysInput').value);
-    if(isNaN(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
+    if(!isFinite(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
     state.annualMinDays = v;
     await saveState();
     render();
@@ -4710,7 +4832,7 @@ async function updateAnnualMinDays(){
 async function updateQuota(key){
   try{
     const v = parseFloat(document.getElementById(key+'TotalInput').value);
-    if(isNaN(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
+    if(!isFinite(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
     setQuota(key, selectedYear, v);
     await saveState();
     render();
@@ -4794,11 +4916,15 @@ function finishAddWithConfirm(message){
 
 async function addRecord(key, e){
   e.preventDefault();
+  // 手機上快速點兩下「新增」按鈕，第二下可能在第一下的saveState()還沒完成前就先跑完前半段的同步驗證，
+  // 沒有這個鎖的話兩次都會各自push一筆進去，變成重複新增同一筆
+  if(isAddingRecord) return;
+  isAddingRecord = true;
   try{
     const unit = document.getElementById(key+'Unit').value;
     const amount = parseFloat(document.getElementById(key+'Amount').value);
     const note = document.getElementById(key+'Note').value.trim();
-    if(isNaN(amount) || amount<=0){ setStatus('請填寫數量', false); return; }
+    if(!isFinite(amount) || amount<=0){ setStatus('請填寫數量', false); return; }
     const daysEquiv = unit==='hour' ? amount/getHoursPerDay() : amount;
 
     if(multiDateMode){
@@ -4848,10 +4974,17 @@ async function addRecord(key, e){
   }catch(err){
     setStatus('儲存失敗：' + (err && err.message ? err.message : String(err)), false);
     console.error(err);
+  } finally {
+    isAddingRecord = false;
   }
 }
-
-async function startEditRecord(key,id){ editing = {kind:'record', key, id}; render(); }
+async function startEditRecord(key,id){
+  // 正在編輯別筆、還沒存檔的話，直接切過去會讓剛打的內容不聲不響消失，先確認一下
+  if(editing && (editing.kind!=='record' || editing.key!==key || editing.id!==id)){
+    if(!window.confirm('目前正在編輯另一筆，還沒儲存的內容會不見，確定要切換嗎？')) return;
+  }
+  editing = {kind:'record', key, id}; render();
+}
 function cancelEdit(){ editing = null; quickEditModalOpen = null; render(); }
 
 async function saveEditRecord(key,id){
@@ -4860,7 +4993,7 @@ async function saveEditRecord(key,id){
     const amount = parseFloat(document.getElementById(`editAmount-${key}-${id}`).value);
     const unit = document.getElementById(`editUnit-${key}-${id}`).value;
     const note = document.getElementById(`editNote-${key}-${id}`).value.trim();
-    if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫正確的日期與數量', false); return; }
+    if(!date || !isFinite(amount) || amount<=0){ setStatus('請填寫正確的日期與數量', false); return; }
     const arr = state.records[key] || [];
     const idx = arr.findIndex(r=>r.id===id);
     if(idx>-1){
@@ -4880,7 +5013,13 @@ async function saveEditRecord(key,id){
 }
 
 function registerUndo(info){
-  if(lastDeleted && lastDeleted.timeoutId) clearTimeout(lastDeleted.timeoutId);
+  if(lastDeleted && lastDeleted.timeoutId){
+    clearTimeout(lastDeleted.timeoutId);
+    // 上一筆的復原時限還沒到，就被這次的新刪除蓋掉了——原本的計時器一取消，
+    // 裡面「時間到了才清照片」的callback永遠不會執行，那張照片會變成永久孤兒、連錯誤記錄都不會有。
+    // 使用者既然又刪了下一筆，代表上一筆已經不會再復原了，這裡直接把它的清理work補做掉
+    if(lastDeleted.item && lastDeleted.item.photoUrl){ deleteCompPhoto(lastDeleted.item.photoUrl); }
+  }
   lastDeleted = info;
   lastDeleted.timeoutId = setTimeout(()=>{
     // 復原時限過了，這筆是真的不會復原了，這時候才把雲端照片一併清掉
@@ -5014,8 +5153,13 @@ async function finalizeResetSnapshotCleanup(snapshotTime){
     if(!raw) return; // 已經被復原、或已經清過了，不用處理
     const snap = JSON.parse(raw);
     if(snap.time !== snapshotTime) return; // 中途又發生過別次重置，這是舊的排程了，不要誤刪新快照的照片
-    const urls = (snap.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl);
-    for(const url of urls){ await deleteCompPhoto(url); }
+    // 重置可能是「範圍限定」的（例如只清某一天），快照裡存的卻是「整份compRecords」，
+    // 如果不跟現在還留著的紀錄比對、直接把快照裡的照片全部刪掉，會連沒有被這次重置動到、其他還在正常使用的紀錄的照片也一併清掉。
+    // 一定要先算出「重置後真的消失了」的那些，才能安全清理，跟還原備份用同一套比對邏輯
+    const oldUrls = (snap.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl);
+    const currentUrls = new Set((state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl));
+    const orphanUrls = oldUrls.filter(u=>!currentUrls.has(u));
+    for(const url of orphanUrls){ await deleteCompPhoto(url); }
     localStorage.removeItem('resetSnapshot');
   }catch(e){ console.error('清理重置快照的照片失敗', e); }
 }
@@ -5089,22 +5233,22 @@ async function resetRecords(scope, key){
     scopeLabel = '全部（不限日期）';
   }
 
-  const keysToClear = key==='ALL' ? LEAVE_TYPES.map(t=>t.key).concat(['comp','exchange']) : [key];
+  const keysToClear = key==='ALL' ? LEAVE_TYPES.map(t=>t.key).concat(['comp','exchange','custom']) : [key];
   let count = 0;
   keysToClear.forEach(k=>{
-    if(k==='comp' || k==='exchange'){ count += state.compRecords.filter(r=>(r.category||'comp')===k && matcher(r.date)).length; }
+    if(k==='comp' || k==='exchange' || k==='custom'){ count += state.compRecords.filter(r=>(r.category||'comp')===k && matcher(r.date)).length; }
     else { count += (state.records[k]||[]).filter(r=>matcher(r.date)).length; }
   });
 
   if(count===0){ setStatus('這個範圍內沒有符合的紀錄', false); return; }
 
-  const targetLabel = key==='ALL' ? '所有假別（含補休／換休）' : (key==='comp' ? '補休' : key==='exchange' ? '換休' : ((LEAVE_TYPES.find(t=>t.key===key)||{}).label||key));
+  const targetLabel = key==='ALL' ? '所有假別（含補休／換休／其他假別）' : (key==='comp' ? '補休' : key==='exchange' ? '換休' : (key==='custom' ? '其他假別' : ((LEAVE_TYPES.find(t=>t.key===key)||{}).label||key)));
   if(!window.confirm(`確定要清除「${targetLabel}」在 ${scopeLabel} 的 ${count} 筆紀錄嗎？\n（清除前會先自動備份，30分鐘內可以在「設定」頁復原）`)) return;
 
   saveResetSnapshot(`${targetLabel} - ${scopeLabel}`);
 
   keysToClear.forEach(k=>{
-    if(k==='comp' || k==='exchange'){ state.compRecords = state.compRecords.filter(r=> !((r.category||'comp')===k && matcher(r.date))); }
+    if(k==='comp' || k==='exchange' || k==='custom'){ state.compRecords = state.compRecords.filter(r=> !((r.category||'comp')===k && matcher(r.date))); }
     else { state.records[k] = (state.records[k]||[]).filter(r=>!matcher(r.date)); }
   });
 
@@ -5179,6 +5323,9 @@ async function cleanupExpiredCompPhotos(){
 
 async function addComp(e, category){
   e.preventDefault();
+  // 跟addRecord同一個鎖，涵蓋所有「新增紀錄」的表單，避免快速點兩下造成重複送出
+  if(isAddingRecord) return;
+  isAddingRecord = true;
   category = category || 'comp';
   const info = COMP_CATEGORIES[category];
   try{
@@ -5188,7 +5335,7 @@ async function addComp(e, category){
     const amount = parseFloat(document.getElementById('compAmount').value);
     const expiry = parseFlexibleDate(document.getElementById('compExpiry').value) || null;
     let note = document.getElementById('compNote').value.trim();
-    if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫日期與數量', false); return; }
+    if(!date || !isFinite(amount) || amount<=0){ setStatus('請填寫日期與數量', false); return; }
     const daysEquiv = unit==='hour' ? amount/getHoursPerDay() : amount;
     let manualPins = [];
     if(type==='use'){
@@ -5242,10 +5389,17 @@ async function addComp(e, category){
   }catch(err){
     setStatus('儲存失敗：' + (err && err.message ? err.message : String(err)), false);
     console.error(err);
+  } finally {
+    isAddingRecord = false;
   }
 }
 
-async function startEditComp(id){ editing = {kind:'comp', id}; editExpiryTouched = false; delete editPhotoRemoved[id]; render(); }
+async function startEditComp(id){
+  if(editing && (editing.kind!=='comp' || editing.id!==id)){
+    if(!window.confirm('目前正在編輯另一筆，還沒儲存的內容會不見，確定要切換嗎？')) return;
+  }
+  editing = {kind:'comp', id}; editExpiryTouched = false; delete editPhotoRemoved[id]; render();
+}
 
 async function saveEditComp(id, btnEl){
   try{
@@ -5254,7 +5408,7 @@ async function saveEditComp(id, btnEl){
     const amount = parseFloat(document.getElementById(`editCompAmount-${id}`).value);
     const unit = document.getElementById(`editCompUnit-${id}`).value;
     const note = document.getElementById(`editCompNote-${id}`).value.trim();
-    if(!date || isNaN(amount) || amount<=0){ setStatus('請填寫正確的日期與數量', false); return; }
+    if(!date || !isFinite(amount) || amount<=0){ setStatus('請填寫正確的日期與數量', false); return; }
     const idx = state.compRecords.findIndex(r=>r.id===id);
     if(idx>-1){
       const category = state.compRecords[idx].category || 'comp';
@@ -5370,7 +5524,7 @@ function downloadExcelBackup(){
     if(typeof XLSX === 'undefined'){ setStatus('Excel 匯出功能載入失敗，請檢查網路連線', false); return; }
     const { selectedTypes, start, end } = getExportFilters();
     if(selectedTypes.length===0){ setStatus('請至少勾選一個假別才能匯出', false); return; }
-    const allTypeKeys = LEAVE_TYPES.map(t=>t.key).concat(['comp','exchange']);
+    const allTypeKeys = LEAVE_TYPES.map(t=>t.key).concat(['comp','exchange','custom']);
     const isFiltered = !!start || !!end || selectedTypes.length < allTypeKeys.length;
     const wb = XLSX.utils.book_new();
 
@@ -5412,6 +5566,21 @@ function downloadExcelBackup(){
       const compSheet = XLSX.utils.aoa_to_sheet(compRows);
       XLSX.utils.book_append_sheet(wb, compSheet, info.label);
     });
+
+    // 其他假別分頁（自訂名目，例如婚假/喪假）：原本完全沒有涵蓋到，用一張合併分頁、多一欄「名目」區分，
+    // 不要每個名目各開一張分頁，避免使用者自訂了很多種名目時分頁太多太亂
+    if(selectedTypes.includes('custom')){
+      const customRows = [['名目','日期(民國)','日期(西元)','類型','數量','單位','備註','到期日(民國)']];
+      state.compRecords.filter(r=>(r.category||'comp')==='custom' && inExportRange(r.date, start, end)).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>{
+        const unit = r.unit==='hour' ? '小時' : '天';
+        const amount = r.unit ? r.amount : r.days;
+        customRows.push([r.customLabel||'其他假別', toROC(r.date), r.date, r.type==='earn'?'獲得':'使用', amount, unit, r.note||'', r.expiry? toROC(r.expiry):'']);
+      });
+      if(!(customRows.length===1 && isFiltered)){
+        const customSheet = XLSX.utils.aoa_to_sheet(customRows);
+        XLSX.utils.book_append_sheet(wb, customSheet, '其他假別');
+      }
+    }
 
     if(wb.SheetNames.length===0){ setStatus('篩選範圍內沒有資料可以匯出', false); return; }
 
@@ -5463,6 +5632,25 @@ function buildFullReportText(){
     lines.push(`目前${info.label}結餘：${fmt(compBalanceUpTo(CUR_YEAR,cat))} 天（≈ ${fmt(compBalanceUpTo(CUR_YEAR,cat)*getHoursPerDay())} 小時）`);
     lines.push('');
   });
+
+  // 其他假別（自訂名目，例如婚假/喪假）：原本這裡完全沒有涵蓋到，匯出的「完整紀錄」文字上寫著含所有假別，卻漏了這塊，
+  // 用全部compRecords裡出現過的customLabel（不只是還沒用完的），確保完整報表真的完整
+  const allCustomLabels = Array.from(new Set(state.compRecords.filter(r=>(r.category||'comp')==='custom' && r.customLabel).map(r=>r.customLabel)));
+  if(allCustomLabels.length){
+    lines.push('■ 其他假別');
+    allCustomLabels.forEach(label=>{
+      lines.push(`　【${label}】`);
+      const recs = state.compRecords.filter(r=>(r.category||'comp')==='custom' && r.customLabel===label).slice().sort((a,b)=>a.date.localeCompare(b.date));
+      recs.forEach(r=>{
+        let line = `　　${toROC(r.date)}　${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}`;
+        if(r.note) line += '　'+r.note;
+        if(r.expiry) line += `　（到期：${toROC(r.expiry)}）`;
+        lines.push(line);
+      });
+      lines.push(`　　目前結餘：${fmt(compBalanceUpTo(CUR_YEAR,'custom',label))} 天`);
+    });
+    lines.push('');
+  }
 
   return lines.join('\n');
 }
@@ -5690,6 +5878,7 @@ async function restoreBackup(){
 }
 
 (async function init(){
+  checkStorageAvailable();
   loadErrorLog();
   loadLastSyncTime();
   initOnlineDetection();
