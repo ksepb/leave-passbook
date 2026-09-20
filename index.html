@@ -442,7 +442,7 @@
   .cal-picker-row{display:flex;gap:8px;justify-content:center;margin:8px 0;}
   .cal-picker-row select{padding:8px 6px;border:1px solid var(--line);border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;}
   .cal-today-btn{margin:6px 0 4px;font-size:12.5px;padding:6px 12px;}
-  .cal-swipe-area{touch-action:pan-y;}
+  .cal-swipe-area{touch-action:pan-y pinch-zoom;}
   .cal-detail-panel{margin-top:12px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;}
   .cal-detail-date{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
   .cal-detail-today-badge{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;color:var(--jade);background:var(--jade-soft);padding:3px 10px;border-radius:10px;}
@@ -563,7 +563,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.13-04';
+const APP_VERSION = 'v2026.09.13-06';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
