@@ -419,8 +419,9 @@
   .cal-weekdays{margin-bottom:4px;font-size:13px;color:var(--ink-soft);text-align:center;}
   .cal-cell{aspect-ratio:1/1;min-width:46px;min-height:46px;overflow:hidden;border-radius:10px;padding:3px;background:#EFEDE7;}
   .cal-cell.empty{background:transparent;}
-  .cal-cell.adjacent{background:transparent;cursor:default;}
+  .cal-cell.adjacent{background:transparent;cursor:pointer;}
   .cal-cell.adjacent .cal-daynum{color:#D8D2C4;}
+  .cal-cell.adjacent .cal-dots{opacity:.55;}
   .cal-cell.today .cal-daynum{background:var(--plum);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;font-weight:700;}
   .cal-cell.selected{background:color-mix(in srgb, var(--blue) 30%, var(--blue-soft));}
   .cal-cell.selected .cal-daynum{color:var(--blue);font-weight:700;}
@@ -562,7 +563,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.13-03';
+const APP_VERSION = 'v2026.09.13-04';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3028,16 +3029,10 @@ function reminderBanner(){
   return compHtml + annualHtml;
 }
 
-function calendarPanel(){
-  if(!calendarMode) return '';
-  const y = calYear, m = calMonth;
-  ensureHolidayYear(y); // 不等待，資料回來時會自動重新渲染
-  const holidays = (holidayCache[y] && typeof holidayCache[y]==='object') ? holidayCache[y] : null;
-  const firstDay = new Date(y, m-1, 1);
-  const startWeekday = firstDay.getDay();
-  const daysInMonth = new Date(y, m, 0).getDate();
+// 把「某個年月有哪些假別紀錄」的計算抽成共用函式，這樣行事曆本月格子、跨月份的灰色格子（上個月尾/下個月頭）都能共用同一套邏輯，
+// 不用本月一份、跨月份又另外寫一份幾乎一樣的程式碼
+function buildCalDayMap(ymPrefix){
   const dayMap = {};
-  const ymPrefix = `${y}-${String(m).padStart(2,'0')}`;
   LEAVE_TYPES.forEach(t=>{
     (state.records[t.key]||[]).forEach(r=>{
       if(r.date.startsWith(ymPrefix)){
@@ -3047,7 +3042,7 @@ function calendarPanel(){
       }
     });
   });
-  state.compRecords.forEach(r=>{
+  (state.compRecords||[]).forEach(r=>{
     if(r.date.startsWith(ymPrefix)){
       const d = parseInt(r.date.slice(8,10),10);
       if(!dayMap[d]) dayMap[d]=[];
@@ -3061,11 +3056,40 @@ function calendarPanel(){
       dayMap[d].push({kind:'comp', key:cat, id:r.id, seal:escapeHtml(sign+label), wide:true, c, label:`${label}${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '：'+r.note:''}`});
     }
   });
+  return dayMap;
+}
+// 點跨月份的灰色格子（上個月尾／下個月頭）：切換到那個日期實際所在的月份、選取那一天，
+// 這樣下面的詳細資訊面板才能正確顯示（面板本來就限定只顯示「目前正在看的月份」裡的日期）
+function selectAdjacentCalDay(dateStr){
+  const [yy, mm] = dateStr.split('-').map(Number);
+  calYear = yy;
+  calMonth = mm;
+  calSelectedDate = dateStr;
+  render();
+}
+function calendarPanel(){
+  if(!calendarMode) return '';
+  const y = calYear, m = calMonth;
+  ensureHolidayYear(y); // 不等待，資料回來時會自動重新渲染
+  const holidays = (holidayCache[y] && typeof holidayCache[y]==='object') ? holidayCache[y] : null;
+  const firstDay = new Date(y, m-1, 1);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const ymPrefix = `${y}-${String(m).padStart(2,'0')}`;
+  const dayMap = buildCalDayMap(ymPrefix);
+  // 上個月／下個月的年月，給跨月份灰色格子用（處理1月往前變上一年12月、12月往後變下一年1月的進位）
+  const prevYM = m===1 ? {y:y-1, m:12} : {y, m:m-1};
+  const nextYM = m===12 ? {y:y+1, m:1} : {y, m:m+1};
+  const prevDayMap = buildCalDayMap(`${prevYM.y}-${String(prevYM.m).padStart(2,'0')}`);
+  const nextDayMap = buildCalDayMap(`${nextYM.y}-${String(nextYM.m).padStart(2,'0')}`);
   let cells = '';
   const prevMonthDays = new Date(y, m-1, 0).getDate();
   for(let i=0;i<startWeekday;i++){
     const dayNum = prevMonthDays - startWeekday + 1 + i;
-    cells += `<div class="cal-cell adjacent"><div class="cal-daynum">${dayNum}</div></div>`;
+    const dateStr = `${prevYM.y}-${String(prevYM.m).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+    const items = prevDayMap[dayNum]||[];
+    const dots = items.map(it=>`<span class="cal-dot ${it.wide?'cal-dot-wide':''} c-${it.c}-bg">${it.seal}</span>`).join('');
+    cells += `<div class="cal-cell adjacent" onclick="selectAdjacentCalDay('${dateStr}')"><div class="cal-daynum">${dayNum}</div><div class="cal-dots">${dots}</div></div>`;
   }
   const monthUsage = {}; // key -> 天數，給月摘要用
   for(let d=1; d<=daysInMonth; d++){
@@ -3087,7 +3111,10 @@ function calendarPanel(){
   }
   const trailingCount = (7 - ((startWeekday + daysInMonth) % 7)) % 7;
   for(let i=1;i<=trailingCount;i++){
-    cells += `<div class="cal-cell adjacent"><div class="cal-daynum">${i}</div></div>`;
+    const dateStr = `${nextYM.y}-${String(nextYM.m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+    const items = nextDayMap[i]||[];
+    const dots = items.map(it=>`<span class="cal-dot ${it.wide?'cal-dot-wide':''} c-${it.c}-bg">${it.seal}</span>`).join('');
+    cells += `<div class="cal-cell adjacent" onclick="selectAdjacentCalDay('${dateStr}')"><div class="cal-daynum">${i}</div><div class="cal-dots">${dots}</div></div>`;
   }
   // 月摘要：這個月每個假別／補休換休「使用」加總了幾天
   LEAVE_TYPES.forEach(t=>{
