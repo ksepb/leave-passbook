@@ -102,6 +102,7 @@
   .skip-warning-bar{position:fixed;left:16px;right:16px;bottom:calc(162px + env(safe-area-inset-bottom));z-index:240;background:var(--amber);color:#fff;padding:11px 16px;border-radius:12px;font-size:15.5px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.3);animation:fadeInPage .15s ease-out;}
   .select-summary-bar .ssb-need{opacity:.75;font-weight:500;}
   .select-summary-bar.ssb-ok{background:var(--jade);}
+  .select-summary-bar.ssb-over{background:var(--amber);}
   .undo-bar button{background:var(--amber);padding:5px 10px;font-size:12px;}
 
   .reminder-bar{background:#FDF1DC;border:1px solid var(--amber);color:#6b4a12;padding:10px 14px;border-radius:6px;font-size:14px;margin-bottom:16px;line-height:1.7;}
@@ -563,7 +564,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.13-06';
+const APP_VERSION = 'v2026.09.20-03';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -2369,9 +2370,27 @@ function updateSelectSummaryBar(barId, manualOn, pins, amount, unit){
   const hpd = getHoursPerDay();
   const neededHours = unit==='hour' ? amount : amount*hpd;
   const selectedHours = pins.reduce((s,p)=> s + (p.days!=null ? p.days*hpd : 0), 0);
+  const isOver = selectedHours > neededHours + 0.001; // 選超過需求：跟「剛好選對」是不同狀態，不能都當成「OK」
+  const isExact = !isOver && selectedHours >= neededHours - 0.001;
   bar.style.display = 'flex';
-  bar.classList.toggle('ssb-ok', selectedHours >= neededHours - 0.001);
-  bar.innerHTML = `<span>已選 ${fmt(selectedHours)} 小時</span><span class="ssb-need">需要 ${fmt(neededHours)} 小時</span>`;
+  bar.classList.toggle('ssb-ok', isExact);
+  bar.classList.toggle('ssb-over', isOver);
+  // 選超過需求時明講「多選了X小時」，不要只是輕描淡寫顯示兩個數字讓使用者自己心算差多少
+  const needLabel = isOver ? `多選了 ${fmt(selectedHours-neededHours)} 小時，記得取消勾選` : `需要 ${fmt(neededHours)} 小時`;
+  bar.innerHTML = `<span>已選 ${fmt(selectedHours)} 小時</span><span class="ssb-need">${needLabel}</span>`;
+}
+// 底部浮動的「已選超過需求」警告跟「已選/需要」小結列都是position:fixed，浮在畫面最上層，
+// 原本表單沒有預留空間給它們，導致捲到底時，照片上傳欄位、「登記」按鈕會被這兩條蓋住、點不到、看不到。
+// 用實際量到的高度（offsetHeight）動態調整表單最下面的間距，這兩條不管顯示幾行文字、有沒有同時出現，都能剛好留出足夠空間
+function updateCompBottomSpacer(spacerId, skipElId, summaryBarId){
+  const spacer = document.getElementById(spacerId);
+  if(!spacer || !spacer.style) return;
+  const skipEl = document.getElementById(skipElId);
+  const barEl = document.getElementById(summaryBarId);
+  let h = 0;
+  if(skipEl && skipEl.style && skipEl.style.display !== 'none') h += (skipEl.offsetHeight||0) + 10;
+  if(barEl && barEl.style && barEl.style.display !== 'none') h += (barEl.offsetHeight||0) + 10;
+  spacer.style.height = h + 'px';
 }
 function updateUsePreview(category){
   const previewEl = document.getElementById('usePreview');
@@ -2383,7 +2402,7 @@ function updateUsePreview(category){
   const isUse = typeEl && typeEl.value === 'use';
   if(wrapEl) wrapEl.style.display = isUse ? '' : 'none';
   if(expiryWrapEl) expiryWrapEl.style.display = isUse ? 'none' : '';
-  if(!isUse){ previewEl.innerHTML = ''; if(skipEl) skipEl.style.display='none'; updateSelectSummaryBar('compSelectSummary', false, [], 0, 'day'); return; }
+  if(!isUse){ previewEl.innerHTML = ''; if(skipEl) skipEl.style.display='none'; updateSelectSummaryBar('compSelectSummary', false, [], 0, 'day'); updateCompBottomSpacer('compBottomSpacer', 'compSkipWarning', 'compSelectSummary'); return; }
   const amountEl = document.getElementById('compAmount');
   const unitEl = document.getElementById('compUnit');
   const amount = parseFloat(amountEl && amountEl.value);
@@ -2402,6 +2421,7 @@ function updateUsePreview(category){
     else { skipEl.style.display = 'none'; }
   }
   updateSelectSummaryBar('compSelectSummary', isManualOn, pins, amount, unit);
+  updateCompBottomSpacer('compBottomSpacer', 'compSkipWarning', 'compSelectSummary');
 }
 
 function toggleEditManualSource(id, category){
@@ -2422,7 +2442,7 @@ function updateEditUsePreview(id, category){
   const isUse = typeEl && typeEl.value === 'use';
   if(wrapEl) wrapEl.style.display = isUse ? '' : 'none';
   if(expiryWrapEl) expiryWrapEl.style.display = isUse ? 'none' : '';
-  if(!isUse){ previewEl.innerHTML = ''; if(skipEl) skipEl.style.display='none'; updateSelectSummaryBar(`editCompSelectSummary-${id}`, false, [], 0, 'day'); return; }
+  if(!isUse){ previewEl.innerHTML = ''; if(skipEl) skipEl.style.display='none'; updateSelectSummaryBar(`editCompSelectSummary-${id}`, false, [], 0, 'day'); updateCompBottomSpacer(`editCompBottomSpacer-${id}`, `editCompSkipWarning-${id}`, `editCompSelectSummary-${id}`); return; }
   const amountEl = document.getElementById(`editCompAmount-${id}`);
   const unitEl = document.getElementById(`editCompUnit-${id}`);
   const amount = parseFloat(amountEl && amountEl.value);
@@ -2437,6 +2457,7 @@ function updateEditUsePreview(id, category){
     else { skipEl.style.display = 'none'; }
   }
   updateSelectSummaryBar(`editCompSelectSummary-${id}`, isManualOn, pins, amount, unit);
+  updateCompBottomSpacer(`editCompBottomSpacer-${id}`, `editCompSkipWarning-${id}`, `editCompSelectSummary-${id}`);
 }
 
 
@@ -3634,6 +3655,7 @@ function pageAddRecord(){
           <div class="form-row">
             <button type="submit" class="btn-${info.c}">登記</button>
           </div>
+          <div id="compBottomSpacer" style="height:0;"></div>
         </form>
       </section>`;
   }
@@ -3704,8 +3726,11 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
     const initialSkipHtml = initialResult.skipHtml;
     const initialSelectedHours = initialPins.reduce((s,p)=> s + (p.days!=null ? p.days*getHoursPerDay() : 0), 0);
     const initialNeededHours = eu==='hour' ? ea : ea*getHoursPerDay();
+    const initialIsOver = initialSelectedHours > initialNeededHours + 0.001;
+    const initialIsExact = !initialIsOver && initialSelectedHours >= initialNeededHours - 0.001;
     const showInitialBar = r.type==='use' && hasManual;
-    const initialBarHtml = showInitialBar ? `<span>已選 ${fmt(initialSelectedHours)} 小時</span><span class="ssb-need">需要 ${fmt(initialNeededHours)} 小時</span>` : '';
+    const initialNeedLabel = initialIsOver ? `多選了 ${fmt(initialSelectedHours-initialNeededHours)} 小時，記得取消勾選` : `需要 ${fmt(initialNeededHours)} 小時`;
+    const initialBarHtml = showInitialBar ? `<span>已選 ${fmt(initialSelectedHours)} 小時</span><span class="ssb-need">${initialNeedLabel}</span>` : '';
     return `<li class="editrow" id="editrow-${category}-${r.id}">
       <div class="field">
         <label>類型</label>
@@ -3777,11 +3802,12 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
         </div>
       </div>
       <div id="editCompSkipWarning-${r.id}" class="skip-warning-bar" style="${initialSkipHtml?'':'display:none;'}">${escapeHtml(initialSkipHtml)}</div>
-      <div id="editCompSelectSummary-${r.id}" class="select-summary-bar${initialSelectedHours>=initialNeededHours-0.001?' ssb-ok':''}" style="${showInitialBar?'':'display:none;'}">${initialBarHtml}</div>
+      <div id="editCompSelectSummary-${r.id}" class="select-summary-bar${initialIsExact?' ssb-ok':''}${initialIsOver?' ssb-over':''}" style="${showInitialBar?'':'display:none;'}">${initialBarHtml}</div>
       <div class="row">
         <button class="btn-${info.c}" onclick="saveEditComp('${r.id}', this)">儲存</button>
         <button class="ghost" onclick="cancelEdit()">取消</button>
       </div>
+      <div id="editCompBottomSpacer-${r.id}" style="height:0;"></div>
     </li>`;
   }
   return `<li class="${r.id===lastAddedId?'stamp-in':''}" data-rec-date="${r.date}" style="position:relative;">
@@ -4704,6 +4730,11 @@ function render(){
   // 不然畫面會顯示「使用」但底下的扣款預覽、手動指定區塊還停留在空白的初始狀態
   if(activePage==='addRecord' && addRecordCompDefaultType==='use' && (activeLeaveTab==='comp' || activeLeaveTab==='exchange')){
     updateUsePreview(activeLeaveTab);
+  }
+  // 編輯補休/換休紀錄、而且原本就有手動指定扣哪幾批的話，一開啟編輯就可能已經顯示「已選超過需求」警告，
+  // 這個間距要在DOM真的插入畫面之後才量得出高度（offsetHeight），render()這裡剛做完innerHTML賦值，時機正好
+  if(editing && editing.kind==='comp'){
+    updateCompBottomSpacer(`editCompBottomSpacer-${editing.id}`, `editCompSkipWarning-${editing.id}`, `editCompSelectSummary-${editing.id}`);
   }
 }
 
