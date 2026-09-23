@@ -435,6 +435,8 @@
   .cal-detail-makeup{font-size:16px;font-weight:700;color:var(--blue);margin-bottom:6px;}
   .cal-cell:not(.empty):not(.adjacent){cursor:pointer;transition:background .1s ease;}
   .cal-cell:not(.empty):not(.adjacent):active{background:var(--paper-soft, #F4EEE2);}
+  .cal-cell.sat-bg{background:color-mix(in srgb, var(--blue-soft) 60%, #fff);}
+  .cal-cell.sat-bg.selected{background:color-mix(in srgb, var(--blue) 30%, var(--blue-soft));}
   .cal-cell.weekend, .cal-cell.holiday-bg{background:var(--rose-soft);}
   .cal-cell.weekend.selected, .cal-cell.holiday-bg.selected{background:var(--blue-soft);}
   .cal-month-summary{font-size:15px;color:var(--blue);font-weight:600;margin:8px 0 10px;}
@@ -565,7 +567,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.20-04';
+const APP_VERSION = 'v2026.09.20-06';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3121,12 +3123,13 @@ function calendarPanel(){
     const isToday = (dateStr===TODAY);
     const isSelected = (dateStr===calSelectedDate);
     const weekday = (startWeekday + d - 1) % 7;
-    const isWeekend = weekday===0 || weekday===6;
     const h = holidays ? holidays[dateStr] : null;
     const isNamedHoliday = h && h.isHoliday && h.description; // 只標「有名字」的假日（國定假日/補假等），週六日本來就看得出來，不特別標
     const isMakeupWorkday = h && h.isHoliday===false && h.description; // 例如「補行上班」：本來是假日但這天要上班
+    const isSaturday = weekday===6;
+    const isSunday = weekday===0;
     const daynumClass = isNamedHoliday ? 'holiday' : '';
-    const weekendClass = (isWeekend && !isMakeupWorkday) ? 'weekend' : '';
+    const weekendClass = isMakeupWorkday ? '' : (isSaturday ? 'sat-bg' : (isSunday ? 'weekend' : ''));
     const holidayBgClass = isNamedHoliday ? 'holiday-bg' : '';
     const makeupBadge = isMakeupWorkday ? `<span class="cal-makeup-badge">班</span>` : '';
     cells += `<div class="cal-cell ${isToday?'today':''} ${isSelected?'selected':''} ${weekendClass} ${holidayBgClass}" onclick="selectCalDay('${dateStr}')"><div class="cal-daynum ${daynumClass}">${d}${isNamedHoliday?'<span class="cal-holiday-dot"></span>':''}${makeupBadge}</div><div class="cal-dots">${dots}</div></div>`;
@@ -5942,12 +5945,26 @@ async function restoreBackup(){
   }catch(e){ setStatus('還原失敗，請確認貼上的內容是完整的備份 JSON', false); }
 }
 
+// 網址加上 ?resetScale=1 可以強制把「畫面大小」設定清回預設值1倍，不動到其他任何資料（假別紀錄、設定都不受影響）。
+// 用途：某些預覽/測試環境的 localStorage 會跨檔案殘留上次存的縮放設定，讓畫面看起來卡住停在舊的大小，這個提供一個安全的手動重置方式
+async function checkResetScaleParam(){
+  try{
+    if(new URLSearchParams(window.location.search).get('resetScale')!=='1') return false;
+    state.uiScale = 1;
+    await saveState();
+    const url = new URL(window.location.href);
+    url.searchParams.delete('resetScale');
+    window.history.replaceState({}, '', url); // 清掉網址上的參數，重新整理或分享網址時不會又觸發一次
+    return true;
+  }catch(e){ return false; } // 不支援URLSearchParams的極舊瀏覽器就算了，不影響其他功能
+}
 (async function init(){
   checkStorageAvailable();
   loadErrorLog();
   loadLastSyncTime();
   initOnlineDetection();
   await loadState();
+  await checkResetScaleParam();
   checkCompLedgerConsistency();
   if(getExpiringUndecidedBatches().length>0) expiryDecisionModalOpen = true;
   applyUiScale();
