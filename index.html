@@ -264,6 +264,7 @@
   .quota-accordion-item:last-child{margin-bottom:0;}
   .quota-accordion-head{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;padding:12px 2px;font-family:'Noto Sans TC',sans-serif;font-size:16.5px;font-weight:700;cursor:pointer;color:var(--ink);}
   .quota-accordion-body{padding:0 2px 14px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;}
+  .next-year-quota{flex:1 1 100%;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:6px;padding-top:12px;border-top:1px dashed var(--line);}
   .auth-option{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:#fff;}
   .auth-option:last-child{margin-bottom:0;}
   .auth-option-title{font-weight:700;font-size:15px;margin-bottom:4px;}
@@ -567,7 +568,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.20-08';
+const APP_VERSION = 'v2026.09.25-04';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -1211,9 +1212,12 @@ function refreshNowIfDateChanged(){
   const freshNow = new Date();
   const freshToday = freshNow.getFullYear()+'-'+String(freshNow.getMonth()+1).padStart(2,'0')+'-'+String(freshNow.getDate()).padStart(2,'0');
   if(freshToday === TODAY) return false; // 還是同一天，不用做事
+  const oldYear = CUR_YEAR;
   NOW = freshNow;
   TODAY = freshToday;
   CUR_YEAR = freshNow.getFullYear();
+  // App開著跨過元旦時，原本正在看「今年」的話，要跟著換到新的一年；使用者自己切去看別的年份就不動
+  if(CUR_YEAR !== oldYear && selectedYear === oldYear) selectedYear = CUR_YEAR;
   render();
   return true;
 }
@@ -1280,6 +1284,7 @@ let multiDateMode = false; // 是否開啟「一次登記多天」模式
 let multiDateList = []; // 多天模式下，使用者陸續加入的日期清單（不一定連續，各自獨立）
 let quotaExpandedKey = null;
 let quotaEditModalOpen = null;
+let annualQuotaModalOpen = false; // 首頁「新的一年特休天數還沒設定」提醒點下去開的小視窗
 let homeDetailModalOpen = null; // null | 'remain' | 'month' —— 首頁摘要卡三格點進去的明細彈窗（年度已經改成獨立頁面，見switchPage('yearRecord')）
 let expiryDecisionModalOpen = false; // 過期補休/換休批次「已使用/保留」決定彈窗
 let quickEditModalOpen = null; // {category, id} | null —— 補休/換休「還沒用完的紀錄」清單點小筆，直接彈窗編輯，不用跳頁
@@ -1506,6 +1511,11 @@ function switchPage(page){
   activePage = page;
   window.scrollTo(0,0);
   render();
+}
+// 從首頁卡片點進去：卡片顯示的是今年，點進去的假別紀錄也要是今年，兩邊才一致
+function viewLeaveDetailFromHome(key){
+  selectedYear = CUR_YEAR;
+  viewLeaveDetail(key);
 }
 function viewLeaveDetail(key, dateStr){
   activeLeaveTab = key;
@@ -2532,9 +2542,11 @@ const COMP_CATEGORIES = {
   exchange: { label:'換休', c:'teal', defaultYears:1 }
 };
 
+// 首頁卡片一律顯示「今年」（CUR_YEAR），跟上面的剩餘合計一致；
+// 不跟著假別紀錄頁切換的年份（selectedYear）走，不然切去看別年再回首頁，上下數字會對不起來
 function stampCard(t){
-  const remain = remainOf(t.key, selectedYear);
-  const quota = getQuota(t.key, selectedYear);
+  const remain = remainOf(t.key, CUR_YEAR);
+  const quota = getQuota(t.key, CUR_YEAR);
   const used = quota - remain;
   // 三段式顏色分級：安全(不特別標色) / 用到70%~90%轉黃 / 用到90%以上或已超額轉紅
   let level = '';
@@ -2546,7 +2558,7 @@ function stampCard(t){
   }
   // 特休專屬：如果還沒用到「最低使用天數」設定，且已經進入10月（跟首頁橫幅提醒用完全一樣的判斷邏輯，確保兩邊不會不一致），用邊框顏色提醒
   let minDaysBorder = '';
-  if(t.key==='annual' && selectedYear===CUR_YEAR){
+  if(t.key==='annual'){
     const minDays = getAnnualMinDays();
     const annualUsedNow = usedOf('annual', CUR_YEAR);
     const shortfall = minDays - annualUsedNow;
@@ -2558,23 +2570,23 @@ function stampCard(t){
   }
   const chips = [];
   if(t.key==='sick'){
-    const excess = menstrualExcess(selectedYear);
+    const excess = menstrualExcess(CUR_YEAR);
     if(excess>0) chips.push(`<span class="mini-chip" style="background:var(--rose-soft);color:var(--rose);">生理假併入 ${fmt(excess)}天</span>`);
     if(remain<0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">超額 ${fmt(-remain)}天，需擇一抵銷</span>`);
   }
   if(t.key==='personal'){
-    const fc = usedOf('familyCare', selectedYear);
+    const fc = usedOf('familyCare', CUR_YEAR);
     if(fc>0) chips.push(`<span class="mini-chip" style="background:var(--plum-soft);color:var(--plum);">家照併入 ${fmt(fc)}天</span>`);
-    const paid = personalPaidUsed(selectedYear), unpaid = personalUnpaidUsed(selectedYear);
+    const paid = personalPaidUsed(CUR_YEAR), unpaid = personalUnpaidUsed(CUR_YEAR);
     if(paid>0) chips.push(`<span class="mini-chip" style="background:var(--jade-soft);color:var(--jade);">${ICON_MONEY}有薪 ${fmt(paid)}天</span>`);
     if(unpaid>0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">無薪 ${fmt(unpaid)}天</span>`);
   }
   if(t.key==='annual' && minDaysBorder) chips.push(`<span class="mini-chip" style="background:${minDaysBorder.includes('brick')?'var(--brick-soft);color:var(--brick);':'var(--amber-soft, #FBEFDC);color:var(--amber);'}">還沒用滿最低 ${fmt(getAnnualMinDays())} 天</span>`);
   return `
-    <div class="stamp-card tint-${t.c} ${level}" style="${minDaysBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetail('${t.key}')">
+    <div class="stamp-card tint-${t.c} ${level}" style="${minDaysBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetailFromHome('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
-      <div class="num c-${t.c}">${fmt(remain)}天 <span class="hour-inline">${fmt(remain*getHoursPerDay())}小時</span><small>共 ${fmt(getQuota(t.key,selectedYear))} 天</small></div>
+      <div class="num c-${t.c}">${fmt(remain)}天 <span class="hour-inline">${fmt(remain*getHoursPerDay())}小時</span><small>共 ${fmt(getQuota(t.key,CUR_YEAR))} 天</small></div>
       ${chips.length? `<div class="mini-chips">${chips.join('')}</div>` : ''}
     </div>`;
 }
@@ -2583,7 +2595,7 @@ function customStampCard(){
   const activeLabels = getActiveCustomLabels();
   if(!activeLabels.length) return '';
   return `
-    <div class="stamp-card tint-amber" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--amber) 45%, transparent);" onclick="viewLeaveDetail('custom')">
+    <div class="stamp-card tint-amber" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--amber) 45%, transparent);" onclick="viewLeaveDetailFromHome('custom')">
       <div class="seal c-plum">他</div>
       <div class="label">其他假別</div>
       ${activeLabels.map(x=>`<div class="num c-plum" style="font-size:16px;margin-top:2px;">${escapeHtml(x.label)}剩餘 ${fmt(x.remainDays)}天</div>`).join('')}
@@ -2593,7 +2605,7 @@ function customStampCard(){
 function compStampCard(category){
   category = category || 'comp';
   const info = COMP_CATEGORIES[category];
-  const compBal = compBalanceUpTo(selectedYear, category);
+  const compBal = compBalanceUpTo(CUR_YEAR, category);
   const reminders = compExpiryReminders().filter(r=>r.category===category);
   let urgentBorder = '';
   if(reminders.length){
@@ -2605,10 +2617,10 @@ function compStampCard(category){
     else if(monthsUntil<=3) urgentBorder = 'border:2px solid var(--amber);';
   }
   return `
-    <div class="stamp-card tint-${info.c} ${compBal<0?'warn':''}" style="${urgentBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${info.c}) 45%, transparent);" onclick="viewLeaveDetail('${category}')">
+    <div class="stamp-card tint-${info.c} ${compBal<0?'warn':''}" style="${urgentBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${info.c}) 45%, transparent);" onclick="viewLeaveDetailFromHome('${category}')">
       <div class="seal c-${info.c}">${info.label.slice(0,1)}</div>
       <div class="label">${info.label}結餘</div>
-      <div class="num c-${info.c}">${fmt(compBal)}天 <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span><small>至 ${selectedYear} 年底・${category==='exchange' ? '當年度用完' : `期限${info.defaultYears}年`}</small></div>
+      <div class="num c-${info.c}">${fmt(compBal)}天 <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span><small>至 ${CUR_YEAR} 年底・${category==='exchange' ? '當年度用完' : `期限${info.defaultYears}年`}</small></div>
     </div>`;
 }
 
@@ -3050,7 +3062,52 @@ function reminderBanner(){
     return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>${ICON_STAR}特休最低使用天數提醒</strong>今年（${CUR_YEAR}）特休已使用 ${fmt(annualUsed)} 天，未達最低要求 ${fmt(annualMin)} 天，尚需再休 ${fmt(shortfall)} 天，建議儘早排定（可在「設定」分頁調整門檻）。</div>`;
   })() : '';
 
-  return compHtml + annualHtml;
+  // 新的一年還沒設定特休天數：每年只有特休會依年資變動，其他假別的預設值通常不用改，
+  // 所以只提醒特休，點下去直接開特休的小視窗，不用跑去設定頁翻找
+  const annualQuotaHtml = needsAnnualQuotaReminder() ? `<div class="reminder-bar"><strong>${ICON_STAR}${CUR_YEAR} 年特休天數還沒設定</strong>新的一年特休天數要重新填，目前先以 0 天計算。<div style="margin-top:8px;"><button type="button" class="btn-jade" style="font-size:14px;padding:8px 14px;" onclick="openAnnualQuotaModal()">設定特休天數</button></div></div>` : '';
+
+  return annualQuotaHtml + compHtml + annualHtml;
+}
+
+// 今年（CUR_YEAR）的特休天數有沒有被使用者設定過；明確設成0也算設定過，只有「完全沒填過」才提醒
+function needsAnnualQuotaReminder(){
+  const y = state && state.quotaByYear ? state.quotaByYear[CUR_YEAR] : null;
+  return !(y && y.annual !== undefined);
+}
+function openAnnualQuotaModal(){ annualQuotaModalOpen = true; render(); }
+function closeAnnualQuotaModal(){ annualQuotaModalOpen = false; render(); }
+async function saveAnnualQuotaModal(){
+  try{
+    const el = document.getElementById('annualQuotaModalInput');
+    const v = parseFloat(el ? el.value : '');
+    if(!isFinite(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
+    setQuota('annual', CUR_YEAR, v);
+    annualQuotaModalOpen = false;
+    await saveState();
+    render();
+    setStatus(`已設定 ${CUR_YEAR} 年特休 ${fmt(v)} 天`, true);
+  }catch(err){
+    setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
+  }
+}
+function annualQuotaModal(){
+  const prev = state.quotaByYear && state.quotaByYear[CUR_YEAR-1];
+  const prevAnnual = prev && prev.annual !== undefined ? prev.annual : null;
+  return `
+    <div class="modal-overlay" onclick="closeAnnualQuotaModal()">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        <h3>${ICON_STAR}設定 ${CUR_YEAR} 年特休天數</h3>
+        <div class="field" style="margin-bottom:8px;">
+          <label>${CUR_YEAR} 年特休總天數</label>
+          <input type="number" id="annualQuotaModalInput" value="${prevAnnual!==null ? prevAnnual : ''}" min="0" step="0.5" placeholder="例如：14">
+        </div>
+        <p class="hint" style="margin:0 0 14px;">${prevAnnual!==null ? `去年（${CUR_YEAR-1}）是 ${fmt(prevAnnual)} 天，已先帶入，依今年年資調整後儲存。` : '依到職年資填入今年的特休天數。'}</p>
+        <div class="row">
+          <button type="button" class="btn-jade" onclick="saveAnnualQuotaModal()">儲存</button>
+          <button type="button" class="ghost" onclick="closeAnnualQuotaModal()">稍後</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 // 把「某個年月有哪些假別紀錄」的計算抽成共用函式，這樣行事曆本月格子、跨月份的灰色格子（上個月尾/下個月頭）都能共用同一套邏輯，
@@ -4374,9 +4431,21 @@ function pageData(){
           <span>${settingsExpandedKey==='quota'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='quota' ? `
-        <p class="hint" style="margin-bottom:8px;">這是每個假別今年（${selectedYear} 年）的總天數上限，通常一年只需要調整一兩次。點假別名稱展開調整。</p>
+        <p class="hint" style="margin-bottom:8px;">這是每個假別${selectedYear===CUR_YEAR ? `今年（${selectedYear} 年）` : ` ${selectedYear} 年`}的總天數上限，通常一年只需要調整一兩次。點假別名稱展開調整。</p>
         ${LEAVE_TYPES.map(t=>{
           const isOpen = quotaExpandedKey===t.key;
+          // 特休每年會依年資變動，已經知道明年天數的話可以先填；只在「正在看今年」時才顯示，避免跟上面的欄位變成同一年
+          const nextYear = CUR_YEAR + 1;
+          const nextYearSet = state.quotaByYear && state.quotaByYear[nextYear] && state.quotaByYear[nextYear].annual !== undefined;
+          const nextYearBlock = (t.key==='annual' && selectedYear===CUR_YEAR) ? `
+                <div class="next-year-quota">
+                  <div class="field">
+                    <label>明年（${nextYear} 年）特休總天數</label>
+                    <input type="number" id="annualNextYearInput" min="0" step="0.5" value="${nextYearSet ? state.quotaByYear[nextYear].annual : ''}" placeholder="已經知道的話可以先填">
+                  </div>
+                  <button class="btn-${t.c}" onclick="updateNextYearAnnualQuota()">儲存明年</button>
+                  <div class="hint">${nextYearSet ? `已設定 ${fmt(state.quotaByYear[nextYear].annual)} 天，${nextYear} 年打開時不會再提醒。` : `還沒設定，${nextYear} 年第一次打開時首頁會提醒你填。`}</div>
+                </div>` : '';
           return `
           <div class="quota-accordion-item">
             <button type="button" class="quota-accordion-head" onclick="toggleQuotaExpand('${t.key}')">
@@ -4386,11 +4455,12 @@ function pageData(){
             ${isOpen ? `
               <div class="quota-accordion-body">
                 <div class="field">
-                  <label>${t.label}總天數</label>
+                  <label>${selectedYear===CUR_YEAR ? `今年（${selectedYear} 年）` : `${selectedYear} 年`}${t.label}總天數</label>
                   <input type="number" id="${t.key}TotalInput" min="0" step="0.5" value="${getQuota(t.key,selectedYear)}">
                 </div>
                 <button class="btn-${t.c}" onclick="updateQuota('${t.key}')">更新</button>
                 <div class="hint">${t.hint}</div>
+                ${nextYearBlock}
               </div>
             ` : ''}
           </div>`;
@@ -4726,6 +4796,7 @@ function render(){
     </div>
 
     ${expiryDecisionModalOpen ? expiryDecisionModal() : ''}
+    ${annualQuotaModalOpen ? annualQuotaModal() : ''}
     ${quickEditModalOpen ? quickEditModal() : ''}
 
     <div class="status" id="statusMsg" style="text-align:center;"></div>
@@ -4897,6 +4968,22 @@ async function updateAnnualMinDays(){
   }
 }
 
+// 設定頁特休底下的「明年」欄位：固定寫進 CUR_YEAR+1，跟畫面上正在看哪一年無關。
+// 先填好的話，明年1/1之後 needsAnnualQuotaReminder() 看到今年（=這裡的明年）已經有值，就不會提醒
+async function updateNextYearAnnualQuota(){
+  try{
+    const el = document.getElementById('annualNextYearInput');
+    const v = parseFloat(el ? el.value : '');
+    if(!isFinite(v) || v<0){ setStatus('請輸入有效的天數', false); return; }
+    const nextYear = CUR_YEAR + 1;
+    setQuota('annual', nextYear, v);
+    await saveState();
+    render();
+    setStatus(`已設定 ${nextYear} 年特休 ${fmt(v)} 天`, true);
+  }catch(err){
+    setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
+  }
+}
 async function updateQuota(key){
   try{
     const v = parseFloat(document.getElementById(key+'TotalInput').value);
