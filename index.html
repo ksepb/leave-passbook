@@ -26,6 +26,7 @@
     --rust:#A8592F; --rust-soft:#F1DDCC;
     --rose:#A8456B; --rose-soft:#F2DDE6;
     --teal:#2A7A75; --teal-soft:#DBEBE9;
+    --amber-soft:#FBEFDC;
     --line:#C9C2B0;
     --amber:#B5761A;
   }
@@ -147,8 +148,8 @@
   .stamp-card.level-danger .num{color:var(--brick);}
   .seal{position:absolute;right:-8px;top:-8px;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-weight:900;font-size:18px;transform:rotate(-12deg);opacity:.8;border:2px solid currentColor;}
   .seal::after{content:'';position:absolute;inset:4px;border:1px solid currentColor;border-radius:50%;opacity:.6;}
-  .c-jade{color:var(--jade);} .c-brick{color:var(--brick);} .c-blue{color:var(--blue);} .c-olive{color:var(--olive);} .c-plum{color:var(--plum);} .c-rust{color:var(--rust);} .c-rose{color:var(--rose);} .c-teal{color:var(--teal);}
-  .c-jade-bg{background:var(--jade);} .c-brick-bg{background:var(--brick);} .c-blue-bg{background:var(--blue);} .c-olive-bg{background:var(--olive);} .c-plum-bg{background:var(--plum);} .c-rust-bg{background:var(--rust);} .c-rose-bg{background:var(--rose);} .c-teal-bg{background:var(--teal);}
+  .c-jade{color:var(--jade);} .c-brick{color:var(--brick);} .c-blue{color:var(--blue);} .c-olive{color:var(--olive);} .c-plum{color:var(--plum);} .c-rust{color:var(--rust);} .c-rose{color:var(--rose);} .c-teal{color:var(--teal);} .c-amber{color:var(--amber);}
+  .c-jade-bg{background:var(--jade);} .c-brick-bg{background:var(--brick);} .c-blue-bg{background:var(--blue);} .c-olive-bg{background:var(--olive);} .c-plum-bg{background:var(--plum);} .c-rust-bg{background:var(--rust);} .c-rose-bg{background:var(--rose);} .c-teal-bg{background:var(--teal);} .c-amber-bg{background:var(--amber);}
 
   .dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
   .dash-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 14px;text-align:center;}
@@ -195,7 +196,7 @@
   .block{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;margin-bottom:20px;}
   section.block h2{font-family:'Noto Serif TC',serif;font-size:19px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
   section.block h2 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px;}
-  .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);} .dot-rose{background:var(--rose);} .dot-teal{background:var(--teal);}
+  .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);} .dot-rose{background:var(--rose);} .dot-teal{background:var(--teal);} .dot-amber{background:var(--amber);}
 
   form.entry{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:flex-end;}
   .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px;}
@@ -251,8 +252,8 @@
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
   .btn-jade{background:var(--jade);} .btn-brick{background:var(--brick);} .btn-blue{background:var(--blue);} .btn-olive{background:var(--olive);} .btn-plum{background:var(--plum);} .btn-rust{background:var(--rust);} .btn-rose{background:var(--rose);} .btn-teal{background:var(--teal);} .btn-amber{background:var(--amber);}
-  .btn-outline-jade,.btn-outline-brick,.btn-outline-blue,.btn-outline-olive,.btn-outline-plum,.btn-outline-rust,.btn-outline-rose,.btn-outline-teal{background:#fff;border-style:solid;border-width:1.2px;font-weight:700;}
-  .btn-outline-jade{color:var(--jade);border-color:var(--jade);} .btn-outline-brick{color:var(--brick);border-color:var(--brick);} .btn-outline-blue{color:var(--blue);border-color:var(--blue);} .btn-outline-olive{color:var(--olive);border-color:var(--olive);} .btn-outline-plum{color:var(--plum);border-color:var(--plum);} .btn-outline-rust{color:var(--rust);border-color:var(--rust);} .btn-outline-rose{color:var(--rose);border-color:var(--rose);} .btn-outline-teal{color:var(--teal);border-color:var(--teal);}
+  .btn-outline-jade,.btn-outline-brick,.btn-outline-blue,.btn-outline-olive,.btn-outline-plum,.btn-outline-rust,.btn-outline-rose,.btn-outline-teal,.btn-outline-amber{background:#fff;border-style:solid;border-width:1.2px;font-weight:700;}
+  .btn-outline-jade{color:var(--jade);border-color:var(--jade);} .btn-outline-brick{color:var(--brick);border-color:var(--brick);} .btn-outline-blue{color:var(--blue);border-color:var(--blue);} .btn-outline-olive{color:var(--olive);border-color:var(--olive);} .btn-outline-plum{color:var(--plum);border-color:var(--plum);} .btn-outline-rust{color:var(--rust);border-color:var(--rust);} .btn-outline-rose{color:var(--rose);border-color:var(--rose);} .btn-outline-teal{color:var(--teal);border-color:var(--teal);} .btn-outline-amber{color:var(--amber);border-color:var(--amber);}
   .btn-with-badge{display:flex;align-items:center;justify-content:center;gap:4px;padding-left:8px;padding-right:8px;white-space:nowrap;min-height:34px;box-sizing:border-box;}
   .btn-badge-circle{width:18px;height:18px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;line-height:1;}
   .btn-badge-circle-solid{background:rgba(255,255,255,.9);}
@@ -369,7 +370,7 @@
   .home-detail-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:15px;color:var(--ink-soft);padding:9px 0;border-top:1px solid color-mix(in srgb, var(--line) 45%, transparent);}
   .home-detail-group .home-detail-row:first-of-type{border-top:none;}
   .home-detail-date{font-family:'IBM Plex Mono',monospace;color:var(--ink);flex-shrink:0;}
-  .home-detail-tag{font-size:13px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(0,0,0,.05);flex-shrink:0;}
+  .home-detail-tag{font-size:13px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(0,0,0,.05);flex-shrink:0;max-width:100%;overflow-wrap:anywhere;}
   .home-detail-amt{font-weight:600;color:var(--ink);flex-shrink:0;}
   .home-detail-note{color:var(--ink-soft);font-size:13.5px;width:100%;}
   .home-detail-note-tag{display:inline-block;background:color-mix(in srgb, var(--amber) 14%, transparent);color:#8A5A00;font-weight:700;padding:2px 9px;border-radius:8px;font-size:13.5px;}
@@ -568,7 +569,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.25-04';
+const APP_VERSION = 'v2026.09.26-03';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -867,8 +868,8 @@ function validateState(parsed){
     if(typeof v !== 'number' || !isFinite(v) || v<=0) return false; // isFinite同時擋掉NaN跟±Infinity
     if(v > MAX_REASONABLE_AMOUNT) return false;
     // 小數位最多到小數點後2位就夠用了（例如0.5天、4.25小時），超過視為異常精度，可能是資料損毀或浮點數運算殘留的雜訊
-    const decimalPart = String(v).split('.')[1];
-    if(decimalPart && decimalPart.length > 4) return false; // 留一點寬容度給浮點數運算本身可能產生的極小誤差，但不要離譜
+    // 不限制小數位數：App自己算出的剩餘天數（例如1天=9小時時，扣掉4小時剩0.5555…天）本來就可能是循環小數，
+    // 之前限制小數位會把App自己產生的正常資料判成異常，導致備份還原失敗、其他裝置永遠同步不到
     return true;
   }
   // 檢查id：必須存在、是字串、而且沒有跟其他紀錄重複過
@@ -908,7 +909,8 @@ function validateState(parsed){
         if(!['earn','use'].includes(r.type)){ errors.push(`補休／換休第 ${i+1} 筆的類型不合法`); }
         if(!r.date || !/^\d{4}-\d{1,2}-\d{1,2}$/.test(r.date) || isNaN(new Date(r.date).getTime())){ errors.push(`補休／換休第 ${i+1} 筆日期不合法`); }
         if(r.unit!==undefined && !VALID_UNITS.includes(r.unit)){ errors.push(`補休／換休第 ${i+1} 筆的unit「${r.unit}」不是合法的單位（只能是day或hour）`); }
-        if(!isReasonableAmount(r.amount)){ errors.push(`補休／換休第 ${i+1} 筆數量不合法（${r.amount}）`); }
+        const compAmt = (r.unit==='hour' || r.unit==='day') ? r.amount : (r.amount!==undefined ? r.amount : r.days); // 跟loadState一致：很早期的紀錄可能只有days欄位
+        if(!isReasonableAmount(compAmt)){ errors.push(`補休／換休第 ${i+1} 筆數量不合法（${compAmt}）`); }
       });
     }
   }
@@ -935,6 +937,7 @@ function applyCloudData(jsonStr){
     // 這裡不像還原/重置那樣給30分鐘反悔時間，因為套用雲端資料本身就是使用者已經做過的選擇（例如已經在「保留哪一份」的對話框選過），不是可能誤觸的操作
     const oldUrls = (state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl);
     state = Object.assign(defaultState(), parsed);
+    state.records = Object.assign(defaultState().records, parsed.records||{}); // 缺少的假別補回空陣列，避免之後新增時 push 到 undefined
     const newUrls = new Set((state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl));
     const orphanUrls = oldUrls.filter(u=>!newUrls.has(u));
     orphanUrls.forEach(u=>{ deleteCompPhoto(u); }); // 不用await，背景清就好，不要卡住套用雲端資料這個主流程
@@ -989,8 +992,9 @@ async function pullOrPushOnSignIn(){
         );
         if(useCloud){
           const applied = applyCloudData(cloudData.data);
-          if(applied){ lastCloudUpdatedAt = cloudData.updatedAt||Date.now(); }
-          // 如果套用失敗，代表本機資料沒被換掉，時間戳記維持原樣，不要亂推進
+          // 套用失敗：本機資料維持原樣，而且絕對不能往下走到saveState——那會把本機資料推上去蓋掉雲端（使用者明明選了要雲端那份）
+          if(!applied) return;
+          lastCloudUpdatedAt = cloudData.updatedAt||Date.now();
         }
         else {
           const pushedAt = Date.now();
@@ -999,7 +1003,9 @@ async function pullOrPushOnSignIn(){
         }
       } else {
         const applied = applyCloudData(cloudData.data);
-        if(applied){ lastCloudUpdatedAt = cloudData.updatedAt||Date.now(); }
+        // 套用失敗：這台是空的，如果往下走saveState會把「空資料」推上雲端，蓋掉所有裝置的資料——一定要直接停下
+        if(!applied) return;
+        lastCloudUpdatedAt = cloudData.updatedAt||Date.now();
       }
     }
     try{ localStorage.setItem('lastCloudUpdatedAt', String(lastCloudUpdatedAt)); }catch(e){}
@@ -1060,6 +1066,8 @@ async function checkForCloudUpdates(){
   try{
     const docRef = fbDb.collection('leavePassbook').doc(currentUser.uid);
     const snap = await docRef.get();
+    // 等雲端回應的這段時間，使用者可能剛好新增了一筆（正在上傳）或登入流程開始了，這時候不能拿舊的雲端資料蓋過去
+    if(cloudSyncing || pendingSync || signInFlowInProgress) return;
     if(!snap.exists) return;
     const cloudData = snap.data();
     if(!cloudData.updatedAt) return;
@@ -1983,7 +1991,19 @@ function compBalanceUpTo(year, category, customLabel){
 // 先進先出核心運算：算出每一筆「獲得」紀錄實際還剩多少沒被用掉，
 // 同時記錄每一筆「使用」紀錄實際扣了哪些批次各多少天（不管是手動指定還是自動判斷），
 // 這樣歷史紀錄畫面才能不管是不是手動指定，都能顯示「這筆實際扣了哪幾批」。
+// ---- 扣抵計算快取（只在畫一次畫面的期間有效） ----
+// 年度紀錄、補休/換休清單每一筆都要查「這筆扣了哪幾批」，原本每一筆都把全部紀錄從頭重算一次先進先出。
+// 同一次畫面裡紀錄不會變，所以同樣的條件只算一次、記下來重複用；畫面畫完就整個丟掉，下次操作再重新算。
+// 計算本身（_compFifoCoreCompute）完全沒改，這裡只是避免重複執行。
+let fifoMemo = null;
 function _compFifoCore(category, excludeId, customLabel){
+  if(!fifoMemo) return _compFifoCoreCompute(category, excludeId, customLabel);
+  const key = `${category}|${excludeId||''}|${customLabel||''}`;
+  let r = fifoMemo.get(key);
+  if(!r){ r = _compFifoCoreCompute(category, excludeId, customLabel); fifoMemo.set(key, r); }
+  return r;
+}
+function _compFifoCoreCompute(category, excludeId, customLabel){
   const records = (state.compRecords||[])
     .filter(r=>(r.category||'comp')===category && r.id!==excludeId && (category!=='custom' || r.customLabel===customLabel))
     .slice()
@@ -2068,11 +2088,11 @@ function _compFifoCore(category, excludeId, customLabel){
   return { batches, breakdown, unfulfilledByKept };
 }
 function compFifoRemaining(category, excludeId, customLabel){
-  return _compFifoCore(category, excludeId, customLabel).batches;
+  return _compFifoCore(category, excludeId, customLabel).batches.map(b=>Object.assign({}, b));
 }
 // 給歷史紀錄畫面用：查某一筆使用紀錄實際扣了哪幾批、各扣多少（不管是手動指定還是自動判斷）
 function compUsageBreakdown(category, useRecordId, customLabel){
-  return _compFifoCore(category, null, customLabel).breakdown[useRecordId] || [];
+  return (_compFifoCore(category, null, customLabel).breakdown[useRecordId] || []).map(e=>Object.assign({}, e));
 }
 // 反向查詢：這筆「獲得」批次，被哪幾筆「使用」紀錄扣過、各扣多少、扣的那天是哪天
 // 用途：翻到獲得那筆所在的月份時，就算實際使用紀錄是登記在別的月份，也能看出這批已經被動用了
@@ -2487,9 +2507,9 @@ function pageYearRecord(){
   state.compRecords.filter(r=>r.type==='use').forEach(r=>{
     if(!r.date.startsWith(String(year))) return;
     const category = r.category||'comp';
-    const info = COMP_CATEGORIES[category];
-    const usage = compUsageBreakdown(category, r.id);
-    const breakdown = usage.length ? usage.map(u=>`${toROC(u.date)}${u.note?`（${escapeHtml(u.note)}）`:''}獲得的${info.label}`).join('、') : null;
+    const info = compCategoryInfo(r);
+    const usage = compUsageBreakdown(category, r.id, category==='custom' ? r.customLabel : undefined);
+    const breakdown = usage.length ? usage.map(u=>`${toROC(u.date)}${u.note?`（${escapeHtml(u.note)}）`:''}獲得的${escapeHtml(info.label)}`).join('、') : null;
     rows.push({ date:r.date, key:category, label:info.label, c:info.c, id:r.id, hours: toDays(r)*getHoursPerDay(), amountText:displayAmount(r), note:r.note, breakdown });
   });
   rows.sort((a,b)=> yearRecordSortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
@@ -2596,9 +2616,9 @@ function customStampCard(){
   if(!activeLabels.length) return '';
   return `
     <div class="stamp-card tint-amber" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--amber) 45%, transparent);" onclick="viewLeaveDetailFromHome('custom')">
-      <div class="seal c-plum">他</div>
+      <div class="seal c-amber">他</div>
       <div class="label">其他假別</div>
-      ${activeLabels.map(x=>`<div class="num c-plum" style="font-size:16px;margin-top:2px;">${escapeHtml(x.label)}剩餘 ${fmt(x.remainDays)}天</div>`).join('')}
+      ${activeLabels.map(x=>`<div class="num c-amber" style="font-size:16px;margin-top:2px;">${escapeHtml(x.label)}剩餘 ${fmt(x.remainDays)}天</div>`).join('')}
     </div>`;
 }
 
@@ -2637,7 +2657,7 @@ function dashboardPanel(){
     });
   });
   state.compRecords.filter(r=>r.type==='use').forEach(r=>{
-    const info = COMP_CATEGORIES[r.category||'comp'];
+    const info = compCategoryInfo(r);
     const row = { date:r.date, label:info.label, c:info.c, amountText:displayAmount(r), note:r.note };
     if(r.date.startsWith(String(y))){ yearTotal += toDays(r); yearRows.push(row); }
     if(r.date.startsWith(ym)){ monthTotal += toDays(r); monthRows.push(row); }
@@ -2649,7 +2669,7 @@ function dashboardPanel(){
   const usageRowsHtml = (rows)=> rows.length ? rows.map(r=>`
     <div class="home-detail-row">
       <span class="home-detail-date">${toROC(r.date)}</span>
-      <span class="home-detail-tag c-${r.c}">${r.label}</span>
+      <span class="home-detail-tag c-${r.c}">${escapeHtml(r.label)}</span>
       <span class="home-detail-amt">${r.amountText}</span>
       ${r.note ? `<span class="home-detail-note-tag">${escapeHtml(r.note)}</span>` : ''}
     </div>`).join('') : `<p class="hint" style="margin:0;">這段期間還沒有請假紀錄。</p>`;
@@ -3216,7 +3236,7 @@ function calendarPanel(){
     }
   });
   const monthUsageLabels = LEAVE_TYPES.concat([{key:'comp',label:'補休'},{key:'exchange',label:'換休'}]);
-  const customUsageParts = Object.keys(monthUsage).filter(k=>k.startsWith('custom:') && monthUsage[k]>0).map(k=>`${k.slice(7)} ${fmt(monthUsage[k])}天`);
+  const customUsageParts = Object.keys(monthUsage).filter(k=>k.startsWith('custom:') && monthUsage[k]>0).map(k=>`${escapeHtml(k.slice(7))} ${fmt(monthUsage[k])}天`);
   const monthSummaryParts = monthUsageLabels.filter(t=>monthUsage[t.key]>0).map(t=>`${t.label} ${fmt(monthUsage[t.key])}天`).concat(customUsageParts);
   // 本月國定假日／補班提醒：資料來源跟月曆紅字用的是同一份人事行政行事曆快取，不管日期是過去還是未來，只要在這個月份範圍內都算
   let holidayNote = '';
@@ -3702,7 +3722,7 @@ function pageAddRecord(){
           </div>
           <div class="form-row" id="compExpiryWrap">
             <div class="field" style="flex:1;min-width:210px;">
-              <label>${ICON_HOURGLASS}到期日（${key==='exchange' ? '自動預設為當年度12/31' : `自動預設 ${info.defaultYears} 年後`}，可手動修改）</label>
+              <label>${ICON_HOURGLASS}到期日（${key==='exchange' ? '自動預設當年底' : `自動預設 ${info.defaultYears} 年後`}，可手動修改）</label>
               <div class="date-row"><input type="date" id="compExpiry" value="${compDefaultExpiry(key, dDef)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
             </div>
           </div>
@@ -4120,18 +4140,18 @@ function customSectionHtml(){
   const year = selectedYear;
   const activeLabels = getActiveCustomLabels();
   const unusedListHtml = activeLabels.length ? `
-    <div class="overview-panel" style="background:var(--plum-soft);margin-bottom:16px;">
+    <div class="overview-panel" style="background:var(--amber-soft, #FBEFDC);margin-bottom:16px;">
       <h3 class="section-title">${ICON_FOLDER}還沒用完的紀錄</h3>
       <div class="avail-batch-list">${activeLabels.map(x=>`
         <div class="avail-batch-item">
-          <div class="avail-batch-title"><span class="avail-batch-note-tag" style="background:var(--plum-soft);color:var(--plum);">${escapeHtml(x.label)}</span></div>
+          <div class="avail-batch-title"><span class="avail-batch-note-tag" style="background:var(--amber-soft, #FBEFDC);color:var(--amber);">${escapeHtml(x.label)}</span></div>
           <div class="avail-batch-remain">剩 ${fmt(x.remainDays)} 天<span class="avail-batch-hours-strong">（${fmt(x.remainDays*getHoursPerDay())} 小時）</span></div>
           ${x.nearestExpiry ? `<div class="avail-batch-expiry" style="color:var(--amber);">${ICON_HOURGLASS}到期 ${toROC(x.nearestExpiry)}</div>` : ''}
         </div>`).join('')}</div>
     </div>` : `<div class="hint" style="margin-bottom:16px;">目前沒有還能使用的其他假別紀錄。</div>`;
 
   const addForm = customAddOpen ? `
-    <div class="overview-panel" style="background:#fff;border:1px solid var(--plum-soft);margin-bottom:16px;">
+    <div class="overview-panel" style="background:#fff;border:1px solid var(--amber-soft, #FBEFDC);margin-bottom:16px;">
       <div class="row" style="gap:8px;margin-bottom:12px;">
         <button type="button" class="${customAddType==='earn'?'btn-amber':'ghost'}" onclick="setCustomAddType('earn')" style="flex:1;">獲得</button>
         <button type="button" class="${customAddType==='use'?'btn-amber':'ghost'}" onclick="setCustomAddType('use')" style="flex:1;">使用</button>
@@ -4169,7 +4189,7 @@ function customSectionHtml(){
         </div>
         <div class="row" style="gap:8px;">
           <button type="button" class="ghost" style="flex:1;" onclick="toggleCustomAdd()">取消</button>
-          <button type="submit" class="btn-plum" style="flex:1;">儲存</button>
+          <button type="submit" class="btn-amber" style="flex:1;">儲存</button>
         </div>
       </form>
     </div>` : `<button type="button" class="btn-amber btn-with-badge" style="width:100%;margin-bottom:16px;" onclick="toggleCustomAdd()"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--amber);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增其他假別</button>`;
@@ -4181,7 +4201,7 @@ function customSectionHtml(){
       <div class="ledger-top">
         <span class="d">${toROC(r.date)}</span>
         <span class="tag" style="background:var(--amber-soft, #FBEFDC);color:var(--amber);">${escapeHtml(r.customLabel||'其他假別')}・${r.type==='earn'?'獲得':'使用'}</span>
-        <span class="days" style="color:var(--plum);">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
+        <span class="days" style="color:var(--amber);">${r.type==='earn'?'+':'-'}${displayAmount(r)}</span>
       </div>
       ${r.note? `<div class="ledger-note-row">${ICON_NOTE}${escapeHtml(r.note)}</div>` : ''}
       <div class="ledger-bottom">
@@ -4768,7 +4788,14 @@ function bottomNav(){
     </nav>`;
 }
 
+// 每次畫畫面時開一份新的扣抵計算快取，畫完就丟掉，確保下次操作一定用最新資料重算
 function render(){
+  const prevMemo = fifoMemo;
+  fifoMemo = new Map();
+  try{ _renderInner(); }
+  finally{ fifoMemo = prevMemo; }
+}
+function _renderInner(){
   expiryTouched = false;
   compNoteTouched = false;
 
@@ -5432,7 +5459,7 @@ function validatePhotoFile(file){
 }
 async function uploadCompPhoto(file, recordId){
   if(!fbStorage || !currentUser){ return null; }
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const ext = ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg');
   const uniqueSuffix = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
   const path = `leavePassbook/${currentUser.uid}/${recordId}-${uniqueSuffix}.${ext}`;
   const ref = fbStorage.ref().child(path);
@@ -5635,6 +5662,13 @@ async function saveEditComp(id, btnEl){
   }
 }
 
+// 補休/換休/其他假別紀錄的顯示名稱與顏色。其他假別（custom）不在 COMP_CATEGORIES 裡，
+// 直接查 COMP_CATEGORIES[category] 會拿到 undefined，接著讀 .label 就會整個畫面報錯，所有「逐筆掃全部 compRecords」的地方都要用這個
+function compCategoryInfo(r){
+  const category = r.category||'comp';
+  if(category==='custom') return { label: r.customLabel || '其他假別', c: 'amber' };
+  return COMP_CATEGORIES[category] || COMP_CATEGORIES.comp;
+}
 function compRecordLabel(r){
   const category = r.category||'comp';
   return category==='custom' ? (r.customLabel || '其他假別') : COMP_CATEGORIES[category].label;
@@ -5857,7 +5891,7 @@ function buildSummaryText(){
     (state.records[t.key]||[]).forEach(r=> combined.push({date:r.date, text:`${t.label} 用 ${displayAmount(r)}${r.note? '　'+r.note:''}`}));
   });
   state.compRecords.forEach(r=>{
-    const info = COMP_CATEGORIES[r.category||'comp'];
+    const info = compCategoryInfo(r);
     combined.push({date:r.date, text:`${info.label} ${r.type==='earn'?'獲得':'使用'} ${displayAmount(r)}${r.note? '　'+r.note:''}`});
   });
   combined.sort((a,b)=> b.date.localeCompare(a.date));
@@ -6023,6 +6057,7 @@ async function restoreBackup(){
     }
     savePreRestoreSnapshot(); // 先把現在這份存起來，萬一還原錯了、或還原完發現不是想要的那份，30分鐘內都可以換回來
     state = Object.assign(defaultState(), parsed);
+    state.records = Object.assign(defaultState().records, parsed.records||{}); // 缺少的假別補回空陣列
     lastDeleted = null; editing = null; searchQuery=''; sortAsc=false; expandedMonths={};
     selectedYear = CUR_YEAR; calendarMode=false; chartMode=false;
     state.calendarMode = false; state.chartMode = false;
