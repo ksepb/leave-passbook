@@ -65,15 +65,16 @@
       --rust:#D68C5D; --rose:#D77B9F; --teal:#50B2AA; --amber:#DDA548;
       --jade-strong:#407666; --brick-strong:#98534D; --blue-strong:#4E7088; --olive-strong:#6E6938; --plum-strong:#6B6A92;
       --rust-strong:#966241; --rose-strong:#96566F; --teal-strong:#387D77; --amber-strong:#89662D;
-      --jade-soft:color-mix(in srgb, var(--jade) 20%, #24211D);
-      --brick-soft:color-mix(in srgb, var(--brick) 20%, #24211D);
-      --blue-soft:color-mix(in srgb, var(--blue) 20%, #24211D);
-      --olive-soft:color-mix(in srgb, var(--olive) 20%, #24211D);
-      --plum-soft:color-mix(in srgb, var(--plum) 20%, #24211D);
-      --rust-soft:color-mix(in srgb, var(--rust) 20%, #24211D);
-      --rose-soft:color-mix(in srgb, var(--rose) 20%, #24211D);
-      --teal-soft:color-mix(in srgb, var(--teal) 20%, #24211D);
-      --amber-soft:color-mix(in srgb, var(--amber) 18%, #24211D);
+      /* 各色淡底＝該色 15%（琥珀 13%）混深底，預先算成固定色碼，舊版 iPhone（iOS 16.2 以前）也能正確顯示 */
+      --jade-soft:#2D362F;
+      --brick-soft:#41302B;
+      --blue-soft:#303536;
+      --olive-soft:#393526;
+      --plum-soft:#363338;
+      --rust-soft:#3F3127;
+      --rose-soft:#3F2E30;
+      --teal-soft:#2B3732;
+      --amber-soft:#3C3223;
       --card:#262420; --field:#1F1D1A; --modal:#2A2723; --edit-row:#2E2A22;
       --nav:rgba(33,31,28,.96); --hairline:rgba(255,255,255,.09); --tint:rgba(255,255,255,.07);
       --bg-a:#231F19; --bg-b:#18201D; --dot:rgba(255,255,255,.035);
@@ -165,8 +166,13 @@
   .reminder-bar{background:var(--reminder-bg);border:1px solid var(--amber);color:var(--amber-ink);padding:10px 14px;border-radius:6px;font-size:14px;margin-bottom:16px;line-height:1.7;}
   .reminder-bar strong{display:block;margin-bottom:4px;font-size:13px;}
   .reminder-bar.reminder-urgent{background:var(--urgent-bg);border-color:var(--urgent-line);color:var(--urgent-ink);}
+  .reminder-summary-link{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin:8px 0 2px;padding:10px 12px;border-radius:10px;border:1.5px solid currentColor;background:transparent;color:inherit;font-size:14.5px;font-weight:700;text-align:left;cursor:pointer;}
+  .reminder-summary-arrow{flex-shrink:0;font-size:13.5px;}
+  .reminder-more{display:block;margin:6px 0 0;padding:4px 0;background:none;border:none;color:inherit;font-size:13.5px;font-weight:700;opacity:.85;cursor:pointer;}
   .reminder-bar .urgent-line{color:var(--urgent-line);font-weight:700;}
-  .reminder-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:3px 0;}
+  .reminder-line{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;}
+  .reminder-line > span{flex:1;min-width:0;}
+  .reminder-line .ack-btn{font-size:12px;padding:4px 10px;min-height:30px;white-space:nowrap;box-shadow:none;}
   .ack-btn{flex-shrink:0;font-size:13px;font-weight:800;color:inherit;background:var(--card);border:1.5px solid currentColor;border-radius:14px;padding:6px 14px;min-height:34px;box-shadow:0 2px 6px rgba(0,0,0,.14);}
   .ack-btn:active{box-shadow:0 1px 2px rgba(0,0,0,.14);}
 
@@ -238,6 +244,10 @@
   .section-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase;margin:6px 2px 10px;}
   .leave-tabs{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:16px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .leave-tabs::-webkit-scrollbar{display:none;}
+  /* 分頁一排放不下時，邊緣淡出，暗示還可以往那邊滑（淡出的是分頁本身，不管底色是淺色或深色都自然） */
+  .leave-tabs.fade-right{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 40px),transparent);}
+  .leave-tabs.fade-left{-webkit-mask-image:linear-gradient(to right,transparent,#000 40px);mask-image:linear-gradient(to right,transparent,#000 40px);}
+  .leave-tabs.fade-both{-webkit-mask-image:linear-gradient(to right,transparent,#000 40px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(to right,transparent,#000 40px,#000 calc(100% - 40px),transparent);}
   .leave-tab{flex-shrink:0;font-family:'Noto Sans TC',sans-serif;font-size:14.5px;font-weight:700;padding:9px 16px;border-radius:20px;border:1px solid var(--line);cursor:pointer;transition:transform .1s ease;}
   .leave-tab:active{transform:scale(.96);}
   .year-pills{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
@@ -247,6 +257,11 @@
   .year-pill.active{background:var(--pill-c,var(--plum-strong));color:#fff;border-color:var(--pill-c,var(--plum-strong));}
   .manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
   @media(max-width:620px){.manage-grid{grid-template-columns:1fr;}}
+  /* 設定頁分組：小標題＋每組一個格子區；組跟組之間靠標題分開，不用額外的框 */
+  .settings-group-title{font-size:17px;font-weight:700;letter-spacing:.12em;color:var(--ink-soft);margin:32px 6px 12px;padding-left:10px;border-left:4px solid var(--jade);line-height:1.2;}
+  .settings-group-title:first-child{margin-top:4px;}
+  .manage-grid.settings-grid{margin-bottom:0;}
+  .settings-grid + .backup.danger-zone{margin-top:16px;}
 
   .block{background:color-mix(in srgb, var(--card) 85%, transparent);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;margin-bottom:20px;}
   section.block h2{font-family:'Noto Serif TC',serif;font-size:19px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
@@ -571,7 +586,9 @@
   .history-divider .divider-year-btn:last-of-type{margin:0 3px 0 4px;}
   .divider-year-btn{width:26px;height:26px;padding:0;min-width:0;min-height:0;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--jade);background:var(--card);border:1.5px solid var(--jade);border-radius:50%;cursor:pointer;line-height:1;}
   .history-divider .divider-year-num{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:17.5px;color:var(--ink);padding:0;text-align:center;}
-  .kw-examples{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+  .kw-examples{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+  .kw-help-toggle{display:block;margin:18px 0 0;padding:6px 0;background:none;border:none;color:var(--jade);font-size:14px;font-weight:700;cursor:pointer;}
+  .kw-help{margin-top:10px;padding-top:12px;border-top:1px solid var(--hairline);}
   .kw-example{border-left:3px solid var(--line);background:color-mix(in srgb, var(--card) 55%, transparent);border-radius:0 10px 10px 0;padding:9px 12px;}
   .kw-example-code{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:5px;}
   .kw-example-desc{font-size:14px;color:var(--ink-soft);line-height:1.6;}
@@ -636,7 +653,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.26-15';
+const APP_VERSION = 'v2026.09.26-20';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3096,8 +3113,29 @@ function keywordPanel(){
   return `
     <div class="block">
       <h2><span class="dot dot-jade"></span>關鍵字快速輸入</h2>
-      <div class="mental-model-hint">💡 這裡跟「假別紀錄」「行事曆」的新增功能做的是同一件事，差別只在於：這裡可以<strong>一次貼很多筆</strong>用文字快速登記，不用一筆一筆點按鈕。只有一兩筆的話，直接用「假別紀錄」的＋新增可能更快。</div>
-      <div class="section-label" style="margin-top:4px;">支援寫法範例</div>
+      <p class="hint" style="margin:-4px 0 12px;">一次貼很多筆，用文字快速登記。</p>
+      <textarea id="kwInputText" rows="6" oninput="kwDraftText=this.value" placeholder="例如：
+2/16 加1補1 (除夕)
+7/23-7/25 特休1天 (返鄉)
+明天 病假半天 (感冒)">${escapeHtml(kwDraftText)}</textarea>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn-jade" onclick="kwParseInput()">解析</button>
+        <button class="ghost" onclick="kwClearInput()">清空重填</button>
+      </div>
+      ${previewHtml}
+      ${unmatchedHtml}
+      <button type="button" class="kw-help-toggle" onclick="toggleKwHelp()">寫法範例與選項 ${kwHelpOpen ? '▴' : '▾'}</button>
+      ${kwHelpOpen ? `
+      <div class="kw-help">
+        <div class="form-row">
+          <div class="field" style="max-width:150px;">
+            <label>沒寫「用／獲得」的補休／換休，預設當作</label>
+            <select id="kwDefaultCompType" onchange="kwDefaultType=this.value" style="min-height:34px;padding:6px 8px;font-size:14px;">
+              <option value="earn" ${kwDefaultType!=='use'?'selected':''}>獲得</option>
+              <option value="use" ${kwDefaultType==='use'?'selected':''}>使用</option>
+            </select>
+          </div>
+        </div>
       <div class="kw-examples">
         <div class="kw-example" style="border-left-color:var(--brick);">
           <div class="kw-example-code">
@@ -3133,25 +3171,8 @@ function keywordPanel(){
           <div class="kw-example-desc">→ 日期區間，自動展開成每天一筆</div>
         </div>
       </div>
-      <div class="form-row">
-        <div class="field" style="max-width:150px;">
-          <label>沒寫「用／獲得」的補休／換休，預設當作</label>
-          <select id="kwDefaultCompType" style="min-height:34px;padding:6px 8px;font-size:14px;">
-            <option value="earn">獲得</option>
-            <option value="use">使用</option>
-          </select>
-        </div>
-      </div>
-      <textarea id="kwInputText" rows="6" placeholder="例如：
-2/16 加1補1 (除夕)
-7/23-7/25 特休1天 (返鄉)
-明天 病假半天 (感冒)"></textarea>
-      <div class="row" style="margin-top:10px;">
-        <button class="btn-jade" onclick="kwParseInput()">解析</button>
-        <button class="ghost" onclick="kwClearInput()">清空重填</button>
-      </div>
-      ${previewHtml}
-      ${unmatchedHtml}
+        <p class="hint" style="margin:0;">只有一兩筆的話，直接用「假別紀錄」的＋新增可能更快。</p>
+      </div>` : ''}
     </div>
     ${kwUnmatchedModalOpen ? `
     <div class="modal-overlay" onclick="closeKwUnmatchedModal()">
@@ -3189,17 +3210,29 @@ async function acknowledgeExpiry(category, id){
   render();
 }
 
+let reminderExpanded = false; // 首頁「即將到期」超過3筆時，是否展開看全部（不存檔，重開App恢復收合）
+function toggleReminderExpanded(){ reminderExpanded = !reminderExpanded; render(); }
+function openExpiryDecisionFromBanner(){ expiryDecisionModalOpen = true; render(); }
 function reminderBanner(){
-  const list = compExpiryReminders();
-  const compHtml = list.length? (()=>{
-    const hasUrgent = list.some(r=>r.diffDays<=7);
-    const items = list.map(r=>{
-      const statusTxt = r.diffDays < 0 ? `已過期${Math.abs(r.diffDays)}天` : (r.diffDays===0? '今天到期' : `${r.diffDays}天後到期`);
+  // 首頁頂端的補休／換休提醒，分兩種：
+  // (1) 已過期、還沒決定「已使用／保留」的：收成一行，點下去打開決定視窗一次處理（同一件事不要在首頁跟視窗各列一次）
+  // (2) 即將到期（90天內）的、跟選了「保留」的過期批次：逐筆列，但最多先顯示3筆，其餘收起來
+  const undecidedCount = getExpiringUndecidedBatches().length;
+  const list = compExpiryReminders().filter(r=> r.diffDays>=0 || r.expiryDecision==='kept');
+  const compHtml = (undecidedCount || list.length) ? (()=>{
+    const hasUrgent = undecidedCount>0 || list.some(r=>r.diffDays<=7);
+    const MAX_SHOWN = 3;
+    const shown = reminderExpanded ? list : list.slice(0, MAX_SHOWN);
+    const hiddenCount = list.length - shown.length;
+    const items = shown.map(r=>{
+      const statusTxt = r.diffDays < 0 ? `已過期${Math.abs(r.diffDays)}天・保留中` : (r.diffDays===0? '今天到期' : `還有${r.diffDays}天`);
       const catLabel = COMP_CATEGORIES[r.category||'comp'].label;
       const lineClass = r.diffDays<=7 ? 'urgent-line' : '';
-      return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 獲得的 ${fmt(r.remainDays)} 天${catLabel}（尚未用完的部分），到期日 ${toROC(r.expiry)}（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
+      return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 的${catLabel} ${fmt(r.remainDays)} 天，${toROC(r.expiry)} 到期（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
     }).join('');
-    return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>${ICON_WARNING} 補休／換休到期提醒</strong>${items}</div>`;
+    const undecidedLine = undecidedCount ? `<button type="button" class="reminder-summary-link" onclick="openExpiryDecisionFromBanner()"><span>${undecidedCount} 筆已過期，還沒決定怎麼處理</span><span class="reminder-summary-arrow">處理 ›</span></button>` : '';
+    const moreLine = list.length > MAX_SHOWN ? `<button type="button" class="reminder-more" onclick="toggleReminderExpanded()">${reminderExpanded ? '收起' : `還有 ${hiddenCount} 筆即將到期 ▾`}</button>` : '';
+    return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>${ICON_WARNING} 補休／換休到期提醒</strong>${undecidedLine}${items}${moreLine}</div>`;
   })() : '';
 
   const month = NOW.getMonth()+1;
@@ -3649,13 +3682,13 @@ function leaveTabBar(){
   LEAVE_TYPES.forEach(t=>{ tabMeta[t.key] = {label:t.label, c:t.c}; });
   const tabs = getHomeCardOrder().map(key=>({key, label:tabMeta[key].label, c:tabMeta[key].c}));
   return `
-    <div class="leave-tabs">
+    <div class="leave-tabs" id="leaveTabsRow" onscroll="updateLeaveTabsFade(this)">
       ${tabs.map(t=>{
         const isActive = activeLeaveTab===t.key;
         const style = isActive
           ? `background:var(--${t.c}-strong);color:#fff;border-color:var(--${t.c}-strong);`
           : `background:var(--card);color:var(--ink-soft);border-color:var(--line);`;
-        return `<button type="button" class="leave-tab" style="${style}" onclick="switchLeaveTab('${t.key}')">${t.label}</button>`;
+        return `<button type="button" class="leave-tab${isActive?' is-active':''}" style="${style}" onclick="switchLeaveTab('${t.key}')">${t.label}</button>`;
       }).join('')}
     </div>`;
 }
@@ -4570,12 +4603,46 @@ function initThemeWatcher(){
     }
   }catch(e){}
 }
+const ICON_BACKUP = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><path d="M12 3v11M7.5 9.5L12 14l4.5-4.5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>`;
+const ICON_SHARE = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg>`;
+const ICON_DOC = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:3px;"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>`;
 const THEME_LABELS = { auto:'跟隨手機', light:'淺色', dark:'深色' };
 // 一次性說明：設定是「跟隨手機」、App 第一次因為手機是深色而顯示成深色時，底部出現一行說明，之後這台裝置永遠不再出現。
 // 如果這台裝置沒辦法記住「已經說明過」（例如隱私瀏覽模式），寧可不顯示，也不要每次開App都跳
+// 假別分頁那一排：畫面重畫後，讓選中的分頁留在看得到的位置（不然選了最右邊的假別，整排又跳回最左邊），並更新邊緣淡出
+let leaveTabsScrollLeft = 0;
+function updateLeaveTabsFade(el){
+  if(!el) return;
+  leaveTabsScrollLeft = el.scrollLeft;
+  const canLeft = el.scrollLeft > 2;
+  const canRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 2;
+  el.classList.remove('fade-left','fade-right','fade-both');
+  if(canLeft && canRight) el.classList.add('fade-both');
+  else if(canRight) el.classList.add('fade-right');
+  else if(canLeft) el.classList.add('fade-left');
+}
+function syncLeaveTabsRow(){
+  try{
+    const row = document.getElementById('leaveTabsRow');
+    if(!row || !row.querySelector) return;
+    row.scrollLeft = leaveTabsScrollLeft; // 先回到重畫前的位置，不要跳回最左邊
+    const act = row.querySelector('.is-active');
+    if(act){
+      const l = act.offsetLeft, r = l + act.offsetWidth;
+      if(l < row.scrollLeft + 8) row.scrollLeft = Math.max(0, l - 24);
+      else if(r > row.scrollLeft + row.clientWidth - 8) row.scrollLeft = r - row.clientWidth + 24;
+    }
+    updateLeaveTabsFade(row);
+  }catch(e){}
+}
+let themeHintPending = false;
 function maybeShowThemeAutoHint(){
   try{
     if(getThemePref()!=='auto' || !systemPrefersDark()) return;
+    // 開App時剛好跳出其他視窗（例如過期補休要決定、特休天數要設定）：先不顯示、也先不記「已說明過」，
+    // 等視窗關掉再顯示，不然說明會被視窗蓋住、5秒後消失，等於白白用掉這唯一一次
+    if(document.querySelector('.modal-overlay')){ themeHintPending = true; return; }
+    themeHintPending = false;
     if(localStorage.getItem('themeAutoHintShown')) return;
     localStorage.setItem('themeAutoHintShown', '1');
     if(localStorage.getItem('themeAutoHintShown')!=='1') return;
@@ -4597,7 +4664,8 @@ const ICON_MOON = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" s
 
 function pageData(){
   return `
-    <div class="manage-grid">
+    <div class="settings-group-title">顯示</div>
+    <div class="manage-grid settings-grid">
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('scale')">
           <span>${ICON_SEARCH}畫面大小</span>
@@ -4649,6 +4717,9 @@ function pageData(){
         </div>
         ` : ''}
       </div>
+    </div>
+    <div class="settings-group-title">假別規則</div>
+    <div class="manage-grid settings-grid">
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('quota')">
           <span>${ICON_RULER}設定假別天數</span>
@@ -4739,6 +4810,9 @@ function pageData(){
         </div>
         ` : ''}
       </div>
+    </div>
+    <div class="settings-group-title">資料與同步</div>
+    <div class="manage-grid settings-grid">
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('cloud')">
           <span>${ICON_CLOUD_LG} 雲端同步（跨裝置）</span>
@@ -4839,8 +4913,31 @@ function pageData(){
         `) : ''}
       </div>
       <div class="backup">
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('backup')">
+          <span>${ICON_BACKUP}備份與還原</span>
+          <span>${settingsExpandedKey==='backup'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='backup' ? `
+        <p>資料目前會自動存到雲端（僅此存摺可見）。若想額外備份一份，或換到新的存摺網頁時匯入資料，可使用下方功能。</p>
+        <div class="row">
+          <button class="ghost" onclick="downloadBackup()">下載備份檔（.json）</button>
+          <button class="ghost" onclick="copyBackup(this)">複製備份文字</button>
+          <button class="ghost" onclick="emailBackup()">${ICON_MAIL} Email 備份給自己</button>
+          <button class="ghost" onclick="toggleImport()">還原備份</button>
+        </div>
+        <div id="importArea" style="display:none;margin-top:6px;">
+          <textarea id="importText" rows="4" placeholder="貼上先前複製或下載的備份 JSON 內容"></textarea>
+          <div class="row" style="margin-top:8px;">
+            <button style="background:var(--neutral-btn);" onclick="restoreBackup()">確認還原（會覆蓋目前資料）</button>
+          </div>
+        </div>
+        ${getPreRestoreSnapshot()? `<div class="undo-bar"><span>${ICON_WARNING} 曾還原過備份（30分鐘內可換回還原前的版本）</span><button onclick="restorePreRestoreSnapshot()">復原</button></div>` : ''}
+        ` : ''}
+      </div>
+
+      <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('share')">
-          <span>分享摘要（可加入備忘錄）</span>
+          <span>${ICON_SHARE}分享摘要（可加入備忘錄）</span>
           <span>${settingsExpandedKey==='share'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='share' ? `
@@ -4885,7 +4982,7 @@ function pageData(){
 
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('report')">
-          <span>完整文字紀錄</span>
+          <span>${ICON_DOC}完整文字紀錄</span>
           <span>${settingsExpandedKey==='report'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='report' ? `
@@ -4901,29 +4998,9 @@ function pageData(){
         ` : ''}
       </div>
 
-      <div class="backup">
-        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('backup')">
-          <span>備份與還原</span>
-          <span>${settingsExpandedKey==='backup'?'▲':'▼'}</span>
-        </button>
-        ${settingsExpandedKey==='backup' ? `
-        <p>資料目前會自動存到雲端（僅此存摺可見）。若想額外備份一份，或換到新的存摺網頁時匯入資料，可使用下方功能。</p>
-        <div class="row">
-          <button class="ghost" onclick="downloadBackup()">下載備份檔（.json）</button>
-          <button class="ghost" onclick="copyBackup(this)">複製備份文字</button>
-          <button class="ghost" onclick="emailBackup()">${ICON_MAIL} Email 備份給自己</button>
-          <button class="ghost" onclick="toggleImport()">還原備份</button>
-        </div>
-        <div id="importArea" style="display:none;margin-top:6px;">
-          <textarea id="importText" rows="4" placeholder="貼上先前複製或下載的備份 JSON 內容"></textarea>
-          <div class="row" style="margin-top:8px;">
-            <button style="background:var(--neutral-btn);" onclick="restoreBackup()">確認還原（會覆蓋目前資料）</button>
-          </div>
-        </div>
-        ${getPreRestoreSnapshot()? `<div class="undo-bar"><span>${ICON_WARNING} 曾還原過備份（30分鐘內可換回還原前的版本）</span><button onclick="restorePreRestoreSnapshot()">復原</button></div>` : ''}
-        ` : ''}
-      </div>
-
+    </div>
+    <div class="settings-group-title">進階</div>
+    <div class="manage-grid settings-grid">
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('errorLog')">
           <span>${ICON_BUG}錯誤記錄</span>
@@ -4998,6 +5075,9 @@ function render(){
   fifoMemo = new Map();
   try{ _renderInner(); }
   finally{ fifoMemo = prevMemo; }
+  syncLeaveTabsRow();
+  // 深色說明因為當時有視窗開著而延後的話，視窗一關就補顯示
+  if(themeHintPending && !document.querySelector('.modal-overlay')) maybeShowThemeAutoHint();
 }
 function _renderInner(){
   expiryTouched = false;
@@ -5472,8 +5552,10 @@ function onCompUnitChange(){
 }
 
 function kwParseInput(){
-  const text = document.getElementById('kwInputText').value;
-  const defaultCompType = document.getElementById('kwDefaultCompType').value;
+  const taEl = document.getElementById('kwInputText');
+  const text = taEl ? taEl.value : kwDraftText;
+  kwDraftText = text;
+  const defaultCompType = kwDefaultType;
   if(!text || !text.trim()){ setStatus('請先貼上想登記的內容', false); return; }
   const { items, unmatched } = parseKeywordLines(text, defaultCompType);
   if(items.length===0){ setStatus('沒有辨識出可登記的資料，請確認格式', false); }
@@ -5484,11 +5566,21 @@ function kwParseInput(){
   render();
 }
 function closeKwUnmatchedModal(){ kwUnmatchedModalOpen = false; render(); }
+// 快速輸入頁：打的字跟「預設當作」的選擇記在變數裡，畫面重畫（解析、移除某筆、展開範例）時不會不見；
+// 真的登記完成、或按「清空重填」才清掉
+let kwDraftText = '';
+let kwDefaultType = 'earn';
+let kwHelpOpen = false; // 寫法範例預設收起來，讓輸入框在最上面
+function toggleKwHelp(){
+  const ta = document.getElementById('kwInputText'); if(ta) kwDraftText = ta.value;
+  kwHelpOpen = !kwHelpOpen; render();
+}
 
 function kwClearInput(){
   const ta = document.getElementById('kwInputText');
   if(ta && ta.value.trim() && !window.confirm('確定要清空目前輸入的文字嗎？')) return;
   if(ta) ta.value = '';
+  kwDraftText = '';
   kwPendingItems = [];
   kwUnmatchedLines = [];
   render();
@@ -5525,6 +5617,7 @@ async function applyKwItems(){
         state.records[item.leaveKey].push({ id, date:item.date, unit:item.unit, amount:Number(item.amount), note:item.note||'' });
       }
     });
+    kwDraftText = ''; // 已經登記完成，輸入框清空，避免再按一次解析重複登記
     kwPendingItems = [];
     kwUnmatchedLines = [];
     await saveState();
