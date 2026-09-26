@@ -277,6 +277,7 @@
   .manual-source-toggle input[type="checkbox"]{width:20px;height:20px;flex-shrink:0;accent-color:var(--jade);}
   .src-batch-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:12px 8px;border-top:1px solid var(--line);max-width:100%;box-sizing:border-box;border-radius:8px;}
   .src-batch-row:first-child{border-top:none;}
+  .src-batch-expired{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font-size:11.5px;font-weight:700;color:var(--brick);background:var(--brick-soft);vertical-align:1px;}
   .src-batch-row:has(input[type="checkbox"]:checked){background:var(--jade-soft);}
   .src-batch-check{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:600;color:var(--ink);cursor:pointer;flex:0 1 auto;min-width:0;max-width:100%;}
   .src-batch-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto;}
@@ -393,7 +394,7 @@
   ul.ledger .ledger-note-row{color:var(--ink);font-weight:700;font-size:15.5px;margin-top:6px;overflow-wrap:break-word;max-width:100%;}
   ul.ledger .days{font-size:17px;}
   ul.ledger .expiry{font-size:14.5px;color:var(--amber);font-weight:700;font-family:'IBM Plex Mono',monospace;flex:1 1 100%;background:var(--amber-soft, #FBEFDC);padding:5px 9px;border-radius:6px;}
-  ul.ledger .alloc-list{font-family:'Noto Sans TC', sans-serif;}
+  ul.ledger .alloc-list{font-family:'Noto Sans TC', sans-serif;overflow-wrap:anywhere;min-width:0;}
   ul.ledger .alloc-line{padding:2px 0;font-size:13.5px;}
   ul.ledger .ledger-actions{display:flex;gap:8px;margin-left:auto;flex:none;}
   ul.ledger .del{background:#fff;border:1.5px solid var(--line);border-radius:12px;color:var(--ink-soft);font-size:13.5px;font-weight:700;cursor:pointer;padding:8px 11px;min-height:44px;line-height:1;display:inline-flex;align-items:center;gap:4px;}
@@ -569,7 +570,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.26-03';
+const APP_VERSION = 'v2026.09.26-09';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -647,6 +648,7 @@ function initFirebase(){
       render();
       if(user){
         cleanupExpiredCompPhotos();
+        processPhotoDeleteQueue(); // 之前沒登入／離線時沒刪成功的照片，登入後補刪
         checkForCloudUpdates(); // App剛開啟就已經是登入狀態時，順便安靜檢查一次雲端有沒有更新（例如剛用別台裝置/瀏覽器新增過資料）
       }
       if(firstAuthCheck){
@@ -1036,6 +1038,7 @@ function initOnlineDetection(){
       isOnline = true;
       render();
       syncToCloud(); // 恢復網路，主動補送一次，確保離線期間排隊的資料真的送出去
+      processPhotoDeleteQueue(); // 離線期間沒刪成功的照片也補刪
       checkForCloudUpdates(); // 順便看看離線這段期間，別的裝置有沒有更新過雲端資料
     });
     window.addEventListener('offline', ()=>{
@@ -1044,7 +1047,7 @@ function initOnlineDetection(){
     });
     // App 從背景切回前景時，順便安靜檢查一次雲端有沒有其他裝置的新資料
     document.addEventListener('visibilitychange', ()=>{
-      if(document.visibilityState === 'visible'){ refreshNowIfDateChanged(); checkForCloudUpdates(); }
+      if(document.visibilityState === 'visible'){ refreshNowIfDateChanged(); checkForCloudUpdates(); getResetSnapshot(); getPreRestoreSnapshot(); processPhotoDeleteQueue(); }
     });
     // Safari 的分頁「關掉再開」很多時候其實是從瀏覽器快取（bfcache）還原頁面，不是真的重新整理，
     // 這種情況下 App 的啟動流程（包括登入偵測）根本不會重新跑一次，visibilitychange 也不一定可靠抓到。
@@ -1226,6 +1229,8 @@ function refreshNowIfDateChanged(){
   CUR_YEAR = freshNow.getFullYear();
   // App開著跨過元旦時，原本正在看「今年」的話，要跟著換到新的一年；使用者自己切去看別的年份就不動
   if(CUR_YEAR !== oldYear && selectedYear === oldYear) selectedYear = CUR_YEAR;
+  // 跨日後可能有批次剛好過期（例如換休12/31到期、App一直開著跨年），跟開App時一樣跳出決定視窗
+  try{ if(getExpiringUndecidedBatches().length>0) expiryDecisionModalOpen = true; }catch(e){}
   render();
   return true;
 }
@@ -1848,7 +1853,46 @@ async function loadState(){
   }catch(e){ /* 無資料，使用預設值 */ }
 }
 
+// 「逾期自動取消」這種系統產生的紀錄，數量是按下「已使用」那一刻的剩餘量。
+// 如果之後補登了一筆更早的使用、剛好也扣到這一批，這筆取消紀錄就會多扣，多出來的部分會接著去扣「還有效」的批次（等於平白損失）。
+// 這裡在每次存檔前把它對齊成「這批現在實際還剩多少」：剩0就整筆移除；補登的那筆之後被刪掉的話，這批會重新出現在過期決定清單，讓使用者再決定一次
+function isAutoCancelRecord(r){
+  return r && r.type==='use' && (r.autoCancel===true || r.note==='逾期自動取消') && Array.isArray(r.sourceAllocations) && r.sourceAllocations.length===1;
+}
+function reconcileAutoCancelRecords(){
+  if(!state || !Array.isArray(state.compRecords)) return false;
+  let changed = false;
+  for(let pass=0; pass<5; pass++){
+    const cancels = state.compRecords.filter(isAutoCancelRecord);
+    if(!cancels.length) break;
+    // 每個類別（其他假別依名目）只算一次先進先出，再看每筆取消紀錄「實際從自己指定的那批扣到多少」
+    const coreCache = new Map();
+    const coreFor = (category, label)=>{
+      const k = category + '|' + (label||'');
+      if(!coreCache.has(k)) coreCache.set(k, _compFifoCoreCompute(category, null, label));
+      return coreCache.get(k);
+    };
+    const removeIds = new Set();
+    let passChanged = false;
+    for(const c of cancels){
+      const category = c.category||'comp';
+      const core = coreFor(category, category==='custom' ? c.customLabel : undefined);
+      const batchId = c.sourceAllocations[0].id;
+      const fromOwn = (core.breakdown[c.id]||[]).filter(e=>e.batchId===batchId).reduce((s,e)=>s+e.take, 0);
+      if(toDays(c) - fromOwn > 0.0001){ // 有一部分不是從自己那批扣的（漏去扣別批、或根本扣不到）→ 對齊
+        if(fromOwn <= 0.0001) removeIds.add(c.id);
+        else { c.unit = 'day'; c.amount = fromOwn; c.sourceAllocations = [{id: batchId, days: fromOwn}]; }
+        passChanged = true;
+      }
+    }
+    if(removeIds.size) state.compRecords = state.compRecords.filter(r=>!removeIds.has(r.id));
+    if(!passChanged) break;
+    changed = true;
+  }
+  return changed;
+}
 async function saveState(){
+  try{ reconcileAutoCancelRecords(); }catch(e){ console.error('對齊逾期取消紀錄失敗', e); }
   try{
     const json = JSON.stringify(state);
     if(window.storage && typeof window.storage.set === 'function'){
@@ -2056,6 +2100,7 @@ function _compFifoCoreCompute(category, excludeId, customLabel){
         if(toDeduct<=0) break;
         if(pinnedIds.has(b.id)) continue;
         if(b.expiryDecision==='kept') continue;
+        if(b.expiry && b.expiry < r.date) continue; // 使用當天已經過期的批次，不會被自動扣抵，只能手動指定
         if(b.remainDays<=0) continue;
         const take = Math.min(b.remainDays, toDeduct);
         takeFrom(b, take);
@@ -2068,6 +2113,7 @@ function _compFifoCoreCompute(category, excludeId, customLabel){
         for(const b of batches){
           if(toDeduct<=0) break;
           if(b.expiryDecision==='kept') continue;
+          if(b.expiry && b.expiry < r.date) continue; // 同上：過期批次不自動扣
           if(b.remainDays<=0) continue;
           const take = Math.min(b.remainDays, toDeduct);
           takeFrom(b, take);
@@ -2079,7 +2125,8 @@ function _compFifoCoreCompute(category, excludeId, customLabel){
       // ② 真的所有批次（含保留）都不夠扣（使用者記錄的用量超過實際擁有的總量，這才是真正該被一致性檢查抓到的異常）
       // 只有原因①要排除，不能讓一致性檢查把它誤判成超扣
       if(toDeduct>0.0001){
-        const keptAvailable = batches.filter(b=>b.expiryDecision==='kept').reduce((s,b)=>s+Math.max(0,b.remainDays),0);
+        // 被刻意跳過（保留、或使用當天已過期）而扣不滿的部分，是規則造成的合理差異，不是超扣
+        const keptAvailable = batches.filter(b=>b.expiryDecision==='kept' || (b.expiry && b.expiry < r.date)).reduce((s,b)=>s+Math.max(0,b.remainDays),0);
         unfulfilledByKept += Math.min(toDeduct, keptAvailable);
       }
       if(useLog.length) breakdown[r.id] = useLog;
@@ -2191,7 +2238,7 @@ async function markExpiredBatchUsed(category, batchId){
   if(!b || b.remainDays<=0) return; // 這批已經沒有剩餘（可能是快速點兩下、或已經被別的操作扣完了），不要建出一筆0天或負數的無意義紀錄
   const record = {
     id: uid(), type:'use', category, date: b.expiry, unit:'day', amount: b.remainDays,
-    note: '逾期自動取消',
+    note: '逾期自動取消', autoCancel: true,
     sourceAllocations: [{id: batchId, days: b.remainDays}],
   };
   if(category==='custom') record.customLabel = customLabel;
@@ -2250,8 +2297,10 @@ function expiryDecisionModal(){
       </div>
     </div>`;
 }
-function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
+function computeUsePreviewHtml(category, amount, unit, pins, excludeId, useDate){
   if(!amount || amount<=0) return '';
+  useDate = useDate || TODAY;
+  const isExpiredFor = b => !!(b.expiry && b.expiry < useDate); // 使用當天已經過期：只能手動指定，不自動扣
   // 向下相容：舊呼叫方式傳入單一字串id（代表「優先扣這批，不夠自動接續」），統一轉成陣列格式處理
   if(typeof pins === 'string'){ pins = pins ? [{id:pins, days:null}] : []; }
   if(!Array.isArray(pins)) pins = [];
@@ -2282,6 +2331,7 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
     if(toDeduct<=0.0001) break;
     if(pinnedIds.has(b.id)) continue;
     if(b.expiryDecision==='kept') continue;
+    if(isExpiredFor(b)) continue;
     const take = Math.min(b.remainDays, toDeduct);
     if(take>0.0001){
       consumed.push({date:b.date, note:b.note, take, remainAfter: b.remainDays-take, pinned:false});
@@ -2296,6 +2346,7 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
     for(const b of batches){
       if(toDeduct<=0.0001) break;
       if(b.expiryDecision==='kept') continue;
+      if(isExpiredFor(b)) continue;
       if(b.remainDays<=0.0001) continue;
       const take = Math.min(b.remainDays, toDeduct);
       if(take>0.0001){
@@ -2307,9 +2358,12 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
       }
     }
   }
+  // 還有剩、但因為已過期而沒被自動扣到的量（提醒使用者：需要的話可以手動勾選）
+  const expiredLeft = batches.filter(b=>isExpiredFor(b) && b.expiryDecision!=='kept' && b.remainDays>0.0001).reduce((s,b)=>s+b.remainDays,0);
+  const expiredHint = (toDeduct>0.0001 && expiredLeft>0.0001) ? `<p class="hint" style="color:var(--ink-soft);margin:6px 0 0;">已過期的 ${fmt(expiredLeft)} 天不會自動扣抵；如果確定要用，請勾選「手動指定」選它。</p>` : '';
   let html = '<div class="use-preview-box">';
   if(consumed.length===0){
-    html += `<p class="hint" style="color:var(--brick);margin:0;">${ICON_WARNING} 目前沒有可扣的${info.label}結餘，這筆送出後結餘會變負數。</p>`;
+    html += `<p class="hint" style="color:var(--brick);margin:0;">${ICON_WARNING} 目前沒有可自動扣的${info.label}結餘，這筆送出後結餘會變負數。</p>`;
   } else {
     html += `<p class="hint" style="margin:0 0 6px;font-weight:700;color:var(--ink);">這筆會${pins.length?'先扣你指定的那幾筆，不夠再':'自動'}扣最早獲得的那幾筆：</p>`;
     html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?ICON_STAR:''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''}　－${fmt(c.take)} 天，扣完後這筆還剩 ${fmt(c.remainAfter)} 天</div>`).join('');
@@ -2317,6 +2371,7 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
       html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">${ICON_WARNING} 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
     }
   }
+  html += expiredHint;
   html += '</div>';
   let skipHtml = '';
   if(skippedPins.length){
@@ -2337,7 +2392,7 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId){
   const manualNotesJoined = Array.from(new Set(consumed.filter(c=>c._id && pinnedIds.has(c._id)).map(c=>c.note).filter(Boolean))).join('｜');
   const manualNote = manualNotesJoined ? `使用 ${manualNotesJoined}` : '';
   const fallbackNotesJoined = Array.from(new Set(consumed.filter(c=>!(c._id && pinnedIds.has(c._id))).map(c=>c.note).filter(Boolean))).join('｜');
-  return { previewHtml: html, skipHtml, suggestedNote, manualNote, fallbackNote: fallbackNotesJoined };
+  return { previewHtml: html, skipHtml, suggestedNote, manualNote, fallbackNote: fallbackNotesJoined, shortfall: Math.max(0,toDeduct), expiredLeft };
 }
 
 function gatherCompSrcPins(listElId, hoursPerDay){
@@ -2443,7 +2498,9 @@ function updateUsePreview(category){
   const manualOn = document.getElementById('compManualToggle');
   const isManualOn = !!(manualOn && manualOn.checked);
   const pins = isManualOn ? gatherCompSrcPins('compSrcBatchList') : [];
-  const result = computeUsePreviewHtml(category, amount, unit, pins, null);
+  const dateEl = document.getElementById('compDate');
+  const useDate = (dateEl && parseFlexibleDate(dateEl.value)) || TODAY;
+  const result = computeUsePreviewHtml(category, amount, unit, pins, null, useDate);
   previewEl.innerHTML = result.previewHtml;
   if(!compNoteTouched){
     const noteEl = document.getElementById('compNote');
@@ -2483,7 +2540,9 @@ function updateEditUsePreview(id, category){
   const manualOn = document.getElementById(`editManualToggle-${id}`);
   const isManualOn = !!(manualOn && manualOn.checked);
   const pins = isManualOn ? gatherCompSrcPins(`editCompSrcBatchList-${id}`) : [];
-  const result = computeUsePreviewHtml(category, amount, unit, pins, id);
+  const editDateEl = document.getElementById(`editCompDate-${id}`);
+  const useDate = (editDateEl && parseFlexibleDate(editDateEl.value)) || TODAY;
+  const result = computeUsePreviewHtml(category, amount, unit, pins, id, useDate);
   previewEl.innerHTML = result.previewHtml;
   if(skipEl){
     if(result.skipHtml){ skipEl.style.display = ''; skipEl.textContent = result.skipHtml; }
@@ -2681,9 +2740,10 @@ function dashboardPanel(){
     const exchangeBatches = compFifoRemaining('exchange').filter(b=>b.remainDays>0.0001).sort((a,b)=>a.date.localeCompare(b.date));
     const batchRowHtml = (b)=>{
       const expiryText = b.expiry ? `效期至 ${toROC(b.expiry)}` : '';
+      const expiredTag = (b.expiry && b.expiry < TODAY) ? `<span class="src-batch-expired">${b.expiryDecision==='kept' ? '已過期・保留' : '已過期・待決定'}</span>` : '';
       return `
       <div class="home-detail-row">
-        <span class="home-detail-date">${toROC(b.date)}</span>
+        <span class="home-detail-date">${toROC(b.date)}${expiredTag}</span>
         <span class="home-detail-amt">剩 ${fmt(b.remainDays)} 天</span>
         ${expiryText || b.note ? `<span class="home-detail-note">${expiryText}${expiryText && b.note ? '　' : ''}${b.note ? `<span class="home-detail-note-tag">${escapeHtml(b.note)}</span>` : ''}</span>` : ''}
       </div>`;
@@ -2691,7 +2751,7 @@ function dashboardPanel(){
     const compBatchesTotal = compBatches.reduce((s,b)=>s+b.remainDays,0);
     const exchangeBatchesTotal = exchangeBatches.reduce((s,b)=>s+b.remainDays,0);
     return `
-      <p class="hint" style="margin:0 0 10px;">只顯示目前還有效(沒過期、沒用完)。</p>
+      <p class="hint" style="margin:0 0 10px;">只顯示還沒用完的；已過期的會另外標示。</p>
       <div class="home-detail-group">
         <div class="home-detail-group-title c-jade">${ICON_STAR}特休　剩 ${fmt(annualRemain)} 天</div>
         <p class="hint" style="margin:2px 0 0;">今年度額度共 ${fmt(annualQuota)} 天</p>
@@ -2706,7 +2766,7 @@ function dashboardPanel(){
       </div>`;
   };
 
-  const modalTitleMap = { remain:'目前有效的剩餘明細', month:`${NOW.getMonth()+1} 月已請假明細`, year:`${y} 年已請假明細` };
+  const modalTitleMap = { remain:'目前剩餘明細', month:`${NOW.getMonth()+1} 月已請假明細`, year:`${y} 年已請假明細` };
   const modalBodyMap = { remain: remainDetailHtml(), month: usageRowsHtml(monthRows), year: usageRowsHtml(yearRows) };
 
   return `
@@ -2769,6 +2829,9 @@ function shiftDate(dateStr, deltaDays){
   return isoDate(d.getFullYear(), d.getMonth()+1, d.getDate());
 }
 
+// 不存在的日期（13/5、2/30、平年2/29）一律當作看不懂，交給「無法辨識」清單，絕對不能存進去——
+// 壞日期一旦上雲端，其他裝置的資料驗證會一直擋下來，同步就卡住了
+function validIsoOrNull(y, m, d){ return isValidCalendarDate(y, m, d) ? isoDate(y, m, d) : null; }
 function parseDateToken(tok, contextYear){
   if(!tok) return null;
   tok = tok.trim();
@@ -2779,12 +2842,12 @@ function parseDateToken(tok, contextYear){
   if(m){
     let y = parseInt(m[1],10);
     if(y<200) y += 1911; // 民國年自動換算
-    return isoDate(y, parseInt(m[2],10), parseInt(m[3],10));
+    return validIsoOrNull(y, parseInt(m[2],10), parseInt(m[3],10));
   }
   m = tok.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
-  if(m){ return isoDate(contextYear, parseInt(m[1],10), parseInt(m[2],10)); }
+  if(m){ return validIsoOrNull(contextYear, parseInt(m[1],10), parseInt(m[2],10)); }
   m = tok.match(/^(\d{1,2})月(\d{1,2})日?$/);
-  if(m){ return isoDate(contextYear, parseInt(m[1],10), parseInt(m[2],10)); }
+  if(m){ return validIsoOrNull(contextYear, parseInt(m[1],10), parseInt(m[2],10)); }
   return null;
 }
 
@@ -2862,15 +2925,16 @@ function parseKeywordLines(text, defaultCompType){
     m = line.match(new RegExp(`^(${DATE_TOKEN_RE})\\s*[~～]\\s*(${DATE_TOKEN_RE})\\s*(.+)$`))
       || line.match(new RegExp(`^(${DATE_SLASH_RE})-(${DATE_SLASH_RE})\\s*(.+)$`));
     if(m){
-      const d1 = parseDateToken(m[1], selectedYear);
-      let d2 = parseDateToken(m[2], selectedYear);
+      // 沒寫年份的日期一律當作今年（不跟著「假別紀錄」頁最後看的年份走，避免登記到別的年份還不自知）
+      const d1 = parseDateToken(m[1], CUR_YEAR);
+      let d2 = parseDateToken(m[2], CUR_YEAR);
       if(d1 && d2){
         // 若結束日期比開始日期早，視為跨年（例如 12/30-1/2），結束日期年份自動+1
         if(new Date(d2+'T00:00:00').getTime() < new Date(d1+'T00:00:00').getTime()){
           const d2Parts = d2.split('-');
-          d2 = isoDate(parseInt(d2Parts[0],10)+1, parseInt(d2Parts[1],10), parseInt(d2Parts[2],10));
+          d2 = validIsoOrNull(parseInt(d2Parts[0],10)+1, parseInt(d2Parts[1],10), parseInt(d2Parts[2],10));
         }
-        const built = kwBuildFromRest(m[3].trim(), defaultCompType, leaveKeywordPattern);
+        const built = d2 ? kwBuildFromRest(m[3].trim(), defaultCompType, leaveKeywordPattern) : null;
         if(built){
           let cur = d1, guard = 0;
           const endTime = new Date(d2+'T00:00:00').getTime();
@@ -2887,7 +2951,7 @@ function parseKeywordLines(text, defaultCompType){
     // B) 單一日期開頭：<日期><其餘內容>，日期後面有沒有空格都可以
     m = line.match(new RegExp(`^(${DATE_TOKEN_RE})\\s*(.+)$`));
     if(m){
-      const d = parseDateToken(m[1], selectedYear);
+      const d = parseDateToken(m[1], CUR_YEAR);
       if(d){
         const built = kwBuildFromRest(m[2].trim(), defaultCompType, leaveKeywordPattern);
         if(built){ items.push(Object.assign({}, built, { date: d, raw: line })); return; }
@@ -2918,7 +2982,7 @@ function keywordPanel(){
         ${kwPendingItems.map((it,idx)=>{
           let label, amountText;
           if(it.kind==='quota'){
-            label = `${it.quotaLabel}總天數`;
+            label = `${CUR_YEAR} 年${it.quotaLabel}總天數`;
             amountText = `更新為 ${fmt(it.total)} 天`;
           } else if(it.kind==='comp'){
             const info = COMP_CATEGORIES[it.category||'comp'];
@@ -3324,7 +3388,8 @@ function statsChart(){
   });
   const maxVal = Math.max(1, ...monthTotals.map(m=> Object.values(m).reduce((s,v)=>s+v,0)));
   const TRACK_H = 130;
-  const typeList = LEAVE_TYPES.concat([{key:'comp', c:'brick', label:'補休使用'}, {key:'exchange', c:'teal', label:'換休使用'}]);
+  const typeList = LEAVE_TYPES.concat([{key:'comp', c:'brick', label:'補休使用'}, {key:'exchange', c:'teal', label:'換休使用'}, {key:'custom', c:'amber', label:'其他假別'}]);
+  const hasCustomUse = monthTotals.some(m=>(m.custom||0)>0);
   const bars = monthTotals.map((m,i)=>{
     const total = Object.values(m).reduce((s,v)=>s+v,0);
     const segments = typeList.map(t=>{
@@ -3384,6 +3449,7 @@ function statsChart(){
         ${LEAVE_TYPES.map(t=>`<span class="legend-item"><span class="legend-dot c-${t.c}-bg"></span>${t.label}</span>`).join('')}
         <span class="legend-item"><span class="legend-dot c-brick-bg"></span>補休使用</span>
         <span class="legend-item"><span class="legend-dot c-teal-bg"></span>換休使用</span>
+        ${hasCustomUse ? `<span class="legend-item"><span class="legend-dot c-amber-bg"></span>其他假別</span>` : ''}
       </div>
     </div>
     ${earnSection}`;
@@ -3705,7 +3771,7 @@ function pageAddRecord(){
                   <div class="src-batch-row" data-batch-id="${b.id}" data-batch-remain="${b.remainDays}">
                     <label class="src-batch-check">
                       <input type="checkbox" onchange="onCompSrcRowToggle(this,'${key}')">
-                      <span class="src-batch-label">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</span>
+                      <span class="src-batch-label">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}${b.expiry && b.expiry < TODAY ? '<span class="src-batch-expired">已過期</span>' : ''}</span>
                       <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}小時</span>
                     </label>
                     <div class="src-batch-input-wrap" style="display:none;">
@@ -3804,7 +3870,7 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
       : (r.sourceEarnId ? [{id:r.sourceEarnId, days:null}] : []);
     const initialPinMap = new Map(initialPins.map(p=>[p.id, p.days]));
     const hasManual = initialPins.length > 0;
-    const initialResult = r.type==='use' ? computeUsePreviewHtml(category, ea, eu, initialPins, r.id) : { previewHtml:'', skipHtml:'' };
+    const initialResult = r.type==='use' ? computeUsePreviewHtml(category, ea, eu, initialPins, r.id, r.date) : { previewHtml:'', skipHtml:'' };
     const initialPreview = initialResult.previewHtml;
     const initialSkipHtml = initialResult.skipHtml;
     const initialSelectedHours = initialPins.reduce((s,p)=> s + (p.days!=null ? p.days*getHoursPerDay() : 0), 0);
@@ -3824,7 +3890,7 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
       </div>
       <div class="field">
         <label>日期</label>
-        <div class="date-row"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}" onchange="onEditCompDateChange('${r.id}','${category}')"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入">⌨</button></div>
+        <div class="date-row"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}" onchange="onEditCompDateChange('${r.id}','${category}');updateEditUsePreview('${r.id}','${category}')"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入">⌨</button></div>
       </div>
       <div class="field field-days">
         <label>數量</label>
@@ -3872,7 +3938,7 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
               <div class="src-batch-row" data-batch-id="${b.id}" data-batch-remain="${b.remainDays}">
                 <label class="src-batch-check">
                   <input type="checkbox" ${isChecked?'checked':''} onchange="onCompSrcRowToggle(this,'${category}')">
-                  <span class="src-batch-label">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}</span>
+                  <span class="src-batch-label">${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''}${b.expiry && b.expiry < r.date ? '<span class="src-batch-expired">已過期</span>' : ''}</span>
                   <span class="src-batch-remain">剩${fmt(b.remainDays*getHoursPerDay())}小時</span>
                 </label>
                 <div class="src-batch-input-wrap" style="${isChecked?'':'display:none;'}">
@@ -5197,18 +5263,19 @@ async function saveEditRecord(key,id){
 function registerUndo(info){
   if(lastDeleted && lastDeleted.timeoutId){
     clearTimeout(lastDeleted.timeoutId);
-    // 上一筆的復原時限還沒到，就被這次的新刪除蓋掉了——原本的計時器一取消，
-    // 裡面「時間到了才清照片」的callback永遠不會執行，那張照片會變成永久孤兒、連錯誤記錄都不會有。
-    // 使用者既然又刪了下一筆，代表上一筆已經不會再復原了，這裡直接把它的清理work補做掉
-    if(lastDeleted.item && lastDeleted.item.photoUrl){ deleteCompPhoto(lastDeleted.item.photoUrl); }
+    // 上一筆的復原時限還沒到就被這次的新刪除蓋掉：上一筆已經不能復原了，它的照片（已在待刪清單裡）可以馬上處理
+    if(lastDeleted.item && lastDeleted.item.photoUrl){ enqueuePhotoDelete(lastDeleted.item.photoUrl, 0); }
   }
+  const hadPrevious = !!(lastDeleted && lastDeleted.timeoutId);
   lastDeleted = info;
+  // 刪除當下就先把照片記進待刪清單（6秒後才生效）：就算6秒內App被關掉，下次開App也會補刪，不會變孤兒
+  if(info.item && info.item.photoUrl){ enqueuePhotoDelete(info.item.photoUrl, 6000); }
   lastDeleted.timeoutId = setTimeout(()=>{
-    // 復原時限過了，這筆是真的不會復原了，這時候才把雲端照片一併清掉
-    if(info.item && info.item.photoUrl){ deleteCompPhoto(info.item.photoUrl); }
     lastDeleted=null;
     render();
+    processPhotoDeleteQueue(); // 復原時限過了，照片正式刪除
   }, 6000);
+  if(hadPrevious) processPhotoDeleteQueue(); // 上一筆已經不能復原，它的照片現在就可以刪
 }
 
 async function removeRecord(btnEl, key, id){
@@ -5236,15 +5303,26 @@ async function removeRecord(btnEl, key, id){
 async function undoDelete(){
   if(!lastDeleted) return;
   clearTimeout(lastDeleted.timeoutId);
+  // 復原前先確認這筆沒有被別的方式帶回來（例如6秒內剛好雲端同步把它帶回來），不然會出現兩筆一樣id的紀錄，
+  // 資料驗證會擋下來，其他裝置就同步不到了
+  const itemId = lastDeleted.item && lastDeleted.item.id;
+  let reinserted = false;
   if(lastDeleted.kind==='record'){
     if(!state.records[lastDeleted.key]) state.records[lastDeleted.key]=[];
-    state.records[lastDeleted.key].splice(lastDeleted.index,0,lastDeleted.item);
+    if(!state.records[lastDeleted.key].some(r=>r.id===itemId)){ state.records[lastDeleted.key].splice(lastDeleted.index,0,lastDeleted.item); reinserted = true; }
   } else {
-    state.compRecords.splice(lastDeleted.index,0,lastDeleted.item);
+    if(!state.compRecords.some(r=>r.id===itemId)){ state.compRecords.splice(lastDeleted.index,0,lastDeleted.item); reinserted = true; }
+  }
+  const undonePhoto = lastDeleted.item && lastDeleted.item.photoUrl;
+  if(undonePhoto){
+    // 真的加回去了 → 照片要留著；沒加回去（同一筆已經被別的版本帶回來）→ 這張照片可能沒人用了，交給待刪清單判斷（有人用就不會刪）
+    if(reinserted) dequeuePhotoDelete(undonePhoto);
+    else enqueuePhotoDelete(undonePhoto, 0);
   }
   lastDeleted = null;
   await saveState();
   render();
+  if(undonePhoto && !reinserted) processPhotoDeleteQueue();
 }
 
 function onCompUnitChange(){
@@ -5287,13 +5365,13 @@ async function applyKwItems(){
   let msg = `確定要新增這 ${kwPendingItems.length} 筆嗎？`;
   if(quotaItems.length>0){
     msg += `\n其中包含 ${quotaItems.length} 筆會直接覆蓋「總天數」設定：\n` +
-      quotaItems.map(q=>`・${q.quotaLabel}總天數 → ${fmt(q.total)} 天`).join('\n');
+      quotaItems.map(q=>`・${CUR_YEAR} 年${q.quotaLabel}總天數 → ${fmt(q.total)} 天`).join('\n');
   }
   if(!window.confirm(msg)) return;
   try{
     kwPendingItems.forEach(item=>{
       if(item.kind==='quota'){
-        setQuota(item.quotaKey, selectedYear, item.total);
+        setQuota(item.quotaKey, CUR_YEAR, item.total); // 快速輸入沒有年份，總天數一律設定今年
         return;
       }
       const id = uid();
@@ -5323,26 +5401,32 @@ async function applyKwItems(){
 
 function saveResetSnapshot(label){
   try{
+    // 30分鐘內又重置一次：上一份快照會被這次蓋掉（不能再復原），它清掉的那些照片要先排入待刪，不然會變孤兒
+    const prevRaw = localStorage.getItem('resetSnapshot');
+    if(prevRaw){ try{ const prev = JSON.parse(prevRaw); expireSnapshotPhotos('resetSnapshot', prev.compRecords); }catch(e){} }
     const snapshot = { time: Date.now(), label, records: state.records, compRecords: state.compRecords };
     localStorage.setItem('resetSnapshot', JSON.stringify(snapshot));
     // 30 分鐘後，如果這份快照還是同一份、也沒被復原，才真的清掉裡面紀錄對應的雲端照片
     setTimeout(()=>{ finalizeResetSnapshotCleanup(snapshot.time); }, 30*60*1000);
   }catch(e){}
 }
+// 快照過期（不能再復原了）：把「快照裡有、現在的紀錄已經沒在用」的照片排進待刪清單，再移除快照。
+// 不管是30分鐘計時器到了、還是App關掉再開時才發現過期，都走這一條，照片不會因為App沒一直開著而被遺忘
+function expireSnapshotPhotos(storageKey, snapRecords){
+  const oldUrls = (snapRecords||[]).filter(r=>r && r.photoUrl).map(r=>r.photoUrl);
+  const currentUrls = new Set((state && state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl));
+  oldUrls.filter(u=>!currentUrls.has(u)).forEach(u=>enqueuePhotoDelete(u, 0));
+  try{ localStorage.removeItem(storageKey); }catch(e){}
+}
 async function finalizeResetSnapshotCleanup(snapshotTime){
   try{
     const raw = localStorage.getItem('resetSnapshot');
     if(!raw) return; // 已經被復原、或已經清過了，不用處理
     const snap = JSON.parse(raw);
-    if(snap.time !== snapshotTime) return; // 中途又發生過別次重置，這是舊的排程了，不要誤刪新快照的照片
-    // 重置可能是「範圍限定」的（例如只清某一天），快照裡存的卻是「整份compRecords」，
-    // 如果不跟現在還留著的紀錄比對、直接把快照裡的照片全部刪掉，會連沒有被這次重置動到、其他還在正常使用的紀錄的照片也一併清掉。
-    // 一定要先算出「重置後真的消失了」的那些，才能安全清理，跟還原備份用同一套比對邏輯
-    const oldUrls = (snap.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl);
-    const currentUrls = new Set((state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl));
-    const orphanUrls = oldUrls.filter(u=>!currentUrls.has(u));
-    for(const url of orphanUrls){ await deleteCompPhoto(url); }
-    localStorage.removeItem('resetSnapshot');
+    if(snap.time !== snapshotTime) return; // 中途又發生過別次重置，這是舊的排程了
+    // 重置可能只清某個範圍，快照存的是整份compRecords，所以只處理「重置後真的消失了」的照片
+    expireSnapshotPhotos('resetSnapshot', snap.compRecords);
+    processPhotoDeleteQueue();
   }catch(e){ console.error('清理重置快照的照片失敗', e); }
 }
 function getResetSnapshot(){
@@ -5350,7 +5434,7 @@ function getResetSnapshot(){
     const raw = localStorage.getItem('resetSnapshot');
     if(!raw) return null;
     const snap = JSON.parse(raw);
-    if(Date.now() - snap.time > 30*60*1000){ localStorage.removeItem('resetSnapshot'); return null; }
+    if(Date.now() - snap.time > 30*60*1000){ expireSnapshotPhotos('resetSnapshot', snap.compRecords); return null; }
     return snap;
   }catch(e){ return null; }
 }
@@ -5380,9 +5464,13 @@ async function restoreResetSnapshot(){
     }
   });
 
+  // 快照裡「因為同一筆（同id）現在已經有別的版本而沒有加回來」的紀錄，它的照片如果現在沒人用，要排入待刪，不然快照一移除就變孤兒
+  const nowUrls = new Set(state.compRecords.filter(r=>r.photoUrl).map(r=>r.photoUrl));
+  (snap.compRecords||[]).forEach(r=>{ if(r && r.photoUrl && !nowUrls.has(r.photoUrl)) enqueuePhotoDelete(r.photoUrl, 0); });
   try{ localStorage.removeItem('resetSnapshot'); }catch(e){}
   await saveState();
   render();
+  processPhotoDeleteQueue();
   setStatus(`已復原 ${restoredCount} 筆被清除的紀錄`, true);
 }
 
@@ -5473,15 +5561,99 @@ async function toggleAutoDeleteExpiredPhotos(checked){
   setStatus(checked ? '已開啟：過期照片會自動清除' : '已關閉：過期照片不會自動清除', true);
 }
 
-async function deleteCompPhoto(photoUrl){
-  if(!fbStorage || !photoUrl) return;
-  try{ await fbStorage.refFromURL(photoUrl).delete(); }
+// ===== 待刪除照片清單（防止雲端孤兒照片）=====
+// 所有「照片要從雲端刪掉」的情況都先記進手機裡的這份清單，真的刪成功（或雲端本來就沒有了）才從清單拿掉。
+// 這樣不管是刪到一半App被關掉、離線、還沒登入、網路出錯，下次開App／恢復網路／回到前景／登入時都會再補刪，照片不會被遺忘在雲端。
+// 安全規則：真正刪除前一定再檢查一次，只要目前任何紀錄、或還在30分鐘復原期限內的快照、或6秒內可以按「復原」的那筆還在用這張照片，就絕對不刪
+const PHOTO_DELETE_QUEUE_KEY = 'pendingPhotoDeletes';
+const PHOTO_DELETE_MAX_TRIES = 30;
+function loadPhotoDeleteQueue(){
+  try{
+    const arr = JSON.parse(localStorage.getItem(PHOTO_DELETE_QUEUE_KEY) || '[]');
+    return Array.isArray(arr) ? arr.filter(x=>x && typeof x.url==='string' && x.url) : [];
+  }catch(e){ return []; }
+}
+function savePhotoDeleteQueue(q){
+  try{ localStorage.setItem(PHOTO_DELETE_QUEUE_KEY, JSON.stringify(q.slice(-500))); }catch(e){}
+}
+function enqueuePhotoDelete(url, delayMs){
+  if(!url) return;
+  const q = loadPhotoDeleteQueue();
+  const existing = q.find(x=>x.url===url);
+  const notBefore = Date.now() + (delayMs||0);
+  if(existing){ existing.notBefore = Math.min(existing.notBefore||notBefore, notBefore); }
+  else { q.push({ url, notBefore, tries: 0, addedAt: Date.now() }); }
+  savePhotoDeleteQueue(q);
+}
+function dequeuePhotoDelete(url){
+  savePhotoDeleteQueue(loadPhotoDeleteQueue().filter(x=>x.url!==url));
+}
+// 目前「還有人在用」的照片：現有紀錄 + 還能復原的重置快照／還原前快照 + 6秒內還能按復原的那筆
+function referencedPhotoUrls(){
+  const set = new Set();
+  const add = arr => (arr||[]).forEach(r=>{ if(r && r.photoUrl) set.add(r.photoUrl); });
+  add(state && state.compRecords);
+  try{ const rs = getResetSnapshot(); if(rs) add(rs.compRecords); }catch(e){}
+  try{ const ps = getPreRestoreSnapshot(); if(ps && ps.state) add(ps.state.compRecords); }catch(e){}
+  if(lastDeleted && lastDeleted.item && lastDeleted.item.photoUrl) set.add(lastDeleted.item.photoUrl);
+  return set;
+}
+// 真的去雲端刪一張：刪成功、或雲端本來就沒有這個檔案（例如另一台裝置已經刪過）都算完成
+async function deletePhotoNow(photoUrl){
+  try{ await fbStorage.refFromURL(photoUrl).delete(); return true; }
   catch(e){
-    console.error('刪除照片失敗', e);
-    // 原本只有console.error，平常完全看不到；照片清理失敗會變成永久孤兒還不自知，
-    // 導進「設定」頁的錯誤記錄，至少之後有機會發現、手動去Firebase Console處理
-    logAppError('照片清理失敗（可能變成雲端孤兒檔案）', (e && e.message ? e.message : String(e)) + '｜網址：' + photoUrl);
+    if(e && (e.code==='storage/object-not-found' || e.code==='storage/invalid-url' || e.code==='storage/invalid-argument')) return true;
+    return false;
   }
+}
+let photoQueueRunning = false;
+let photoQueueRerun = false;
+async function processPhotoDeleteQueue(){
+  if(photoQueueRunning){ photoQueueRerun = true; return; } // 正在跑：記著跑完再跑一次，不會漏掉這次觸發
+  if(!fbStorage || !currentUser || !isOnline) return; // 沒登入／離線時刪不了，留著等之後
+  photoQueueRunning = true;
+  try{
+    const q = loadPhotoDeleteQueue();
+    if(!q.length) return;
+    const inUse = referencedPhotoUrls();
+    const now = Date.now();
+    const done = new Set();
+    const failed = new Map();
+    for(const item of q){
+      if((item.notBefore||0) > now) continue; // 還在6秒復原期間
+      if(inUse.has(item.url)){
+        // 還有紀錄在用（例如按了復原、別台裝置同步回來、或這筆紀錄正在更新中）：絕對不刪，先留在清單等；
+        // 連續30天都還在用，代表它確定被用回去了，才從清單拿掉
+        if(now - (item.addedAt||now) > 30*24*60*60*1000) done.add(item.url);
+        continue;
+      }
+      // 前面刪別張要等網路，這段期間資料可能變了（例如雲端同步把紀錄帶回來），刪之前再確認一次這張真的沒人用
+      if(referencedPhotoUrls().has(item.url)) continue;
+      const ok = await deletePhotoNow(item.url);
+      if(ok) done.add(item.url);
+      else failed.set(item.url, (item.tries||0)+1);
+    }
+    // 處理期間可能又有新的照片被排進來，要以最新的清單為準合併，不能蓋掉
+    const latest = loadPhotoDeleteQueue().filter(x=>!done.has(x.url)).map(x=>{
+      if(!failed.has(x.url)) return x;
+      const tries = failed.get(x.url);
+      if(tries===1) logAppError('照片清理失敗，已排入待刪清單，之後會自動重試', '網址：' + x.url);
+      return Object.assign({}, x, { tries });
+    });
+    // 不設放棄上限：放棄就等於製造孤兒。留在清單裡幾乎不佔空間，每次觸發試一次，總有一次會成功
+    // 連續失敗很多次時再提醒一次（例如換了帳號、權限設定被改），方便到Firebase Console查
+    latest.filter(x=>failed.has(x.url) && x.tries===PHOTO_DELETE_MAX_TRIES).forEach(x=>logAppError('照片已連續多次刪除失敗，仍會持續自動重試（如果一直失敗，可以到Firebase Console手動處理）', '網址：' + x.url));
+    savePhotoDeleteQueue(latest);
+  }finally{
+    photoQueueRunning = false;
+    if(photoQueueRerun){ photoQueueRerun = false; setTimeout(processPhotoDeleteQueue, 0); }
+  }
+}
+// 原本各處呼叫的入口：改成「先排入清單、馬上試著處理」，失敗會留在清單裡之後重試
+async function deleteCompPhoto(photoUrl){
+  if(!photoUrl) return;
+  enqueuePhotoDelete(photoUrl, 0);
+  await processPhotoDeleteQueue();
 }
 
 // 到期自動清照片：只清「已經過期的補休/換休獲得紀錄」的照片，
@@ -5490,17 +5662,14 @@ async function cleanupExpiredCompPhotos(){
   if(!state.autoDeleteExpiredPhotos || !currentUser) return;
   const today = TODAY;
   const GRACE_MONTHS = 6; // 到期後再留6個月緩衝，補休(2年到期)實際會存到2.5年，換休(1年到期)存到1.5年
+  // 刻意不管這批還有沒有剩、是不是選了「保留」：到期滿6個月就一律清掉，避免照片長期佔用免費雲端空間
+  // （紀錄本身跟剩餘天數都不受影響，只是附件照片不見；清完同時移除紀錄上的照片網址，不會留下指向不存在檔案的連結）
   const expired = state.compRecords.filter(r=> r.type==='earn' && r.photoUrl && r.expiry && addMonths(r.expiry, GRACE_MONTHS) < today);
   if(expired.length===0) return;
-  let cleaned = 0;
-  for(const r of expired){
-    try{
-      await deleteCompPhoto(r.photoUrl);
-      delete r.photoUrl;
-      cleaned++;
-    }catch(e){ console.error('清除到期照片失敗', e); }
-  }
-  if(cleaned>0){ await saveState(); render(); }
+  // 先把紀錄上的照片網址拿掉並存檔，再交給待刪清單去刪（刪失敗會自動重試，不會因為網址已經拿掉而被遺忘）
+  expired.forEach(r=>{ enqueuePhotoDelete(r.photoUrl, 0); delete r.photoUrl; });
+  await saveState(); render();
+  processPhotoDeleteQueue();
 }
 
 async function addComp(e, category){
@@ -5527,7 +5696,7 @@ async function addComp(e, category){
       // 送出前用同一套FIFO邏輯重新算一次實際會扣到哪些批次，缺口若真的接到手動沒選過的批次，把那筆的備註也一併補進來，
       // 避免存檔後備註跟實際扣款狀況兜不起來
       if(manualPins.length && !compNoteTouched){
-        const finalResult = computeUsePreviewHtml(category, amount, unit, manualPins, null);
+        const finalResult = computeUsePreviewHtml(category, amount, unit, manualPins, null, date);
         if(finalResult.fallbackNote){
           note = note ? `${note}｜${finalResult.fallbackNote}` : `使用 ${finalResult.fallbackNote}`;
         }
@@ -5535,6 +5704,12 @@ async function addComp(e, category){
       const balAsOfDate = compBalanceAsOf(category, date, null);
       if(balAsOfDate - daysEquiv < 0){
         if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmt(balAsOfDate)} 天（可能是因為這筆使用的日期比對應的獲得日期早），登記後會變負數，仍要登記嗎？`)) return;
+      } else {
+        // 總數夠，但有一部分是已過期的批次（不會自動扣）：先講清楚，讓使用者決定要不要回去手動指定
+        const chk = computeUsePreviewHtml(category, amount, unit, manualPins, null, date);
+        if(chk.shortfall>0.0001 && chk.expiredLeft>0.0001){
+          if(!window.confirm(`⚠️ 有效的${info.label}不夠扣，還缺 ${fmt(chk.shortfall)} 天。\n已過期的 ${fmt(chk.expiredLeft)} 天不會自動扣抵，如果要用請按「取消」，回去勾選「手動指定」選它。\n\n仍要直接登記嗎？`)) return;
+        }
       }
     }
     const id = uid();
@@ -5600,6 +5775,13 @@ async function saveEditComp(id, btnEl){
         const balAsOfDate = compBalanceAsOf(category, date, id);
         if(balAsOfDate - daysEquiv < 0){
           if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmt(balAsOfDate)} 天，儲存後會變負數，仍要儲存嗎？`)) return;
+        } else {
+          const editManualOn = document.getElementById(`editManualToggle-${id}`);
+          const editPins = (editManualOn && editManualOn.checked) ? gatherCompSrcPins(`editCompSrcBatchList-${id}`) : [];
+          const chk = computeUsePreviewHtml(category, amount, unit, editPins, id, date);
+          if(chk.shortfall>0.0001 && chk.expiredLeft>0.0001){
+            if(!window.confirm(`⚠️ 有效的${info.label}不夠扣，還缺 ${fmt(chk.shortfall)} 天。\n已過期的 ${fmt(chk.expiredLeft)} 天不會自動扣抵，如果要用請按「取消」，回去勾選「手動指定」選它。\n\n仍要直接儲存嗎？`)) return;
+          }
         }
       }
       const updated = Object.assign({}, state.compRecords[idx], {type,date,unit,amount,note});
@@ -5620,6 +5802,8 @@ async function saveEditComp(id, btnEl){
         const expiryEl = document.getElementById(`editCompExpiry-${id}`);
         const expiry = expiryEl ? parseFlexibleDate(expiryEl.value) : null;
         if(expiry){ updated.expiry = expiry; } else { delete updated.expiry; }
+        // 改了到期日，之前針對舊到期日做的「保留」決定就不再適用（不然改成未來日期後，自動扣抵還是會一直跳過這批）
+        if((updated.expiry||null) !== (state.compRecords[idx].expiry||null)) delete updated.expiryDecision;
       }
 
       const oldPhotoUrl = updated.photoUrl || null;
@@ -5635,7 +5819,7 @@ async function saveEditComp(id, btnEl){
           if(btnEl){ btnEl.disabled = true; btnEl.textContent = '📤 照片上傳中…'; }
           try{
             updated.photoUrl = await uploadCompPhoto(newPhotoFile, id);
-            if(oldPhotoUrl) deleteCompPhoto(oldPhotoUrl); // 換照片，舊的不用留著
+            if(oldPhotoUrl) enqueuePhotoDelete(oldPhotoUrl, 0); // 換照片，舊的排入待刪（等紀錄更新完才真的刪）
           }catch(err){
             console.error('照片上傳失敗', err);
             logAppError('編輯時照片上傳失敗', err && err.message ? err.message : String(err));
@@ -5644,11 +5828,24 @@ async function saveEditComp(id, btnEl){
         }
       } else if(editPhotoRemoved[id] && oldPhotoUrl){
         delete updated.photoUrl;
-        deleteCompPhoto(oldPhotoUrl);
+        enqueuePhotoDelete(oldPhotoUrl, 0);
       }
       delete editPhotoRemoved[id];
 
-      state.compRecords[idx] = updated;
+      // 上傳照片要等網路，這段期間清單可能變了（例如刪了別筆、或雲端同步把整份資料換掉），
+      // 原本記住的位置已經不可靠，一定要用id重新找一次，不然會蓋到別筆紀錄
+      const curIdx = state.compRecords.findIndex(r=>r.id===id);
+      if(curIdx<0){
+        // 這筆在上傳期間已經不在了（被刪除或同步掉），修改不套用；剛上傳的新照片沒有紀錄要用，排入待刪
+        if(updated.photoUrl && updated.photoUrl!==oldPhotoUrl) enqueuePhotoDelete(updated.photoUrl, 0);
+        editing = null; quickEditModalOpen = null;
+        render();
+        processPhotoDeleteQueue();
+        setStatus('這筆紀錄在儲存期間已被刪除或同步更新，這次修改沒有套用', false);
+        return;
+      }
+      state.compRecords[curIdx] = updated;
+      processPhotoDeleteQueue(); // 紀錄已經換成新的，舊照片現在沒人用了才刪
     }
     editing = null;
     quickEditModalOpen = null;
@@ -5999,6 +6196,9 @@ function toggleImport(){
 
 function savePreRestoreSnapshot(){
   try{
+    // 30分鐘內又還原一次：上一份還原前快照會被蓋掉，它引用、現在已經沒人用的照片先排入待刪
+    const prevRaw = localStorage.getItem('preRestoreSnapshot');
+    if(prevRaw){ try{ const prev = JSON.parse(prevRaw); expireSnapshotPhotos('preRestoreSnapshot', prev.state && prev.state.compRecords); }catch(e){} }
     const snapshot = { time: Date.now(), state: state };
     localStorage.setItem('preRestoreSnapshot', JSON.stringify(snapshot));
     // 跟重置快照用同一套邏輯：30分鐘後主動清掉，不是等使用者剛好再打開設定頁才順便清，
@@ -6013,11 +6213,8 @@ async function finalizePreRestoreSnapshotCleanup(snapshotTime){
     const snap = JSON.parse(raw);
     if(snap.time !== snapshotTime) return; // 中途又發生過別次還原，這是舊的排程了，不要誤刪新快照
     // 「還原前」那份資料裡引用的照片，如果現在（還原後、使用者沒有反悔）已經沒有任何一筆紀錄還在用，就是孤兒照片，清掉
-    const oldUrls = (snap.state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl);
-    const currentUrls = new Set((state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl));
-    const orphanUrls = oldUrls.filter(u=>!currentUrls.has(u));
-    for(const url of orphanUrls){ await deleteCompPhoto(url); }
-    localStorage.removeItem('preRestoreSnapshot');
+    expireSnapshotPhotos('preRestoreSnapshot', snap.state && snap.state.compRecords);
+    processPhotoDeleteQueue();
   }catch(e){ console.error('清理還原前快照的照片失敗', e); }
 }
 function getPreRestoreSnapshot(){
@@ -6025,7 +6222,7 @@ function getPreRestoreSnapshot(){
     const raw = localStorage.getItem('preRestoreSnapshot');
     if(!raw) return null;
     const snap = JSON.parse(raw);
-    if(Date.now() - snap.time > 30*60*1000){ localStorage.removeItem('preRestoreSnapshot'); return null; } // 跟重置的復原視窗一樣是30分鐘，維持一致，比較好記
+    if(Date.now() - snap.time > 30*60*1000){ expireSnapshotPhotos('preRestoreSnapshot', snap.state && snap.state.compRecords); return null; } // 跟重置的復原視窗一樣是30分鐘
     return snap;
   }catch(e){ return null; }
 }
@@ -6035,10 +6232,16 @@ async function restorePreRestoreSnapshot(){
   const snap = getPreRestoreSnapshot();
   if(!snap){ setStatus('復原時限已過（30分鐘），或沒有可復原的還原前版本', false); return; }
   if(!window.confirm('確定要復原到「還原備份」之前的版本嗎？\n（這會把剛才還原進來的資料整個換掉，改回還原前的樣子）')) return;
+  // 整份換回去之前，記下「現在這份」用到的照片；換回去後沒人用的（例如還原後才新增的紀錄的照片）排入待刪
+  const discardedUrls = (state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl);
   state = snap.state;
+  state.records = Object.assign(defaultState().records, state.records||{});
   try{ localStorage.removeItem('preRestoreSnapshot'); }catch(e){}
+  const keptUrls = new Set((state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl));
+  discardedUrls.filter(u=>!keptUrls.has(u)).forEach(u=>enqueuePhotoDelete(u, 0));
   await saveState();
   render();
+  processPhotoDeleteQueue();
   setStatus('已復原到還原備份之前的版本', true);
 }
 async function restoreBackup(){
@@ -6086,6 +6289,7 @@ async function checkResetScaleParam(){
   loadLastSyncTime();
   initOnlineDetection();
   await loadState();
+  try{ if(reconcileAutoCancelRecords()) await saveState(); }catch(e){} // 舊資料裡已經多扣的「逾期自動取消」，開App時順便對齊
   await checkResetScaleParam();
   checkCompLedgerConsistency();
   if(getExpiringUndecidedBatches().length>0) expiryDecisionModalOpen = true;
