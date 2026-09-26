@@ -615,8 +615,8 @@
   .theme-hint-title{font-size:16px;font-weight:700;line-height:1.4;}
   .theme-hint-sub{font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
   /* 深色模式的元件微調 */
-  /* 首頁綠色大卡片在深色底上壓暗一點，不要太搶眼 */
-  :root[data-theme="dark"] .hero-card{background:linear-gradient(155deg, #3D6B5D, #2A4F44);}
+  /* 首頁綠色大卡片（深色）：墨綠底＋左上角一道淡綠柔光＋細亮邊，跟下方綠色按鈕分出主次 */
+  :root[data-theme="dark"] .hero-card{background:radial-gradient(120% 90% at 15% 0%, rgba(120,190,160,.18), transparent 60%), linear-gradient(160deg, #294A40, #1B302A);border:1px solid rgba(140,200,175,.18);box-shadow:0 12px 28px -14px rgba(0,0,0,.6);}
   :root[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.6);}
   :root[data-theme="dark"] img{filter:brightness(.92);}
 </style>
@@ -653,7 +653,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.26-20';
+const APP_VERSION = 'v2026.09.26-21';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
