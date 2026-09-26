@@ -653,7 +653,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.26-21';
+const APP_VERSION = 'v2026.09.27-01';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -1667,10 +1667,12 @@ function renderMonthGroups(listKey, rows, emptyMsg, liBuilder, totalFn, forceExp
   });
   const curYm = `${NOW.getFullYear()}-${String(NOW.getMonth()+1).padStart(2,'0')}`;
   const hasCurMonth = order.includes(curYm);
+  // 沒有本月紀錄時，預設展開「最近的」那個月（不管排序是新到舊還是舊到新），不會因為舊到新就打開最久以前的月份
+  const latestYm = order.reduce((a,b)=> b>a ? b : a, order[0]);
   return order.map((ym, idx)=>{
     const groupRows = groups[ym];
     const stateKey = `${listKey}-${ym}`;
-    const isDefaultOpen = hasCurMonth ? (ym===curYm) : (idx===0);
+    const isDefaultOpen = hasCurMonth ? (ym===curYm) : (ym===latestYm);
     const forced = forceExpand ? forceExpand(groupRows) : false;
     const expanded = forced ? true : (searchQuery ? true : (expandedMonths[stateKey] !== undefined ? expandedMonths[stateKey] : isDefaultOpen));
     const metaText = totalFn ? totalFn(groupRows) : `${groupRows.length} 筆`;
