@@ -570,7 +570,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.26-08';
+const APP_VERSION = 'v2026.09.26-09';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3388,7 +3388,8 @@ function statsChart(){
   });
   const maxVal = Math.max(1, ...monthTotals.map(m=> Object.values(m).reduce((s,v)=>s+v,0)));
   const TRACK_H = 130;
-  const typeList = LEAVE_TYPES.concat([{key:'comp', c:'brick', label:'補休使用'}, {key:'exchange', c:'teal', label:'換休使用'}]);
+  const typeList = LEAVE_TYPES.concat([{key:'comp', c:'brick', label:'補休使用'}, {key:'exchange', c:'teal', label:'換休使用'}, {key:'custom', c:'amber', label:'其他假別'}]);
+  const hasCustomUse = monthTotals.some(m=>(m.custom||0)>0);
   const bars = monthTotals.map((m,i)=>{
     const total = Object.values(m).reduce((s,v)=>s+v,0);
     const segments = typeList.map(t=>{
@@ -3448,6 +3449,7 @@ function statsChart(){
         ${LEAVE_TYPES.map(t=>`<span class="legend-item"><span class="legend-dot c-${t.c}-bg"></span>${t.label}</span>`).join('')}
         <span class="legend-item"><span class="legend-dot c-brick-bg"></span>補休使用</span>
         <span class="legend-item"><span class="legend-dot c-teal-bg"></span>換休使用</span>
+        ${hasCustomUse ? `<span class="legend-item"><span class="legend-dot c-amber-bg"></span>其他假別</span>` : ''}
       </div>
     </div>
     ${earnSection}`;
@@ -5301,16 +5303,26 @@ async function removeRecord(btnEl, key, id){
 async function undoDelete(){
   if(!lastDeleted) return;
   clearTimeout(lastDeleted.timeoutId);
-  if(lastDeleted.item && lastDeleted.item.photoUrl) dequeuePhotoDelete(lastDeleted.item.photoUrl); // 復原了，照片不用刪
+  // 復原前先確認這筆沒有被別的方式帶回來（例如6秒內剛好雲端同步把它帶回來），不然會出現兩筆一樣id的紀錄，
+  // 資料驗證會擋下來，其他裝置就同步不到了
+  const itemId = lastDeleted.item && lastDeleted.item.id;
+  let reinserted = false;
   if(lastDeleted.kind==='record'){
     if(!state.records[lastDeleted.key]) state.records[lastDeleted.key]=[];
-    state.records[lastDeleted.key].splice(lastDeleted.index,0,lastDeleted.item);
+    if(!state.records[lastDeleted.key].some(r=>r.id===itemId)){ state.records[lastDeleted.key].splice(lastDeleted.index,0,lastDeleted.item); reinserted = true; }
   } else {
-    state.compRecords.splice(lastDeleted.index,0,lastDeleted.item);
+    if(!state.compRecords.some(r=>r.id===itemId)){ state.compRecords.splice(lastDeleted.index,0,lastDeleted.item); reinserted = true; }
+  }
+  const undonePhoto = lastDeleted.item && lastDeleted.item.photoUrl;
+  if(undonePhoto){
+    // 真的加回去了 → 照片要留著；沒加回去（同一筆已經被別的版本帶回來）→ 這張照片可能沒人用了，交給待刪清單判斷（有人用就不會刪）
+    if(reinserted) dequeuePhotoDelete(undonePhoto);
+    else enqueuePhotoDelete(undonePhoto, 0);
   }
   lastDeleted = null;
   await saveState();
   render();
+  if(undonePhoto && !reinserted) processPhotoDeleteQueue();
 }
 
 function onCompUnitChange(){
@@ -5389,6 +5401,9 @@ async function applyKwItems(){
 
 function saveResetSnapshot(label){
   try{
+    // 30分鐘內又重置一次：上一份快照會被這次蓋掉（不能再復原），它清掉的那些照片要先排入待刪，不然會變孤兒
+    const prevRaw = localStorage.getItem('resetSnapshot');
+    if(prevRaw){ try{ const prev = JSON.parse(prevRaw); expireSnapshotPhotos('resetSnapshot', prev.compRecords); }catch(e){} }
     const snapshot = { time: Date.now(), label, records: state.records, compRecords: state.compRecords };
     localStorage.setItem('resetSnapshot', JSON.stringify(snapshot));
     // 30 分鐘後，如果這份快照還是同一份、也沒被復原，才真的清掉裡面紀錄對應的雲端照片
@@ -5449,9 +5464,13 @@ async function restoreResetSnapshot(){
     }
   });
 
+  // 快照裡「因為同一筆（同id）現在已經有別的版本而沒有加回來」的紀錄，它的照片如果現在沒人用，要排入待刪，不然快照一移除就變孤兒
+  const nowUrls = new Set(state.compRecords.filter(r=>r.photoUrl).map(r=>r.photoUrl));
+  (snap.compRecords||[]).forEach(r=>{ if(r && r.photoUrl && !nowUrls.has(r.photoUrl)) enqueuePhotoDelete(r.photoUrl, 0); });
   try{ localStorage.removeItem('resetSnapshot'); }catch(e){}
   await saveState();
   render();
+  processPhotoDeleteQueue();
   setStatus(`已復原 ${restoredCount} 筆被清除的紀錄`, true);
 }
 
@@ -5588,8 +5607,9 @@ async function deletePhotoNow(photoUrl){
   }
 }
 let photoQueueRunning = false;
+let photoQueueRerun = false;
 async function processPhotoDeleteQueue(){
-  if(photoQueueRunning) return;
+  if(photoQueueRunning){ photoQueueRerun = true; return; } // 正在跑：記著跑完再跑一次，不會漏掉這次觸發
   if(!fbStorage || !currentUser || !isOnline) return; // 沒登入／離線時刪不了，留著等之後
   photoQueueRunning = true;
   try{
@@ -5607,6 +5627,8 @@ async function processPhotoDeleteQueue(){
         if(now - (item.addedAt||now) > 30*24*60*60*1000) done.add(item.url);
         continue;
       }
+      // 前面刪別張要等網路，這段期間資料可能變了（例如雲端同步把紀錄帶回來），刪之前再確認一次這張真的沒人用
+      if(referencedPhotoUrls().has(item.url)) continue;
       const ok = await deletePhotoNow(item.url);
       if(ok) done.add(item.url);
       else failed.set(item.url, (item.tries||0)+1);
@@ -5618,11 +5640,13 @@ async function processPhotoDeleteQueue(){
       if(tries===1) logAppError('照片清理失敗，已排入待刪清單，之後會自動重試', '網址：' + x.url);
       return Object.assign({}, x, { tries });
     });
-    const givenUp = latest.filter(x=>x.tries>=PHOTO_DELETE_MAX_TRIES);
-    givenUp.forEach(x=>logAppError('照片多次刪除失敗，已放棄（可能變成雲端孤兒檔案，請到Firebase Console手動處理）', '網址：' + x.url));
-    savePhotoDeleteQueue(latest.filter(x=>x.tries<PHOTO_DELETE_MAX_TRIES));
+    // 不設放棄上限：放棄就等於製造孤兒。留在清單裡幾乎不佔空間，每次觸發試一次，總有一次會成功
+    // 連續失敗很多次時再提醒一次（例如換了帳號、權限設定被改），方便到Firebase Console查
+    latest.filter(x=>failed.has(x.url) && x.tries===PHOTO_DELETE_MAX_TRIES).forEach(x=>logAppError('照片已連續多次刪除失敗，仍會持續自動重試（如果一直失敗，可以到Firebase Console手動處理）', '網址：' + x.url));
+    savePhotoDeleteQueue(latest);
   }finally{
     photoQueueRunning = false;
+    if(photoQueueRerun){ photoQueueRerun = false; setTimeout(processPhotoDeleteQueue, 0); }
   }
 }
 // 原本各處呼叫的入口：改成「先排入清單、馬上試著處理」，失敗會留在清單裡之後重試
@@ -5808,7 +5832,19 @@ async function saveEditComp(id, btnEl){
       }
       delete editPhotoRemoved[id];
 
-      state.compRecords[idx] = updated;
+      // 上傳照片要等網路，這段期間清單可能變了（例如刪了別筆、或雲端同步把整份資料換掉），
+      // 原本記住的位置已經不可靠，一定要用id重新找一次，不然會蓋到別筆紀錄
+      const curIdx = state.compRecords.findIndex(r=>r.id===id);
+      if(curIdx<0){
+        // 這筆在上傳期間已經不在了（被刪除或同步掉），修改不套用；剛上傳的新照片沒有紀錄要用，排入待刪
+        if(updated.photoUrl && updated.photoUrl!==oldPhotoUrl) enqueuePhotoDelete(updated.photoUrl, 0);
+        editing = null; quickEditModalOpen = null;
+        render();
+        processPhotoDeleteQueue();
+        setStatus('這筆紀錄在儲存期間已被刪除或同步更新，這次修改沒有套用', false);
+        return;
+      }
+      state.compRecords[curIdx] = updated;
       processPhotoDeleteQueue(); // 紀錄已經換成新的，舊照片現在沒人用了才刪
     }
     editing = null;
@@ -6160,6 +6196,9 @@ function toggleImport(){
 
 function savePreRestoreSnapshot(){
   try{
+    // 30分鐘內又還原一次：上一份還原前快照會被蓋掉，它引用、現在已經沒人用的照片先排入待刪
+    const prevRaw = localStorage.getItem('preRestoreSnapshot');
+    if(prevRaw){ try{ const prev = JSON.parse(prevRaw); expireSnapshotPhotos('preRestoreSnapshot', prev.state && prev.state.compRecords); }catch(e){} }
     const snapshot = { time: Date.now(), state: state };
     localStorage.setItem('preRestoreSnapshot', JSON.stringify(snapshot));
     // 跟重置快照用同一套邏輯：30分鐘後主動清掉，不是等使用者剛好再打開設定頁才順便清，
@@ -6193,10 +6232,16 @@ async function restorePreRestoreSnapshot(){
   const snap = getPreRestoreSnapshot();
   if(!snap){ setStatus('復原時限已過（30分鐘），或沒有可復原的還原前版本', false); return; }
   if(!window.confirm('確定要復原到「還原備份」之前的版本嗎？\n（這會把剛才還原進來的資料整個換掉，改回還原前的樣子）')) return;
+  // 整份換回去之前，記下「現在這份」用到的照片；換回去後沒人用的（例如還原後才新增的紀錄的照片）排入待刪
+  const discardedUrls = (state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl);
   state = snap.state;
+  state.records = Object.assign(defaultState().records, state.records||{});
   try{ localStorage.removeItem('preRestoreSnapshot'); }catch(e){}
+  const keptUrls = new Set((state.compRecords||[]).filter(r=>r.photoUrl).map(r=>r.photoUrl));
+  discardedUrls.filter(u=>!keptUrls.has(u)).forEach(u=>enqueuePhotoDelete(u, 0));
   await saveState();
   render();
+  processPhotoDeleteQueue();
   setStatus('已復原到還原備份之前的版本', true);
 }
 async function restoreBackup(){
