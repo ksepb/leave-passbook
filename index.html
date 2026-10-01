@@ -618,6 +618,8 @@
   /* 首頁綠色大卡片（深色）：墨綠底＋左上角一道淡綠柔光＋細亮邊，跟下方綠色按鈕分出主次 */
   :root[data-theme="dark"] .hero-card{background:radial-gradient(120% 90% at 15% 0%, rgba(120,190,160,.18), transparent 60%), linear-gradient(160deg, #294A40, #1B302A);border:1px solid rgba(140,200,175,.18);box-shadow:0 12px 28px -14px rgba(0,0,0,.6);}
   :root[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.6);}
+  /* 明細視窗裡的假別小標籤：深色時底色淡一點，彩色字才夠清楚 */
+  :root[data-theme="dark"] .home-detail-tag{background:rgba(255,255,255,.04);}
   :root[data-theme="dark"] img{filter:brightness(.92);}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
@@ -653,7 +655,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.09.27-01';
+const APP_VERSION = 'v2026.10.01-02';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -1323,6 +1325,11 @@ const DEFAULT_PERSONAL_PAID_DAYS = 7;
 function getPersonalPaidDays(){ return (state && state.personalPaidDays !== undefined && state.personalPaidDays !== null) ? Number(state.personalPaidDays) : DEFAULT_PERSONAL_PAID_DAYS; }
 const DEFAULT_ANNUAL_MIN_DAYS = 10;
 function getAnnualMinDays(){ return (state && state.annualMinDays !== undefined && state.annualMinDays !== null) ? Number(state.annualMinDays) : DEFAULT_ANNUAL_MIN_DAYS; }
+// 實際要求的最低天數：設定的門檻，但不能超過當年度特休總天數（例如今年特休只有7天，門檻設10天，就以7天計算，不會要求休不可能休到的天數）
+function getEffectiveAnnualMin(year){
+  year = year || CUR_YEAR;
+  return Math.max(0, Math.min(getAnnualMinDays(), getQuota('annual', year)));
+}
 function personalPaidUsed(year){
   year = year || selectedYear;
   return Math.min(usedOf('personal', year), getPersonalPaidDays());
@@ -2723,7 +2730,7 @@ function stampCard(t){
   // 特休專屬：如果還沒用到「最低使用天數」設定，且已經進入10月（跟首頁橫幅提醒用完全一樣的判斷邏輯，確保兩邊不會不一致），用邊框顏色提醒
   let minDaysBorder = '';
   if(t.key==='annual'){
-    const minDays = getAnnualMinDays();
+    const minDays = getEffectiveAnnualMin(CUR_YEAR);
     const annualUsedNow = usedOf('annual', CUR_YEAR);
     const shortfall = minDays - annualUsedNow;
     const month = NOW.getMonth()+1;
@@ -2745,7 +2752,7 @@ function stampCard(t){
     if(paid>0) chips.push(`<span class="mini-chip" style="background:var(--jade-soft);color:var(--jade);">${ICON_MONEY}有薪 ${fmt(paid)}天</span>`);
     if(unpaid>0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">無薪 ${fmt(unpaid)}天</span>`);
   }
-  if(t.key==='annual' && minDaysBorder) chips.push(`<span class="mini-chip" style="background:${minDaysBorder.includes('brick')?'var(--brick-soft);color:var(--brick);':'var(--amber-soft, #FBEFDC);color:var(--amber);'}">還沒用滿最低 ${fmt(getAnnualMinDays())} 天</span>`);
+  if(t.key==='annual' && minDaysBorder) chips.push(`<span class="mini-chip" style="background:${minDaysBorder.includes('brick')?'var(--brick-soft);color:var(--brick);':'var(--amber-soft, #FBEFDC);color:var(--amber);'}">還沒用滿最低 ${fmt(getEffectiveAnnualMin(CUR_YEAR))} 天</span>`);
   return `
     <div class="stamp-card tint-${t.c} ${level}" style="${minDaysBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetailFromHome('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
@@ -3239,12 +3246,13 @@ function reminderBanner(){
 
   const month = NOW.getMonth()+1;
   const annualUsed = usedOf('annual', CUR_YEAR);
-  const annualMin = getAnnualMinDays();
+  const annualMin = getEffectiveAnnualMin(CUR_YEAR);
+  const annualMinCapped = annualMin < getAnnualMinDays(); // 今年特休總天數比門檻少，以總天數為準
   const shortfall = annualMin - annualUsed;
   const daysLeftInYear = Math.round((new Date(CUR_YEAR,11,31) - new Date(TODAY+'T00:00:00')) / 86400000);
   const annualHtml = (month>=10 && shortfall>0) ? (()=>{
     const urgent = daysLeftInYear <= 30;
-    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>${ICON_STAR}特休最低使用天數提醒</strong>今年（${CUR_YEAR}）特休已使用 ${fmt(annualUsed)} 天，未達最低要求 ${fmt(annualMin)} 天，尚需再休 ${fmt(shortfall)} 天，建議儘早排定（可在「設定」分頁調整門檻）。</div>`;
+    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>${ICON_STAR}特休最低使用天數提醒</strong>今年（${CUR_YEAR}）特休已使用 ${fmt(annualUsed)} 天，未達最低要求 ${fmt(annualMin)} 天${annualMinCapped ? `（今年特休共 ${fmt(annualMin)} 天，以此為準）` : ''}，尚需再休 ${fmt(shortfall)} 天，建議儘早排定（可在「設定」分頁調整門檻）。</div>`;
   })() : '';
 
   // 新的一年還沒設定特休天數：每年只有特休會依年資變動，其他假別的預設值通常不用改，
@@ -4802,7 +4810,7 @@ function pageData(){
           <span>${fmt(getAnnualMinDays())} 天　${settingsExpandedKey==='annualMin'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='annualMin' ? `
-        <p>如果貴單位規定每年特休至少要休滿一定天數，可以在這裡設定門檻。每年 10 月起，如果當年度特休已使用天數還沒達到這個數字，首頁會出現提醒（越接近年底顏色越明顯），避免年底特休沒休完。</p>
+        <p>如果貴單位規定每年特休至少要休滿一定天數，可以在這裡設定門檻。每年 10 月起，如果當年度特休已使用天數還沒達到這個數字，首頁會出現提醒（越接近年底顏色越明顯），避免年底特休沒休完。如果當年度特休總天數比這個門檻少（例如今年只有 7 天），會以特休總天數為準。</p>
         <div class="total-row" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">
           <div class="field" style="max-width:140px;">
             <label>每年至少休幾天</label>
