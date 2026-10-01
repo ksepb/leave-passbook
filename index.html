@@ -655,7 +655,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.10.01-02';
+const APP_VERSION = 'v2026.10.01-03';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3252,7 +3252,7 @@ function reminderBanner(){
   const daysLeftInYear = Math.round((new Date(CUR_YEAR,11,31) - new Date(TODAY+'T00:00:00')) / 86400000);
   const annualHtml = (month>=10 && shortfall>0) ? (()=>{
     const urgent = daysLeftInYear <= 30;
-    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>${ICON_STAR}特休最低使用天數提醒</strong>今年（${CUR_YEAR}）特休已使用 ${fmt(annualUsed)} 天，未達最低要求 ${fmt(annualMin)} 天${annualMinCapped ? `（今年特休共 ${fmt(annualMin)} 天，以此為準）` : ''}，尚需再休 ${fmt(shortfall)} 天，建議儘早排定（可在「設定」分頁調整門檻）。</div>`;
+    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>${ICON_STAR}特休還要再休 ${fmt(shortfall)} 天</strong>${annualMinCapped ? `今年已休 ${fmt(annualUsed)} 天，今年特休 ${fmt(annualMin)} 天需全部休完。` : `今年已休 ${fmt(annualUsed)} 天，最低要休 ${fmt(annualMin)} 天。`}</div>`;
   })() : '';
 
   // 新的一年還沒設定特休天數：每年只有特休會依年資變動，其他假別的預設值通常不用改，
