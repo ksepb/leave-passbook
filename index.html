@@ -655,7 +655,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.10.01-03';
+const APP_VERSION = 'v2026.10.03-01';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3250,9 +3250,9 @@ function reminderBanner(){
   const annualMinCapped = annualMin < getAnnualMinDays(); // 今年特休總天數比門檻少，以總天數為準
   const shortfall = annualMin - annualUsed;
   const daysLeftInYear = Math.round((new Date(CUR_YEAR,11,31) - new Date(TODAY+'T00:00:00')) / 86400000);
-  const annualHtml = (month>=10 && shortfall>0) ? (()=>{
+  const annualHtml = (month>=10 && shortfall>0 && !isAnnualMinSnoozed()) ? (()=>{
     const urgent = daysLeftInYear <= 30;
-    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>${ICON_STAR}特休還要再休 ${fmt(shortfall)} 天</strong>${annualMinCapped ? `今年已休 ${fmt(annualUsed)} 天，今年特休 ${fmt(annualMin)} 天需全部休完。` : `今年已休 ${fmt(annualUsed)} 天，最低要休 ${fmt(annualMin)} 天。`}</div>`;
+    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>${ICON_STAR}特休還要再休 ${fmt(shortfall)} 天</strong><div class="reminder-line"><span>${annualMinCapped ? `已休 ${fmt(annualUsed)} 天・今年 ${fmt(annualMin)} 天需全休完` : `已休 ${fmt(annualUsed)} 天・最低要休 ${fmt(annualMin)} 天`}</span><button type="button" class="ack-btn" onclick="snoozeAnnualMin()">先隱藏</button></div></div>`;
   })() : '';
 
   // 新的一年還沒設定特休天數：每年只有特休會依年資變動，其他假別的預設值通常不用改，
@@ -3262,6 +3262,23 @@ function reminderBanner(){
   return annualQuotaHtml + compHtml + annualHtml;
 }
 
+// 特休最低天數提醒「先隱藏」：10、11月按 → 隱藏到12/1（最後一個月再提醒）；12月按 → 只隱藏7天。
+// 只存在這台裝置，不進雲端同步、不進備份；跨年自動失效（記錄裡含年份）。首頁特休卡片的外框／標籤不受影響，照常顯示
+const ANNUAL_MIN_SNOOZE_KEY = 'annualMinSnoozeUntil';
+function isAnnualMinSnoozed(){
+  try{
+    const until = localStorage.getItem(ANNUAL_MIN_SNOOZE_KEY);
+    if(!until || until.slice(0,4)!==String(CUR_YEAR)) return false;
+    return TODAY < until;
+  }catch(e){ return false; }
+}
+function snoozeAnnualMin(){
+  const month = NOW.getMonth()+1;
+  const until = month < 12 ? `${CUR_YEAR}-12-01` : shiftDate(TODAY, 7);
+  try{ localStorage.setItem(ANNUAL_MIN_SNOOZE_KEY, until); }catch(e){}
+  render();
+  setStatus(month < 12 ? '已先隱藏，12/1 會再提醒' : '已先隱藏，7 天後會再提醒', true);
+}
 // 今年（CUR_YEAR）的特休天數有沒有被使用者設定過；明確設成0也算設定過，只有「完全沒填過」才提醒
 function needsAnnualQuotaReminder(){
   const y = state && state.quotaByYear ? state.quotaByYear[CUR_YEAR] : null;
