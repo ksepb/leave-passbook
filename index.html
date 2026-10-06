@@ -13,7 +13,10 @@
     var pref = localStorage.getItem('themePref') || 'auto';
     var dark = pref==='dark' || (pref!=='light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    var m = document.getElementById('themeColorMeta'); if(m) m.setAttribute('content', dark ? '#1C1A17' : '#2F5D50');
+    var pal = localStorage.getItem('colorTheme');
+    if(pal==='rose' || pal==='navy') document.documentElement.setAttribute('data-palette', pal);
+    var bar = { rose:'#8A5260', navy:'#2C4A6E' }[pal] || '#2F5D50';
+    var m = document.getElementById('themeColorMeta'); if(m) m.setAttribute('content', dark ? '#1C1A17' : bar);
   }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
 })();
 </script>
@@ -52,6 +55,9 @@
     --inverse:var(--ink); --neutral-btn:var(--ink-soft); --undo-bg:#3A2F22;
     --jade-strong:var(--jade); --brick-strong:var(--brick); --blue-strong:var(--blue); --olive-strong:var(--olive); --plum-strong:var(--plum);
     --rust-strong:var(--rust); --rose-strong:var(--rose); --teal-strong:var(--teal); --amber-strong:var(--amber);
+    /* 主色（App 的色系，可在「設定→外觀」換）：跟「特休綠」分開，換色系時假別顏色不受影響 */
+    --primary:var(--jade); --primary-strong:var(--jade-strong); --primary-soft:var(--jade-soft);
+    --hero-bg:linear-gradient(155deg, #5C8A78, var(--jade)); --hero-num:#F0C868; --hero-shadow:rgba(47,93,80,.4);
     color-scheme:light;
   }
   /* ===== 深色模式（<html data-theme="dark">；由「設定→外觀」或手機設定決定） =====
@@ -84,7 +90,28 @@
       --reminder-bg:#2E2618; --amber-ink:#E8C98E; --note-ink:#E3B55F;
       --urgent-bg:#35201E; --urgent-line:#E07A6E; --urgent-ink:#F2B8AF;
       --inverse:#3A362F; --neutral-btn:#5E574C; --undo-bg:#463B2D;
+      --hero-bg:radial-gradient(120% 90% at 15% 0%, rgba(120,190,160,.18), transparent 60%), linear-gradient(160deg, #294A40, #1B302A);
+      --hero-shadow:rgba(0,0,0,.6); --hero-edge:rgba(140,200,175,.18);
       color-scheme:dark;
+  }
+  /* ===== 其他色系：乾燥玫瑰、深海藍（只換主色，假別顏色不變） ===== */
+  :root[data-palette="rose"]{
+    --primary:#8E5562; --primary-strong:#8A5260; --primary-soft:#F1E2E4;
+    --hero-bg:linear-gradient(155deg, #B88690, #8E5562); --hero-num:#FFE6B0; --hero-shadow:rgba(142,85,98,.4); --bg-b:#EEDADD;
+  }
+  :root[data-palette="rose"][data-theme="dark"]{
+    --primary:#D6A3AC; --primary-strong:#8A5260; --primary-soft:#3A2A2E;
+    --hero-bg:radial-gradient(120% 90% at 15% 0%, rgba(215,165,175,.16), transparent 60%), linear-gradient(160deg, #452C33, #2A1B20);
+    --hero-num:#F0C868; --hero-edge:rgba(220,170,180,.18); --bg-b:#211A1C;
+  }
+  :root[data-palette="navy"]{
+    --primary:#2C4A6E; --primary-strong:#2C4A6E; --primary-soft:#DFE7F1;
+    --hero-bg:linear-gradient(155deg, #4F7299, #2A4467); --hero-shadow:rgba(42,68,103,.4); --bg-b:#D6E0EC;
+  }
+  :root[data-palette="navy"][data-theme="dark"]{
+    --primary:#93B3D8; --primary-strong:#3A5B82; --primary-soft:#26313E;
+    --hero-bg:radial-gradient(120% 90% at 15% 0%, rgba(140,180,225,.16), transparent 60%), linear-gradient(160deg, #22344B, #141F2E);
+    --hero-edge:rgba(150,185,225,.18); --bg-b:#161B22;
   }
   *{box-sizing:border-box;}
   html{touch-action:manipulation;}
@@ -102,7 +129,7 @@
   .page-fade{animation:fadeInPage .25s ease-out;}
   .shimmer-once{position:relative;overflow:hidden;}
   .add-success-box{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;animation:fadeInPage .2s ease-out;}
-  .add-success-check{width:64px;height:64px;border-radius:50%;background:var(--jade-strong);color:#fff;font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;margin-bottom:16px;animation:stampIn .35s ease-out;}
+  .add-success-check{width:64px;height:64px;border-radius:50%;background:var(--primary-strong);color:#fff;font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;margin-bottom:16px;animation:stampIn .35s ease-out;}
   .add-success-text{font-size:16px;font-weight:700;color:var(--ink);}
   .ledger-thumb{width:36px;height:36px;max-width:36px;max-height:36px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;flex-shrink:0;}
   .photo-badge{display:inline-flex;align-items:center;background:var(--blue-soft);color:var(--blue);font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:20px;cursor:pointer;flex-shrink:0;}
@@ -139,8 +166,8 @@
     transition:background .15s ease, transform .15s ease;
   }
   .nav-item .nav-icon{display:flex;align-items:center;justify-content:center;line-height:1;}
-  .nav-item.active{color:var(--jade);}
-  .nav-item.active .nav-icon-wrap{background:var(--jade-soft);}
+  .nav-item.active{color:var(--primary);}
+  .nav-item.active .nav-icon-wrap{background:var(--primary-soft);}
   .nav-item:active .nav-icon-wrap{transform:scale(.9);}
   header{text-align:center;margin-bottom:24px;}
   .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--ink-soft);text-transform:uppercase;}
@@ -180,7 +207,7 @@
   .home-order-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
   .home-order-item{display:flex;flex-direction:column;gap:6px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:border-color .12s ease, background .12s ease;}
   .home-order-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-  .home-order-item.selected{border-color:var(--jade);background:var(--jade-soft);}
+  .home-order-item.selected{border-color:var(--primary);background:var(--primary-soft);}
   .home-order-item.hidden-item{opacity:.55;}
   .home-order-label{font-size:14.5px;font-weight:700;color:var(--ink);}
   .home-order-visibility-btn{flex-shrink:0;background:none;border:none;padding:2px 4px;min-height:0;display:flex;align-items:center;gap:3px;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
@@ -217,9 +244,9 @@
   .dash-card .label{font-size:11px;color:var(--ink-soft);}
   .dash-card .num{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;margin-top:4px;}
 
-  .hero-card{background:linear-gradient(155deg, #5C8A78, var(--jade));color:#fff;border-radius:20px;padding:22px 20px 20px;margin-bottom:16px;box-shadow:0 12px 28px -12px rgba(47,93,80,.4);}
+  .hero-card{background:var(--hero-bg);color:#fff;border-radius:20px;padding:22px 20px 20px;margin-bottom:16px;box-shadow:0 12px 28px -12px var(--hero-shadow);}
   .hero-card .hero-label{font-size:13px;opacity:.85;}
-  .hero-card .hero-num{font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:700;margin-top:4px;line-height:1.1;color:#F0C868;}
+  .hero-card .hero-num{font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:700;margin-top:4px;line-height:1.1;color:var(--hero-num);}
   .hero-card .hero-sub{font-size:11.5px;opacity:.75;margin-top:6px;}
   .hero-card .hero-divider{border:none;border-top:1px solid rgba(255,255,255,.25);margin:16px 0;}
   .hero-card .hero-stats{display:flex;gap:12px;}
@@ -235,8 +262,8 @@
   .search-sort-row .sortbtn{flex-shrink:0;font-size:13.5px;padding:9px 10px;white-space:nowrap;}
   .year-toolbar-row{gap:10px;}
   .year-switch{display:flex;align-items:center;gap:6px;}
-  .year-switch button.sortbtn{width:36px;height:36px;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--jade);background:var(--card);border:1.5px solid var(--jade);border-radius:50%;}
-  .back-to-today-btn{font-family:'Noto Sans TC',sans-serif;font-size:14.5px;font-weight:700;color:var(--jade);background:var(--card);border:1.5px solid var(--jade);border-radius:20px;padding:9px 18px;min-height:44px;}
+  .year-switch button.sortbtn{width:36px;height:36px;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--primary);background:var(--card);border:1.5px solid var(--primary);border-radius:50%;}
+  .back-to-today-btn{font-family:'Noto Sans TC',sans-serif;font-size:14.5px;font-weight:700;color:var(--primary);background:var(--card);border:1.5px solid var(--primary);border-radius:20px;padding:9px 18px;min-height:44px;}
   .view-toggles{display:flex;gap:8px;}
   .view-toggles button{flex:1;}
   button.sortbtn{background:var(--card);color:var(--ink-soft);border:1px solid var(--line);font-weight:500;padding:9px 14px;min-height:38px;}
@@ -258,7 +285,7 @@
   .manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
   @media(max-width:620px){.manage-grid{grid-template-columns:1fr;}}
   /* 設定頁分組：小標題＋每組一個格子區；組跟組之間靠標題分開，不用額外的框 */
-  .settings-group-title{font-size:17px;font-weight:700;letter-spacing:.12em;color:var(--ink-soft);margin:32px 6px 12px;padding-left:10px;border-left:4px solid var(--jade);line-height:1.2;}
+  .settings-group-title{font-size:17px;font-weight:700;letter-spacing:.12em;color:var(--ink-soft);margin:32px 6px 12px;padding-left:10px;border-left:4px solid var(--primary);line-height:1.2;}
   .settings-group-title:first-child{margin-top:4px;}
   .manage-grid.settings-grid{margin-bottom:0;}
   .settings-grid + .backup.danger-zone{margin-top:16px;}
@@ -280,7 +307,7 @@
     text-align:center; text-align-last:center;
   }
   .field input:focus,.field select:focus{background-color:var(--card);}
-  .field input:focus,.field select:focus{outline:none;border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
   .field.note{flex:2;min-width:140px;}
   .form-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;flex:1 1 100%;margin-bottom:2px;}
   .quickdays{display:flex;gap:6px;}
@@ -333,6 +360,14 @@
   }
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
+  .btn-primary{background:var(--primary-strong);}
+  .palette-title{font-size:13px;font-weight:600;color:var(--ink-soft);margin:14px 0 8px;}
+  .palette-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+  .palette-opt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;min-width:0;}
+  .palette-opt.is-on{border-color:var(--primary);background:var(--primary-soft);}
+  .palette-sw{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
+  .palette-name{font-size:13px;line-height:1.3;text-align:center;}
+  .palette-name small{display:block;font-size:11px;color:var(--ink-soft);}
   .btn-jade{background:var(--jade-strong);} .btn-brick{background:var(--brick-strong);} .btn-blue{background:var(--blue-strong);} .btn-olive{background:var(--olive-strong);} .btn-plum{background:var(--plum-strong);} .btn-rust{background:var(--rust-strong);} .btn-rose{background:var(--rose-strong);} .btn-teal{background:var(--teal-strong);} .btn-amber{background:var(--amber-strong);}
   .btn-outline-jade,.btn-outline-brick,.btn-outline-blue,.btn-outline-olive,.btn-outline-plum,.btn-outline-rust,.btn-outline-rose,.btn-outline-teal,.btn-outline-amber{background:var(--card);border-style:solid;border-width:1.2px;font-weight:700;}
   .btn-outline-jade{color:var(--jade);border-color:var(--jade);} .btn-outline-brick{color:var(--brick);border-color:var(--brick);} .btn-outline-blue{color:var(--blue);border-color:var(--blue);} .btn-outline-olive{color:var(--olive);border-color:var(--olive);} .btn-outline-plum{color:var(--plum);border-color:var(--plum);} .btn-outline-rust{color:var(--rust);border-color:var(--rust);} .btn-outline-rose{color:var(--rose);border-color:var(--rose);} .btn-outline-teal{color:var(--teal);border-color:var(--teal);} .btn-outline-amber{color:var(--amber);border-color:var(--amber);}
@@ -356,7 +391,7 @@
   .use-preview-line{font-size:13.5px;color:var(--ink);padding:3px 0;}
   .src-batch-list{border:1px solid var(--line);border-radius:10px;padding:6px 12px 10px;overflow:hidden;box-sizing:border-box;max-width:100%;}
   .manual-source-toggle{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin:-4px 0 10px;cursor:pointer;color:var(--ink);}
-  .manual-source-toggle input[type="checkbox"]{width:20px;height:20px;flex-shrink:0;accent-color:var(--jade);}
+  .manual-source-toggle input[type="checkbox"]{width:20px;height:20px;flex-shrink:0;accent-color:var(--primary);}
   .src-batch-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:12px 8px;border-top:1px solid var(--line);max-width:100%;box-sizing:border-box;border-radius:8px;}
   .src-batch-row:first-child{border-top:none;}
   .src-batch-expired{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font-size:11.5px;font-weight:700;color:var(--brick);background:var(--brick-soft);vertical-align:1px;}
@@ -365,7 +400,7 @@
   .src-batch-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto;}
   .src-batch-remain{color:var(--jade);font-weight:700;font-size:16px;flex-shrink:0;white-space:nowrap;}
   .src-batch-row:has(input[type="checkbox"]:checked) .src-batch-remain{display:none;}
-  .src-batch-check input[type="checkbox"]{flex-shrink:0;width:22px;height:22px;accent-color:var(--jade);}
+  .src-batch-check input[type="checkbox"]{flex-shrink:0;width:22px;height:22px;accent-color:var(--primary);}
   .src-batch-days{width:92px;box-sizing:border-box;padding:8px 10px 8px 6px;font-size:17px;font-weight:700;text-align:right;border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
   .src-batch-input-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;}
   .src-batch-unit{font-size:15.5px;font-weight:600;color:var(--ink);flex-shrink:0;}
@@ -418,7 +453,7 @@
   .avail-batch-expiry{font-size:12.5px;margin-top:3px;font-family:'IBM Plex Mono',monospace;}
   .info-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);font-size:13px;cursor:pointer;margin-left:6px;vertical-align:middle;}
   .leave-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;}
-  .overview-unit-toggle{flex-shrink:0;font-size:14px;font-weight:700;color:var(--jade);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 12px;min-height:32px;}
+  .overview-unit-toggle{flex-shrink:0;font-size:14px;font-weight:700;color:var(--primary);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 12px;min-height:32px;}
   .overview-unit-arrow-icon{font-size:17px;font-weight:900;margin-right:2px;}
   .overview-panel{background:var(--jade-soft);border-radius:14px;padding:16px 16px 18px;margin-bottom:16px;}
   .overview-balance{font-size:15px;font-weight:700;color:var(--ink);}
@@ -431,7 +466,7 @@
   .overview-stat-unit{font-size:13px;font-weight:600;margin-left:2px;color:var(--ink-soft);}
   .overview-carryover-note{display:flex;align-items:center;gap:6px;background:var(--card);color:var(--amber-ink);border-radius:10px;padding:8px 12px;margin-top:14px;font-size:13px;font-weight:700;}
   .overview-panel-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;}
-  .overview-edit-link{flex-shrink:0;font-size:12px;color:var(--jade);background:var(--card);padding:4px 10px;border-radius:20px;cursor:pointer;font-weight:600;white-space:nowrap;}
+  .overview-edit-link{flex-shrink:0;font-size:12px;color:var(--primary);background:var(--card);padding:4px 10px;border-radius:20px;cursor:pointer;font-weight:600;white-space:nowrap;}
   .sync-status-box{border-radius:10px;padding:10px 12px;margin:8px 0 12px;font-size:13.5px;}
   .sync-status-box.sync-status-synced{background:var(--jade-soft);color:var(--jade);}
   .sync-status-box.sync-status-syncing{background:var(--paper-deep);color:var(--ink-soft);}
@@ -446,7 +481,7 @@
   .expiry-decision-actions button{flex:1;}
   .modal-box h3{margin:0 0 16px;font-family:'Noto Serif TC',serif;font-size:18px;color:var(--ink);}
   .modal-header-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;}
-  .modal-header-link{flex-shrink:0;font-size:14px;font-weight:700;color:var(--jade);background:var(--card);border:1px solid var(--jade);border-radius:14px;padding:5px 12px;cursor:pointer;white-space:nowrap;}
+  .modal-header-link{flex-shrink:0;font-size:14px;font-weight:700;color:var(--primary);background:var(--card);border:1px solid var(--primary);border-radius:14px;padding:5px 12px;cursor:pointer;white-space:nowrap;}
   .home-detail-group{margin-bottom:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
   .home-detail-group:last-child{margin-bottom:0;}
   .home-detail-group-title{font-size:16px;font-weight:700;margin-bottom:5px;}
@@ -489,7 +524,7 @@
 
   @keyframes stampIn{0%{transform:scale(1.5) rotate(-6deg);opacity:0;}60%{transform:scale(.96) rotate(1deg);opacity:1;}100%{transform:scale(1) rotate(0);}}
   @keyframes editConfirmFade{0%{opacity:0;}15%{opacity:1;}75%{opacity:1;}100%{opacity:0;}}
-  .edit-confirm-badge{position:absolute;top:8px;right:8px;background:var(--jade-strong);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;z-index:2;animation:editConfirmFade 1.6s ease-out forwards;pointer-events:none;}
+  .edit-confirm-badge{position:absolute;top:8px;right:8px;background:var(--primary-strong);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;z-index:2;animation:editConfirmFade 1.6s ease-out forwards;pointer-events:none;}
   .stamp-in{animation:stampIn .32s ease-out;}
   @keyframes revealFlash{0%{box-shadow:0 0 0 0 rgba(47,93,80,0);background:var(--jade-soft);}100%{box-shadow:0 0 0 0 rgba(47,93,80,0);background:var(--card);}}
   .reveal-flash{animation:revealFlash 1.5s ease-out;}
@@ -497,7 +532,7 @@
   ul.ledger li.removing{animation:fadeOutRemove .2s ease-in forwards;pointer-events:none;}
 
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-  .cal-header button.ghost{width:36px;height:36px;flex-shrink:0;box-sizing:border-box;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;color:var(--jade);background:var(--card);border:1.5px solid var(--jade);border-radius:50%;}
+  .cal-header button.ghost{width:36px;height:36px;flex-shrink:0;box-sizing:border-box;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;color:var(--primary);background:var(--card);border:1.5px solid var(--primary);border-radius:50%;}
   .cal-title-chevron{width:26px;height:26px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--ink-soft);border-radius:50%;color:var(--ink-soft);}
   .cal-header button{min-width:44px;min-height:44px;}
   .cal-title{font-family:'Noto Serif TC',serif;font-weight:900;font-size:21px;}
@@ -525,7 +560,7 @@
   .cal-cell.weekend, .cal-cell.holiday-bg{background:var(--rose-soft);}
   .cal-cell.weekend.selected, .cal-cell.holiday-bg.selected{background:color-mix(in srgb, var(--blue) 30%, var(--blue-soft));}
   .cal-month-summary{font-size:15px;color:var(--blue);font-weight:600;margin:8px 0 10px;}
-  .cal-holiday-refresh-btn{display:block;margin-top:6px;background:none;border:none;padding:0;color:var(--jade);font-size:12.5px;font-weight:700;text-decoration:underline;text-underline-offset:2px;}
+  .cal-holiday-refresh-btn{display:block;margin-top:6px;background:none;border:none;padding:0;color:var(--primary);font-size:12.5px;font-weight:700;text-decoration:underline;text-underline-offset:2px;}
   .cal-holiday-note-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
   .cal-holiday-chip-lg{font-size:14px;padding:5px 11px;border-radius:9px;}
   .cal-picker-row{display:flex;gap:8px;justify-content:center;margin:8px 0;}
@@ -534,7 +569,7 @@
   .cal-swipe-area{touch-action:pan-y pinch-zoom;}
   .cal-detail-panel{margin-top:12px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;}
   .cal-detail-date{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
-  .cal-detail-today-badge{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;color:var(--jade);background:var(--jade-soft);padding:3px 10px;border-radius:10px;}
+  .cal-detail-today-badge{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;color:var(--primary);background:var(--primary-soft);padding:3px 10px;border-radius:10px;}
   .cal-detail-holiday{font-size:16px;font-weight:700;color:var(--brick);margin-bottom:6px;}
   .cal-detail-chips{display:flex;flex-wrap:wrap;gap:6px;}
   .cal-detail-chip{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:700;padding:7px 7px 7px 12px;border-radius:16px;}
@@ -585,7 +620,7 @@
   .month-header-sub{font-size:13.5px;color:var(--ink-soft);font-weight:600;margin-top:4px;text-align:right;padding-right:40px;}
   .chevron{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;flex:none;background:var(--card);box-shadow:0 1px 3px rgba(43,42,40,.15);}
   .chevron svg{display:block;}
-  .chevron-open{color:var(--jade);border:2px solid var(--jade);}
+  .chevron-open{color:var(--primary);border:2px solid var(--primary);}
   .chevron-closed{color:var(--amber);border:2px solid var(--amber);}
   .month-body{background:var(--month-body);border:1px solid var(--month-open-line);border-top:none;border-radius:0 0 10px 10px;padding:10px 8px 4px;}
   .month-body ul.ledger{margin:0;}
@@ -596,10 +631,10 @@
   .history-divider span{padding:0 10px;white-space:nowrap;display:inline-flex;align-items:center;}
   .history-divider .divider-year-btn:first-of-type{margin:0 4px 0 3px;}
   .history-divider .divider-year-btn:last-of-type{margin:0 3px 0 4px;}
-  .divider-year-btn{width:26px;height:26px;padding:0;min-width:0;min-height:0;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--jade);background:var(--card);border:1.5px solid var(--jade);border-radius:50%;cursor:pointer;line-height:1;}
+  .divider-year-btn{width:26px;height:26px;padding:0;min-width:0;min-height:0;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--primary);background:var(--card);border:1.5px solid var(--primary);border-radius:50%;cursor:pointer;line-height:1;}
   .history-divider .divider-year-num{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:17.5px;color:var(--ink);padding:0;text-align:center;}
   .kw-examples{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
-  .kw-help-toggle{display:block;margin:18px 0 0;padding:6px 0;background:none;border:none;color:var(--jade);font-size:14px;font-weight:700;cursor:pointer;}
+  .kw-help-toggle{display:block;margin:18px 0 0;padding:6px 0;background:none;border:none;color:var(--primary);font-size:14px;font-weight:700;cursor:pointer;}
   .kw-help{margin-top:10px;padding-top:12px;border-top:1px solid var(--hairline);}
   .kw-example{border-left:3px solid var(--line);background:color-mix(in srgb, var(--card) 55%, transparent);border-radius:0 10px 10px 0;padding:9px 12px;}
   .kw-example-code{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:5px;}
@@ -628,7 +663,7 @@
   .theme-hint-sub{font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
   /* 深色模式的元件微調 */
   /* 首頁綠色大卡片（深色）：墨綠底＋左上角一道淡綠柔光＋細亮邊，跟下方綠色按鈕分出主次 */
-  :root[data-theme="dark"] .hero-card{background:radial-gradient(120% 90% at 15% 0%, rgba(120,190,160,.18), transparent 60%), linear-gradient(160deg, #294A40, #1B302A);border:1px solid rgba(140,200,175,.18);box-shadow:0 12px 28px -14px rgba(0,0,0,.6);}
+  :root[data-theme="dark"] .hero-card{box-shadow:0 12px 28px -14px rgba(0,0,0,.6);border:1px solid var(--hero-edge);}
   :root[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.6);}
   /* 明細視窗裡的假別小標籤：深色時底色淡一點，彩色字才夠清楚 */
   :root[data-theme="dark"] .home-detail-tag{background:rgba(255,255,255,.04);}
@@ -667,7 +702,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.10.07-03';
+const APP_VERSION = 'v2026.10.07-04';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -2391,7 +2426,7 @@ function expiryDecisionModal(){
               <div class="expiry-decision-title">${toROC(b.date)} 獲得的 ${escapeHtml(label)}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
               <div class="expiry-decision-sub">剩 ${fmt(b.remainDays)} 天，${toROC(b.expiry)} 到期（已過期 ${diffDays} 天）</div>
               <div class="expiry-decision-actions">
-                <button type="button" class="btn-jade" onclick="decideExpiredBatch('${b.category}','${b.id}','used')">已使用</button>
+                <button type="button" class="btn-primary" onclick="decideExpiredBatch('${b.category}','${b.id}','used')">已使用</button>
                 <button type="button" class="ghost" onclick="decideExpiredBatch('${b.category}','${b.id}','kept')">保留</button>
               </div>
             </div>`;
@@ -3122,7 +3157,7 @@ function keywordPanel(){
         }).join('')}
       </ul>
       <div class="row" style="margin-top:10px;">
-        <button class="btn-jade" onclick="applyKwItems()">確認新增全部</button>
+        <button class="btn-primary" onclick="applyKwItems()">確認新增全部</button>
         <button class="ghost" onclick="cancelKwItems()">取消</button>
       </div>
     </div>` : '';
@@ -3140,7 +3175,7 @@ function keywordPanel(){
 7/23-7/25 特休1天 (返鄉)
 明天 病假半天 (感冒)">${escapeHtml(kwDraftText)}</textarea>
       <div class="row" style="margin-top:10px;">
-        <button class="btn-jade" onclick="kwParseInput()">解析</button>
+        <button class="btn-primary" onclick="kwParseInput()">解析</button>
         <button class="ghost" onclick="kwClearInput()">清空重填</button>
       </div>
       ${previewHtml}
@@ -3269,7 +3304,7 @@ function reminderBanner(){
 
   // 新的一年還沒設定特休天數：每年只有特休會依年資變動，其他假別的預設值通常不用改，
   // 所以只提醒特休，點下去直接開特休的小視窗，不用跑去設定頁翻找
-  const annualQuotaHtml = needsAnnualQuotaReminder() ? `<div class="reminder-bar"><strong>${ICON_STAR}${CUR_YEAR} 年特休天數還沒設定</strong>新的一年特休天數要重新填，目前先以 0 天計算。<div style="margin-top:8px;"><button type="button" class="btn-jade" style="font-size:14px;padding:8px 14px;" onclick="openAnnualQuotaModal()">設定特休天數</button></div></div>` : '';
+  const annualQuotaHtml = needsAnnualQuotaReminder() ? `<div class="reminder-bar"><strong>${ICON_STAR}${CUR_YEAR} 年特休天數還沒設定</strong>新的一年特休天數要重新填，目前先以 0 天計算。<div style="margin-top:8px;"><button type="button" class="btn-primary" style="font-size:14px;padding:8px 14px;" onclick="openAnnualQuotaModal()">設定特休天數</button></div></div>` : '';
 
   return annualQuotaHtml + compHtml + annualHtml;
 }
@@ -3325,7 +3360,7 @@ function annualQuotaModal(){
         </div>
         <p class="hint" style="margin:0 0 14px;">${prevAnnual!==null ? `去年（${CUR_YEAR-1}）是 ${fmt(prevAnnual)} 天，已先帶入，依今年年資調整後儲存。` : '依到職年資填入今年的特休天數。'}</p>
         <div class="row">
-          <button type="button" class="btn-jade" onclick="saveAnnualQuotaModal()">儲存</button>
+          <button type="button" class="btn-primary" onclick="saveAnnualQuotaModal()">儲存</button>
           <button type="button" class="ghost" onclick="closeAnnualQuotaModal()">稍後</button>
         </div>
       </div>
@@ -3480,7 +3515,7 @@ function calendarPanel(){
       ${recordChips}
       <div class="cal-detail-add-row">
         <select id="calAddTypeSelect">${typeOptions}</select>
-        <button type="button" class="btn-jade" onclick="addFromCalendar('${calSelectedDate}')">＋ 新增</button>
+        <button type="button" class="btn-primary" onclick="addFromCalendar('${calSelectedDate}')">＋ 新增</button>
       </div>
     </div>`;
   })() : '';
@@ -4548,8 +4583,8 @@ function pageHome(justEntered){
     ${dashboardPanel()}
 
     <div style="margin-bottom:16px;">
-      <button type="button" class="btn-jade${justEntered?' shimmer-once':''}" style="width:100%;font-size:16px;padding:14px 16px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> 登記休假／補休紀錄</button>
-      ${(state.lastUsedType && QUICK_LOG_ELIGIBLE_TYPES.includes(state.lastUsedType)) ? `<button type="button" style="width:100%;margin-top:8px;font-size:16px;padding:14px 16px;background:var(--jade-soft);color:var(--jade);border:1.5px solid var(--jade);" onclick="quickLogToday()">⚡ 快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
+      <button type="button" class="btn-primary${justEntered?' shimmer-once':''}" style="width:100%;font-size:16px;padding:14px 16px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> 登記休假／補休紀錄</button>
+      ${(state.lastUsedType && QUICK_LOG_ELIGIBLE_TYPES.includes(state.lastUsedType)) ? `<button type="button" style="width:100%;margin-top:8px;font-size:16px;padding:14px 16px;background:var(--primary-soft);color:var(--primary);border:1.5px solid var(--primary);" onclick="quickLogToday()">⚡ 快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
     </div>
 
     <div class="stamps">
@@ -4615,12 +4650,34 @@ function getThemePref(){
 function systemPrefersDark(){
   try{ return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); }catch(e){ return false; }
 }
+// 色系：'jade' 墨綠（預設）、'rose' 乾燥玫瑰、'navy' 深海藍。只換 App 主色，假別顏色（特休綠、病假藍…）不變。
+// 跟深淺色一樣只存在這台裝置（localStorage 'colorTheme'），不進雲端同步、不進備份
+const PALETTES = [
+  { key:'jade', label:'墨綠', sw:'#2F5D50', bar:'#2F5D50' },
+  { key:'rose', label:'乾燥玫瑰', sw:'#9C5F6B', bar:'#8A5260' },
+  { key:'navy', label:'深海藍', sw:'#2C4A6E', bar:'#2C4A6E' },
+];
+function getColorTheme(){
+  try{ const v = localStorage.getItem('colorTheme'); return (v==='rose' || v==='navy') ? v : 'jade'; }catch(e){ return 'jade'; }
+}
+function setColorTheme(key){
+  try{
+    if(key==='rose' || key==='navy') localStorage.setItem('colorTheme', key);
+    else localStorage.removeItem('colorTheme');
+  }catch(e){}
+  applyTheme();
+  render();
+}
 function applyTheme(){
   const pref = getThemePref();
   const dark = pref==='dark' || (pref==='auto' && systemPrefersDark());
+  const pal = getColorTheme();
   try{
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    const m = document.getElementById('themeColorMeta'); if(m) m.setAttribute('content', dark ? '#1C1A17' : '#2F5D50');
+    if(pal==='jade') document.documentElement.removeAttribute('data-palette');
+    else document.documentElement.setAttribute('data-palette', pal);
+    const bar = (PALETTES.find(p=>p.key===pal) || PALETTES[0]).bar;
+    const m = document.getElementById('themeColorMeta'); if(m) m.setAttribute('content', dark ? '#1C1A17' : bar);
   }catch(e){}
 }
 function setThemePref(pref){
@@ -4713,23 +4770,28 @@ function pageData(){
         ${settingsExpandedKey==='scale' ? `
         <p>覺得文字太小可以調大一點，會連按鈕、間距一起放大（不是只有文字），方便點選。</p>
         <div class="row" style="gap:8px;">
-          <button type="button" class="leave-tab" style="${getUiScale()===0.9?'background:var(--jade-strong);color:#fff;border-color:var(--jade-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(0.9)">小</button>
-          <button type="button" class="leave-tab" style="${getUiScale()===1?'background:var(--jade-strong);color:#fff;border-color:var(--jade-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(1)">中（預設）</button>
-          <button type="button" class="leave-tab" style="${getUiScale()===1.15?'background:var(--jade-strong);color:#fff;border-color:var(--jade-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(1.15)">大</button>
-          <button type="button" class="leave-tab" style="${getUiScale()===1.3?'background:var(--jade-strong);color:#fff;border-color:var(--jade-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(1.3)">特大</button>
+          <button type="button" class="leave-tab" style="${getUiScale()===0.9?'background:var(--primary-strong);color:#fff;border-color:var(--primary-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(0.9)">小</button>
+          <button type="button" class="leave-tab" style="${getUiScale()===1?'background:var(--primary-strong);color:#fff;border-color:var(--primary-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(1)">中（預設）</button>
+          <button type="button" class="leave-tab" style="${getUiScale()===1.15?'background:var(--primary-strong);color:#fff;border-color:var(--primary-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(1.15)">大</button>
+          <button type="button" class="leave-tab" style="${getUiScale()===1.3?'background:var(--primary-strong);color:#fff;border-color:var(--primary-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setUiScale(1.3)">特大</button>
         </div>
         ` : ''}
       </div>
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('theme')">
           <span>${ICON_MOON}外觀</span>
-          <span>${THEME_LABELS[getThemePref()]}　${settingsExpandedKey==='theme'?'▲':'▼'}</span>
+          <span>${THEME_LABELS[getThemePref()]}・${(PALETTES.find(p=>p.key===getColorTheme())||PALETTES[0]).label}　${settingsExpandedKey==='theme'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='theme' ? `
         <p>「跟隨手機」會依手機的淺色／深色設定自動切換。這個選擇只存在這台裝置，不會影響其他裝置。</p>
         <div class="row" style="gap:8px;">
-          ${['auto','light','dark'].map(k=>`<button type="button" class="leave-tab" style="${getThemePref()===k?'background:var(--jade-strong);color:#fff;border-color:var(--jade-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setThemePref('${k}')">${THEME_LABELS[k]}</button>`).join('')}
+          ${['auto','light','dark'].map(k=>`<button type="button" class="leave-tab" style="${getThemePref()===k?'background:var(--primary-strong);color:#fff;border-color:var(--primary-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="setThemePref('${k}')">${THEME_LABELS[k]}</button>`).join('')}
         </div>
+        <div class="palette-title">色系</div>
+        <div class="palette-row">
+          ${PALETTES.map(p=>{ const on = getColorTheme()===p.key; return `<button type="button" class="palette-opt${on?' is-on':''}" aria-pressed="${on}" onclick="setColorTheme('${p.key}')"><span class="palette-sw" style="background:${p.sw};">${on?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':''}</span><span class="palette-name">${p.label}${p.key==='jade'?'<small>預設</small>':''}</span></button>`; }).join('')}
+        </div>
+        <p style="margin-top:8px;">色系只換 App 的主色，假別的顏色不會變。</p>
         ` : ''}
       </div>
       <div class="backup">
@@ -4813,7 +4875,7 @@ function pageData(){
             <label>每日標準工時（小時）</label>
             <input type="number" id="hoursPerDayInput" value="${getHoursPerDay()}" min="1" max="24" step="0.5">
           </div>
-          <button type="button" class="btn-jade" onclick="updateHoursPerDay()">更新工時</button>
+          <button type="button" class="btn-primary" onclick="updateHoursPerDay()">更新工時</button>
         </div>
         ` : ''}
       </div>
@@ -4829,7 +4891,7 @@ function pageData(){
             <label>每年有薪天數門檻</label>
             <input type="number" id="personalPaidDaysInput" value="${getPersonalPaidDays()}" min="0" max="365" step="0.5">
           </div>
-          <button type="button" class="btn-jade" onclick="updatePersonalPaidDays()">更新設定</button>
+          <button type="button" class="btn-primary" onclick="updatePersonalPaidDays()">更新設定</button>
         </div>
         ` : ''}
       </div>
@@ -4845,7 +4907,7 @@ function pageData(){
             <label>每年至少休幾天</label>
             <input type="number" id="annualMinDaysInput" value="${getAnnualMinDays()}" min="0" max="365" step="0.5">
           </div>
-          <button type="button" class="btn-jade" onclick="updateAnnualMinDays()">更新設定</button>
+          <button type="button" class="btn-primary" onclick="updateAnnualMinDays()">更新設定</button>
         </div>
         ` : ''}
       </div>
@@ -4893,7 +4955,7 @@ function pageData(){
         <div class="auth-option">
           <div class="auth-option-title">🔵 Google 帳號</div>
           <p class="hint">一鍵登入，最簡單，任何情境都適用。</p>
-          <button class="btn-jade" style="width:100%;" onclick="signInWithGoogle()">使用 Google 帳號登入</button>
+          <button class="btn-primary" style="width:100%;" onclick="signInWithGoogle()">使用 Google 帳號登入</button>
         </div>
 
         <div class="auth-option">
@@ -4903,8 +4965,8 @@ function pageData(){
           ${(emailAuthMode==='pw-login'||emailAuthMode==='pw-signup') ? `
           <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">
             <div class="row" style="margin-bottom:10px;gap:8px;">
-              <button type="button" class="leave-tab" style="${emailAuthMode==='pw-login'?'background:var(--jade-strong);color:#fff;border-color:var(--jade-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="toggleEmailAuthForm('pw-login')">登入</button>
-              <button type="button" class="leave-tab" style="${emailAuthMode==='pw-signup'?'background:var(--jade-strong);color:#fff;border-color:var(--jade-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="toggleEmailAuthForm('pw-signup')">第一次用，註冊新帳號</button>
+              <button type="button" class="leave-tab" style="${emailAuthMode==='pw-login'?'background:var(--primary-strong);color:#fff;border-color:var(--primary-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="toggleEmailAuthForm('pw-login')">登入</button>
+              <button type="button" class="leave-tab" style="${emailAuthMode==='pw-signup'?'background:var(--primary-strong);color:#fff;border-color:var(--primary-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="toggleEmailAuthForm('pw-signup')">第一次用，註冊新帳號</button>
             </div>
             <div class="field" style="margin-bottom:8px;">
               <label>Email</label>
@@ -4914,7 +4976,7 @@ function pageData(){
               <label>密碼（至少 6 個字）</label>
               <input type="password" id="emailPwPassword" placeholder="密碼" value="${escapeAttr(emailPwPasswordVal)}">
             </div>
-            <button type="button" class="btn-jade" style="width:100%;" onclick="submitEmailPasswordAuth('${emailAuthMode==='pw-signup'?'signup':'login'}', this)">${emailAuthMode==='pw-signup' ? '註冊並登入' : '登入'}</button>
+            <button type="button" class="btn-primary" style="width:100%;" onclick="submitEmailPasswordAuth('${emailAuthMode==='pw-signup'?'signup':'login'}', this)">${emailAuthMode==='pw-signup' ? '註冊並登入' : '登入'}</button>
             ${emailAuthMode==='pw-login' ? `
             <button type="button" class="ghost" style="width:100%;margin-top:8px;" onclick="toggleForgotPassword()">${forgotPasswordMode? '取消' : '忘記密碼？'}</button>
             ${forgotPasswordMode ? `
@@ -4945,7 +5007,7 @@ function pageData(){
               <label>Email</label>
               <input type="email" id="emailAuthEmail" placeholder="you@example.com">
             </div>
-            <button type="button" class="btn-jade" style="width:100%;" onclick="sendEmailSignInLink(this)">寄出登入連結</button>
+            <button type="button" class="btn-primary" style="width:100%;" onclick="sendEmailSignInLink(this)">寄出登入連結</button>
           </div>
           ` : ''}
         </div>
