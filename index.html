@@ -309,7 +309,7 @@
   .convert-hint.u-hour{ background:var(--amber-soft, #FBEFDC); color:var(--amber); }
   .convert-hint b{ font-family:'Noto Sans TC',sans-serif; font-size:17px; font-weight:800; }
   .date-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-  .date-row input{flex:1;min-width:130px;}
+  .date-row input{flex:1;min-width:150px;} /* iPhone／iPad 的日期顯示成「2026年10月7日」，至少要這麼寬才不會被切掉；放不下時按鈕自動換到下一行 */
   .date-toggle{padding:8px 9px;min-height:44px;min-width:44px;font-size:11.5px;background:transparent;color:var(--ink-soft);border:1px solid var(--line);border-radius:10px;font-weight:600;flex:none;box-sizing:border-box;}
   .multi-date-toggle{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;}
   .multi-date-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
@@ -319,6 +319,18 @@
   .date-toggle:active{color:var(--jade);border-color:var(--jade);}
   .days-row input[type=number]{width:66px;flex:none;border-radius:12px;}
   .field-days{flex:1 1 220px;min-width:220px;}
+  /* 日期、數量一律各佔一整行（手機、平板、電腦都一樣）：
+     iPhone／iPad 的日期會顯示成「2026年10月7日」比較寬，跟數量硬擠在同一排時，「今天／昨天」會被擠到下一行、數量欄位也對不齊 */
+  form.entry > .field-date, form.entry > .field-days, li.editrow > .field-date, li.editrow > .field-days,
+  .form-row > .field-date, .form-row > .field-days{flex:1 1 100% !important;min-width:0 !important;}
+  /* 很窄的手機（約 360 以下，例如舊款小 iPhone 或開了放大顯示）：數量那一排的快捷按鈕放不下時換行，不要超出卡片 */
+  @media(max-width:360px){
+    .days-row{flex-wrap:wrap;}
+    .field label{white-space:normal;} /* 很窄時標籤換行顯示完整，不要超出卡片 */
+    .form-row > .field{min-width:0 !important;}
+    .field label.multi-date-toggle{white-space:normal;overflow:visible;align-items:flex-start;line-height:1.5;}
+    .multi-date-toggle input{flex-shrink:0;margin-top:2px;}
+  }
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
   .btn-jade{background:var(--jade-strong);} .btn-brick{background:var(--brick-strong);} .btn-blue{background:var(--blue-strong);} .btn-olive{background:var(--olive-strong);} .btn-plum{background:var(--plum-strong);} .btn-rust{background:var(--rust-strong);} .btn-rose{background:var(--rose-strong);} .btn-teal{background:var(--teal-strong);} .btn-amber{background:var(--amber-strong);}
@@ -655,7 +667,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.10.03-01';
+const APP_VERSION = 'v2026.10.07-03';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -3656,7 +3668,7 @@ function buildLeaveLi(t, r, dMin, dMax){
     const eu = r.unit || 'day';
     const ea = r.unit ? r.amount : r.days;
     return `<li class="editrow" id="editrow-${t.key}-${r.id}">
-      <div class="field">
+      <div class="field field-date">
         <label>日期</label>
         <div class="date-row"><input type="date" id="editDate-${t.key}-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}"><button type="button" class="date-toggle" onclick="toggleDateInputType('editDate-${t.key}-${r.id}')" title="切換手動輸入">⌨</button></div>
       </div>
@@ -3863,7 +3875,7 @@ function pageAddRecord(){
             </div>
           </div>
           <div class="form-row">
-            <div class="field" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange('${key}');updateUsePreview('${key}');" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange('${key}');updateUsePreview('${key}');">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange('${key}');updateUsePreview('${key}');">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
+            <div class="field field-date" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange('${key}');updateUsePreview('${key}');" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange('${key}');updateUsePreview('${key}');">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange('${key}');updateUsePreview('${key}');">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
           </div>
           <div class="form-row">
             <div class="field field-days">
@@ -3940,7 +3952,7 @@ function pageAddRecord(){
     <section class="block">
       <h2><span class="dot dot-${t.c}"></span>使用${t.label}</h2>
       <form class="entry" onsubmit="addRecord('${t.key}', event)">
-        <div class="field"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" ${multiDateMode?'':'required'}><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div>
+        <div class="field field-date"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" ${multiDateMode?'':'required'}><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div>
           <label class="multi-date-toggle"><input type="checkbox" ${multiDateMode?'checked':''} onchange="toggleMultiDateMode('${t.key}Date')"> 一次登記多天（可分別指定不連續的日期）</label>
           ${multiDateMode ? `
           <div style="margin-top:8px;">
@@ -4014,7 +4026,7 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
           <option value="use" ${r.type==='use'?'selected':''}>使用${info.label}</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field field-date">
         <label>日期</label>
         <div class="date-row"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}" onchange="onEditCompDateChange('${r.id}','${category}');updateEditUsePreview('${r.id}','${category}')"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入">⌨</button></div>
       </div>
@@ -4358,7 +4370,7 @@ function customSectionHtml(){
             <label>選擇假別</label>
             <select id="customUseLabelSelect">${activeLabels.map(x=>`<option value="${escapeAttr(x.label)}">${escapeHtml(x.label)}（剩${fmt(x.remainDays)}天）</option>`).join('')}</select>
           </div>`}
-        <div class="field" style="margin-bottom:12px;">
+        <div class="field field-date" style="margin-bottom:12px;">
           <label>日期</label>
           <div class="date-row"><input type="date" id="customDate" value="${defaultDateFor(year)}"><button type="button" class="date-toggle" onclick="toggleDateInputType('customDate')" title="切換手動輸入">⌨</button></div>
         </div>
@@ -4993,11 +5005,11 @@ function pageData(){
           <label style="display:flex;align-items:center;gap:4px;font-size:14px;"><input type="checkbox" class="exportTypeChk" value="custom" checked> 其他假別</label>
         </div>
         <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end;">
-          <div class="field" style="max-width:170px;">
+          <div class="field" style="flex:1 1 220px;max-width:340px;">
             <label>開始日期（留空＝不限）</label>
             <div class="date-row"><input type="date" id="exportStartDate"><button type="button" class="date-toggle" onclick="toggleDateInputType('exportStartDate')" title="切換手動輸入">⌨</button></div>
           </div>
-          <div class="field" style="max-width:170px;">
+          <div class="field" style="flex:1 1 220px;max-width:340px;">
             <label>結束日期（留空＝不限）</label>
             <div class="date-row"><input type="date" id="exportEndDate"><button type="button" class="date-toggle" onclick="toggleDateInputType('exportEndDate')" title="切換手動輸入">⌨</button></div>
           </div>
