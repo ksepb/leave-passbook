@@ -31,7 +31,7 @@
     --paper:#F3EFE4;
     --paper-deep:#EAE3D2;
     --ink:#2B2A28;
-    --ink-soft:#6B6459;
+    --ink-soft:#625B50;
     --jade:#2F5D50; --jade-soft:#DDE8E2;
     --brick:#A03B3B; --brick-soft:#F1DFDA;
     --blue:#355E7A; --blue-soft:#DCE6EC;
@@ -43,11 +43,12 @@
     --amber-soft:#FBEFDC;
     --line:#C9C2B0;
     --amber:#B5761A;
+    --hour-text:#8E5A0C; /* 卡片上的小時數字：比 --amber 深一階，淺底上對比才夠 */
     /* 深色模式要換色的地方，淺色模式維持原本的值 */
     --card:#fff; --field:#fdfcf9; --modal:#fffdf8; --edit-row:#fffaf0;
     --nav:rgba(255,253,248,.97); --hairline:rgba(0,0,0,.08); --tint:rgba(0,0,0,.05);
     --bg-a:#F4E4C8; --bg-b:#D3E6DC; --dot:rgba(43,42,40,.07);
-    --paper-soft:#F4EEE2; --cal-cell:#EFEDE7; --cal-adjacent:#D8D2C4;
+    --paper-soft:#F4EEE2; --cal-cell:#EFEDE7; --cal-adjacent:#958E80;
     --month-open-a:#DCEAE4; --month-open-line:#B9D6C9; --month-body:#EFF6F3;
     --month-closed-a:#F6EAD2; --month-closed-line:#E4D3A8;
     --reminder-bg:#FDF1DC; --amber-ink:#6b4a12; --note-ink:#8A5A00;
@@ -57,7 +58,7 @@
     --rust-strong:var(--rust); --rose-strong:var(--rose); --teal-strong:var(--teal); --amber-strong:var(--amber);
     /* 主色（App 的色系，可在「設定→外觀」換）：跟「特休綠」分開，換色系時假別顏色不受影響 */
     --primary:var(--jade); --primary-strong:var(--jade-strong); --primary-soft:var(--jade-soft);
-    --hero-bg:linear-gradient(155deg, #5C8A78, var(--jade)); --hero-num:#F0C868; --hero-shadow:rgba(47,93,80,.4);
+    --hero-bg:linear-gradient(155deg, #4A7766, #2C5A4D); --hero-num:#F0C868; --hero-shadow:rgba(47,93,80,.4);
     --icon-accent:#2F5D50; --icon-soft:#DBEBE9;
     color-scheme:light;
   }
@@ -65,11 +66,11 @@
      暖色系的「夜裡的紙本存摺」：底色是帶一點咖啡的深灰，不是純黑；
      強調色調成中間明度，同時兼顧「深底上的文字」跟「按鈕上的白字」兩種用途都看得清楚 */
   :root[data-theme="dark"]{
-      --paper:#1C1A17; --paper-deep:#24211D;
-      --ink:#ECE6D8; --ink-soft:#ABA293; --line:#3E3A33;
+      --paper:#191714; --paper-deep:#24211D;
+      --ink:#E2DBCC; --ink-soft:#ABA293; --line:#3E3A33;
       /* 兩種明度：文字用亮一點的（深底上看得清楚），按鈕／標籤底色用深一點的（上面的白字看得清楚） */
       --jade:#5EAB94; --brick:#E3857D; --blue:#72A4C7; --olive:#B2A95A; --plum:#9998D0;
-      --rust:#D68C5D; --rose:#D77B9F; --teal:#50B2AA; --amber:#DDA548;
+      --rust:#D68C5D; --rose:#D77B9F; --teal:#50B2AA; --amber:#DDA548; --hour-text:var(--amber);
       --jade-strong:#407666; --brick-strong:#98534D; --blue-strong:#4E7088; --olive-strong:#6E6938; --plum-strong:#6B6A92;
       --rust-strong:#966241; --rose-strong:#96566F; --teal-strong:#387D77; --amber-strong:#89662D;
       /* 各色淡底＝該色 15%（琥珀 13%）混深底，預先算成固定色碼，舊版 iPhone（iOS 16.2 以前）也能正確顯示 */
@@ -82,10 +83,10 @@
       --rose-soft:#3F2E30;
       --teal-soft:#2B3732;
       --amber-soft:#3C3223;
-      --card:#262420; --field:#1F1D1A; --modal:#2A2723; --edit-row:#2E2A22;
+      --card:#2B2822; --field:#1F1D19; --modal:#35312A; --edit-row:#2E2A22;
       --nav:rgba(33,31,28,.96); --hairline:rgba(255,255,255,.09); --tint:rgba(255,255,255,.07);
-      --bg-a:#231F19; --bg-b:#18201D; --dot:rgba(255,255,255,.035);
-      --paper-soft:#2A2723; --cal-cell:#2A2824; --cal-adjacent:#57524A;
+      --bg-a:#201C16; --bg-b:#151C19; --dot:rgba(255,255,255,.035);
+      --paper-soft:#2A2723; --cal-cell:#2A2824; --cal-adjacent:#958E80;
       --month-open-a:#20302A; --month-open-line:#34493F; --month-body:#1D2623;
       --month-closed-a:#2D281F; --month-closed-line:#4A4231;
       --reminder-bg:#2E2618; --amber-ink:#E8C98E; --note-ink:#E3B55F;
@@ -94,19 +95,20 @@
       --hero-bg:radial-gradient(120% 90% at 15% 0%, rgba(120,190,160,.18), transparent 60%), linear-gradient(160deg, #294A40, #1B302A);
       --hero-shadow:rgba(0,0,0,.6); --hero-edge:rgba(140,200,175,.18);
       --icon-line:var(--primary);
+      --primary-strong:#3A6A5C; --hero-num:#E6BE62;
       color-scheme:dark;
   }
   /* ===== 其他色系：乾燥玫瑰、深海藍（只換主色，假別顏色不變） ===== */
   :root[data-palette="rose"]{
     --primary:#8E5562; --primary-strong:#8A5260; --primary-soft:#F1E2E4;
-    --hero-bg:linear-gradient(155deg, #9C6873, #7A4352); --hero-num:#FFE6B0; --hero-shadow:rgba(122,67,82,.4); --bg-b:#EEDADD;
+    --hero-bg:linear-gradient(155deg, #93606B, #78404F); --hero-num:#FFE6B0; --hero-shadow:rgba(122,67,82,.4); --bg-b:#EEDADD;
     --icon-accent:#8A5260; --icon-soft:#F1E2E4;
     --month-open-a:#EEDCE0; --month-open-line:#DDBCC4; --month-body:#F8EFF1;
   }
   :root[data-palette="rose"][data-theme="dark"]{
-    --primary:#D6A3AC; --primary-strong:#8A5260; --primary-soft:#3A2A2E;
+    --primary:#D6A3AC; --primary-strong:#7A4A56; --primary-soft:#3A2A2E;
     --hero-bg:radial-gradient(120% 90% at 15% 0%, rgba(215,165,175,.16), transparent 60%), linear-gradient(160deg, #452C33, #2A1B20);
-    --hero-num:#F0C868; --hero-edge:rgba(220,170,180,.18); --bg-b:#211A1C;
+    --hero-num:#E6BE62; --hero-edge:rgba(220,170,180,.18); --bg-b:#1E181A;
     --month-open-a:#302227; --month-open-line:#4A343B; --month-body:#261C20;
   }
   :root[data-palette="navy"]{
@@ -116,9 +118,9 @@
     --month-open-a:#DCE5EF; --month-open-line:#B8CADF; --month-body:#EEF3F8;
   }
   :root[data-palette="navy"][data-theme="dark"]{
-    --primary:#93B3D8; --primary-strong:#3A5B82; --primary-soft:#26313E;
+    --primary:#93B3D8; --primary-strong:#35506F; --primary-soft:#26313E;
     --hero-bg:radial-gradient(120% 90% at 15% 0%, rgba(140,180,225,.16), transparent 60%), linear-gradient(160deg, #22344B, #141F2E);
-    --hero-edge:rgba(150,185,225,.18); --bg-b:#161B22;
+    --hero-edge:rgba(150,185,225,.18); --bg-b:#141920;
     --month-open-a:#1F2833; --month-open-line:#33445A; --month-body:#1B222B;
   }
   *{box-sizing:border-box;}
@@ -173,7 +175,7 @@
     display:flex; align-items:center; justify-content:center;
     transition:background .15s ease, transform .15s ease;
   }
-  .nav-item .nav-icon{display:flex;align-items:center;justify-content:center;line-height:1;}
+  .nav-item .nav-icon{color:inherit;display:flex;align-items:center;justify-content:center;line-height:1;}
   .nav-item.active{color:var(--primary);}
   .nav-item.active .nav-icon-wrap{background:var(--primary-soft);}
   .nav-item:active .nav-icon-wrap{transform:scale(.9);}
@@ -198,6 +200,23 @@
   .select-summary-bar.ssb-over{background:var(--rust-strong);}
   .undo-bar button{background:var(--amber-strong);padding:5px 10px;font-size:12px;}
 
+  .notice-card{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:-4px 0 16px;overflow:hidden;}
+  .notice-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:none;border:none;border-radius:0;box-shadow:none;color:var(--ink);font:inherit;text-align:left;min-height:0;cursor:pointer;}
+  .notice-row + .notice-row, .notice-detail + .notice-row{border-top:1px solid var(--line);}
+  .notice-row.is-static{cursor:default;}
+  .notice-ico{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--amber-soft, #FBEFDC);color:var(--hour-text);}
+  .notice-ico svg{width:16px;height:16px;margin:0;}
+  .notice-row.is-urgent .notice-ico{background:var(--urgent-bg);color:var(--urgent-line);}
+  .notice-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+  .notice-main b{font-size:14.5px;font-weight:700;line-height:1.35;}
+  .notice-main small{font-size:12.5px;color:var(--ink-soft);line-height:1.35;}
+  .notice-row.is-urgent .notice-main b{color:var(--urgent-line);}
+  .notice-act{flex-shrink:0;font-size:13px;font-weight:700;color:var(--ink-soft);white-space:nowrap;}
+  .notice-ack{flex-shrink:0;font-size:12.5px;font-weight:700;padding:5px 11px;min-height:30px;border-radius:14px;background:transparent;color:var(--ink-soft);border:1px solid var(--line);box-shadow:none;}
+  .notice-detail{padding:0 14px 6px 56px;}
+  .notice-line{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px dashed var(--line);font-size:14px;}
+  .notice-line > span{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .notice-line small{font-size:12.5px;color:var(--ink-soft);}
   .reminder-bar{background:var(--reminder-bg);border:1px solid var(--amber);color:var(--amber-ink);padding:10px 14px;border-radius:6px;font-size:14px;margin-bottom:16px;line-height:1.7;}
   .reminder-bar strong{display:block;margin-bottom:4px;font-size:13px;}
   .reminder-bar.reminder-urgent{background:var(--urgent-bg);border-color:var(--urgent-line);color:var(--urgent-ink);}
@@ -224,10 +243,14 @@
   .stamp-card:active{transform:scale(.97);}
   .stamp-card .label{font-size:14px;font-weight:700;color:var(--ink-soft);letter-spacing:.03em;}
   .stamp-card .num{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;line-height:1.15;margin-top:8px;white-space:nowrap;}
-  .stamp-card .num small{font-size:11px;font-weight:500;color:var(--ink-soft);display:block;margin-top:8px;line-height:1.5;}
+  .stamp-card .num small{font-family:'Noto Sans TC',sans-serif;font-size:11.5px;font-weight:500;color:var(--ink-soft);display:block;margin-top:8px;line-height:1.5;}
   .mini-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
-  .mini-chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;}
-  .hour-inline{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:var(--amber);vertical-align:middle;}
+  input::placeholder, textarea::placeholder{color:var(--ink-soft);opacity:1;font-weight:400;}
+  .expiry-chip{display:inline-flex;align-items:center;gap:3px;background:var(--amber-soft, #FBEFDC);color:var(--hour-text);}
+  .expiry-chip svg{width:13px;height:13px;margin:0;vertical-align:0;}
+  .expiry-chip.is-urgent{background:var(--urgent-bg);color:var(--urgent-ink);}
+  .mini-chip{font-size:12px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;}
+  .hour-inline{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:var(--hour-text);vertical-align:middle;}
   .tint-jade{background:color-mix(in srgb, var(--jade-soft) 45%, var(--card));}
   .tint-brick{background:color-mix(in srgb, var(--brick-soft) 45%, var(--card));}
   .tint-blue{background:color-mix(in srgb, var(--blue-soft) 45%, var(--card));}
@@ -253,13 +276,17 @@
   .dash-card .num{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;margin-top:4px;}
 
   .hero-card{background:var(--hero-bg);color:#fff;border-radius:20px;padding:22px 20px 20px;margin-bottom:16px;box-shadow:0 12px 28px -12px var(--hero-shadow);}
-  .hero-card .hero-label{font-size:13px;opacity:.85;}
+  .hero-card .hero-label{font-size:13px;opacity:.92;}
+  .hero-num .u{font-size:.62em;margin:0 2px 0 1px;}
+  .hero-num-hours{display:inline-block;font-size:20px;font-weight:600;opacity:1;margin-left:6px;white-space:nowrap;}
+  .hero-stat-num .u{font-size:.72em;margin:0 1px 0 3px;}
+  .stamp-card .num .u{font-size:.72em;margin:0 1px;}
   .hero-card .hero-num{font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:700;margin-top:4px;line-height:1.1;color:var(--hero-num);}
-  .hero-card .hero-sub{font-size:11.5px;opacity:.75;margin-top:6px;}
+  .hero-card .hero-sub{font-size:12px;opacity:.88;margin-top:6px;}
   .hero-card .hero-divider{border:none;border-top:1px solid rgba(255,255,255,.25);margin:16px 0;}
   .hero-card .hero-stats{display:flex;gap:12px;}
   .hero-card .hero-stat{flex:1;}
-  .hero-card .hero-stat .hero-stat-label{font-size:12px;opacity:.8;}
+  .hero-card .hero-stat .hero-stat-label{font-size:12px;opacity:.92;}
   .hero-card .hero-stat .hero-stat-num{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;margin-top:3px;}
 
   .toolbar{background:color-mix(in srgb, var(--card) 70%, transparent);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin:10px 0 18px;}
@@ -295,11 +322,15 @@
   /* 設定頁分組：小標題＋每組一個格子區；組跟組之間靠標題分開，不用額外的框 */
   .settings-group-title{font-size:17px;font-weight:700;letter-spacing:.12em;color:var(--ink-soft);margin:32px 6px 12px;padding-left:10px;border-left:4px solid var(--primary);line-height:1.2;}
   .settings-group-title:first-child{margin-top:4px;}
-  .manage-grid.settings-grid{margin-bottom:0;}
+  .manage-grid.settings-grid{margin-bottom:0;gap:0;grid-template-columns:1fr;background:color-mix(in srgb, var(--card) 85%, transparent);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .settings-grid > .backup{border:none;border-radius:0;background:transparent;padding:4px 14px;}
+  .settings-grid > .backup + .backup{border-top:1px solid var(--line);}
+  .settings-grid > .backup > .quota-accordion-head{padding:13px 2px;}
+  .settings-grid > .backup:has(> .quota-accordion-head + *){padding-bottom:16px;}
   .settings-grid + .backup.danger-zone{margin-top:16px;}
 
   .block{background:color-mix(in srgb, var(--card) 85%, transparent);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;margin-bottom:20px;}
-  section.block h2{font-family:'Noto Serif TC',serif;font-size:19px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
+  section.block h2{font-family:'Noto Sans TC',sans-serif;font-weight:800;font-size:19px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
   section.block h2 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px;}
   .dot-jade{background:var(--jade);} .dot-brick{background:var(--brick);} .dot-blue{background:var(--blue);} .dot-olive{background:var(--olive);} .dot-plum{background:var(--plum);} .dot-rust{background:var(--rust);} .dot-rose{background:var(--rose);} .dot-teal{background:var(--teal);} .dot-amber{background:var(--amber);}
 
@@ -369,6 +400,8 @@
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
   .btn-primary{background:var(--primary-strong);}
+  .form-submit{width:100%;margin-top:6px;padding:14px 16px;font-size:16px;}
+  form.entry > .form-submit{flex:1 1 100%;}
   .palette-title{font-size:13px;font-weight:600;color:var(--ink-soft);margin:14px 0 8px;}
   .palette-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
   .palette-opt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;min-width:0;}
@@ -487,7 +520,7 @@
   .expiry-decision-sub{font-size:13px;color:var(--brick);margin-bottom:10px;}
   .expiry-decision-actions{display:flex;gap:8px;}
   .expiry-decision-actions button{flex:1;}
-  .modal-box h3{margin:0 0 16px;font-family:'Noto Serif TC',serif;font-size:18px;color:var(--ink);}
+  .modal-box h3{margin:0 0 16px;font-family:'Noto Sans TC',sans-serif;font-weight:800;font-size:18px;color:var(--ink);}
   .modal-header-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;}
   .modal-header-link{flex-shrink:0;font-size:14px;font-weight:700;color:var(--primary);background:var(--card);border:1px solid var(--primary);border-radius:14px;padding:5px 12px;cursor:pointer;white-space:nowrap;}
   .home-detail-group{margin-bottom:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
@@ -543,7 +576,7 @@
   .cal-header button.ghost{width:36px;height:36px;flex-shrink:0;box-sizing:border-box;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;color:var(--primary);background:var(--card);border:1.5px solid var(--primary);border-radius:50%;}
   .cal-title-chevron{width:26px;height:26px;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--ink-soft);border-radius:50%;color:var(--ink-soft);}
   .cal-header button{min-width:44px;min-height:44px;}
-  .cal-title{font-family:'Noto Serif TC',serif;font-weight:900;font-size:21px;}
+  .cal-title{font-family:'Noto Sans TC',sans-serif;font-weight:800;font-size:21px;}
   .cal-block{padding-left:6px;padding-right:6px;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;}
   .cal-weekdays{margin-bottom:4px;font-size:13px;color:var(--ink-soft);text-align:center;}
@@ -596,8 +629,8 @@
   .chart-col-active .chart-label{color:var(--blue);font-weight:700;}
   .chart-bar-track{width:100%;max-width:24px;height:130px;display:flex;flex-direction:column-reverse;background:var(--paper-deep);border-radius:2px 2px 0 0;overflow:hidden;}
   .chart-seg{width:100%;}
-  .chart-label{font-size:9.5px;color:var(--ink-soft);margin-top:4px;}
-  .chart-total{font-size:9px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .chart-label{font-size:11px;color:var(--ink-soft);margin-top:4px;white-space:nowrap;letter-spacing:-.02em;}
+  .chart-total{font-size:10.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
   .chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:11px;color:var(--ink-soft);}
   .cmp-list{display:flex;flex-direction:column;gap:10px;}
   .cmp-row{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:var(--paper-soft);border-radius:8px;cursor:pointer;}
@@ -612,19 +645,20 @@
   .legend-item{display:flex;align-items:center;gap:4px;}
   .legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
 
+  div.block > h2{font-family:'Noto Sans TC',sans-serif;font-weight:800;font-size:17px;margin:0 0 12px;display:flex;align-items:center;gap:8px;line-height:1.35;}
   .backup{background:color-mix(in srgb, var(--card) 85%, transparent);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;}
   .backup.danger-zone{border-color:var(--brick);background:color-mix(in srgb, var(--brick-soft) 50%, transparent);margin-bottom:20px;}
   .backup.danger-zone h2{color:var(--brick);}
   .month-group{margin-bottom:10px;}
   .year-record-month{margin-bottom:18px;}
-  .year-record-month-title{font-family:'Noto Serif TC',serif;font-weight:900;font-size:17px;color:var(--amber);padding:10px 14px;margin-bottom:10px;background:var(--amber-soft, #FBEFDC);border-radius:10px;display:inline-block;}
+  .year-record-month-title{font-family:'Noto Sans TC',sans-serif;font-weight:800;font-size:17px;color:var(--amber);padding:10px 14px;margin-bottom:10px;background:var(--amber-soft, #FBEFDC);border-radius:10px;display:inline-block;}
   .month-group:last-child{margin-bottom:0;}
   .month-header{width:100%;display:flex;flex-direction:column;align-items:stretch;border-radius:10px 10px 0 0;padding:13px 12px;color:var(--ink);text-align:left;transition:background .15s ease, border-color .15s ease;}
   .month-header.month-header-closed{background:linear-gradient(135deg, var(--month-closed-a), var(--paper-deep));border:1px solid var(--month-closed-line);border-radius:10px;}
   .month-header.month-header-open{background:linear-gradient(135deg, var(--month-open-a), var(--paper-deep));border:1px solid var(--month-open-line);border-bottom:none;}
   .month-header-main{display:flex;align-items:center;gap:8px;width:100%;}
-  .month-header .month-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:17px;flex-shrink:0;}
-  .month-header .month-meta{font-size:14.5px;font-weight:700;color:var(--ink);font-family:'IBM Plex Mono',monospace;margin-left:auto;flex-shrink:1;min-width:0;text-align:right;}
+  .month-header .month-title{font-family:'Noto Sans TC',sans-serif;font-weight:800;font-size:17px;flex-shrink:0;}
+  .month-header .month-meta{font-size:14.5px;font-weight:700;color:var(--ink);font-family:'Noto Sans TC',sans-serif;font-variant-numeric:tabular-nums;margin-left:auto;flex-shrink:1;min-width:0;text-align:right;}
   .month-header-sub{font-size:13.5px;color:var(--ink-soft);font-weight:600;margin-top:4px;text-align:right;padding-right:40px;}
   .chevron{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;flex:none;background:var(--card);box-shadow:0 1px 3px rgba(43,42,40,.15);}
   .chevron svg{display:block;}
@@ -651,7 +685,7 @@
   .reset-label{font-size:12px;color:var(--ink-soft);}
   .reset-row select{font-family:'Noto Sans TC',sans-serif;font-size:12.5px;padding:6px 7px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink);}
   .danger-btn{background:var(--card);color:var(--brick);border:1px solid var(--brick);font-weight:700;padding:8px 14px;min-height:38px;font-size:12.5px;}
-  .backup h2{font-family:'Noto Serif TC',serif;font-size:19px;margin:0 0 6px;}
+  .backup h2{font-family:'Noto Sans TC',sans-serif;font-weight:800;font-size:19px;margin:0 0 6px;}
   .backup p{font-size:14px;color:var(--ink-soft);margin:0 0 12px;line-height:1.6;}
   .backup .row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
   textarea{width:100%;font-family:'IBM Plex Mono',monospace;font-size:16px;border:1px solid var(--line);border-radius:4px;padding:8px;background:var(--field);color:var(--ink-soft);resize:vertical;}
@@ -676,6 +710,20 @@
   /* 明細視窗裡的假別小標籤：深色時底色淡一點，彩色字才夠清楚 */
   :root[data-theme="dark"] .home-detail-tag{background:rgba(255,255,255,.04);}
   :root[data-theme="dark"] img{filter:brightness(.92);}
+
+  /* ===== 深色模式細修：層次、陰影、跟著色系走的小地方 ===== */
+  :root[data-theme="dark"] .stamp-card{box-shadow:0 8px 20px -10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.045) !important;}
+  :root[data-theme="dark"] .backup, :root[data-theme="dark"] section.block, :root[data-theme="dark"] .block, :root[data-theme="dark"] .notice-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+  :root[data-theme="dark"] .modal-box{border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 50px -12px rgba(0,0,0,.7);}
+  :root[data-theme="dark"] .field input:focus, :root[data-theme="dark"] .field select:focus{box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 32%, transparent);}
+  :root[data-theme="dark"] .chart-bar-track{background:#322E27;}
+  :root[data-theme="dark"] .stack-preview-more-hint{background:rgba(255,255,255,.05);}
+  :root[data-theme="dark"] .undo-bar{color:var(--ink);border:1px solid rgba(255,255,255,.08);}
+  :root[data-theme="dark"] .palette-sw{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}
+  /* 「今天」用主色的空心圓圈：實心圓會跟格子裡同色的假別標籤（例如墨綠的特休）搞混，空心的形狀不一樣，一眼分得出來 */
+  .cal-cell.today .cal-daynum, .cal-cell.selected.today .cal-daynum{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 2px var(--primary);}
+  .cal-cell.selected.today .cal-daynum{background:var(--card);} /* 選到今天時格子變藍，圓圈裡補上卡片底色，數字才不會淡掉 */
+  .chart-total{font-size:11px;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
@@ -710,21 +758,21 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.10.07-06';
+const APP_VERSION = 'v2026.11.12-08';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
-const ICON_NOTE = `<svg width="19" height="19" viewBox="0 0 32 32" style="vertical-align:-5px;margin-right:2px;"><rect x="6" y="4" width="16" height="24" rx="2" fill="#F5F1E6" stroke="#6B6459" stroke-width="2.4"/><line x1="9" y1="10" x2="19" y2="10" stroke="#B4AC9C" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="14" x2="19" y2="14" stroke="#B4AC9C" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="18" x2="15" y2="18" stroke="#B4AC9C" stroke-width="2" stroke-linecap="round"/><path d="M18 20L27 11L30 14L21 23L17 24Z" fill="#DBEBE9" stroke="#6B6459" stroke-width="2.2" stroke-linejoin="round"/><path d="M25 13L28 16" stroke="#6B6459" stroke-width="1.8"/></svg>`;
-const ICON_FOLDER = `<svg width="20" height="20" viewBox="0 0 32 32" style="vertical-align:-5px;margin-right:2px;"><path d="M3 10C3 8.9 3.9 8 5 8H12L15 11H27C28.1 11 29 11.9 29 13V24C29 25.1 28.1 26 27 26H5C3.9 26 3 25.1 3 24V10Z" fill="#B5761A" fill-opacity="0.55" stroke="#1F1F1F" stroke-width="2.4" stroke-linejoin="round"/><rect x="7" y="14" width="6" height="8" rx="0.8" fill="#F1DFDA" stroke="#1F1F1F" stroke-width="1.8"/><rect x="14" y="14" width="6" height="8" rx="0.8" fill="#DBEBE9" stroke="#1F1F1F" stroke-width="1.8"/><rect x="21" y="14" width="5" height="8" rx="0.8" fill="#E1E0EE" stroke="#1F1F1F" stroke-width="1.8"/></svg>`;
-const ICON_CAMERA = `<svg width="19" height="19" viewBox="0 0 32 32" style="vertical-align:-5px;margin-right:2px;"><path d="M10 9L12 5H20L22 9H27C28.1 9 29 9.9 29 11V24C29 25.1 28.1 26 27 26H5C3.9 26 3 25.1 3 24V11C3 9.9 3.9 9 5 9H10Z" fill="#9BA5AE" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="17" r="6" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/><circle cx="16" cy="17" r="2.6" fill="#2A7A75" stroke="#1F1F1F" stroke-width="1.6"/><circle cx="24" cy="13" r="1.3" fill="#B5761A" stroke="#1F1F1F" stroke-width="1.2"/></svg>`;
-const ICON_HOURGLASS = `<svg width="18" height="18" viewBox="0 0 32 32" style="vertical-align:-4px;margin-right:2px;"><path d="M8 4H24V9C24 12 21 14 16 16C21 18 24 20 24 23V28H8V23C8 20 11 18 16 16C11 14 8 12 8 9V4Z" fill="#F1DFDA" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><line x1="6" y1="4" x2="26" y2="4" stroke="#1F1F1F" stroke-width="2.4" stroke-linecap="round"/><line x1="6" y1="28" x2="26" y2="28" stroke="#1F1F1F" stroke-width="2.4" stroke-linecap="round"/><path d="M11 8C11.5 10 13 11.5 16 13C19 11.5 20.5 10 21 8" stroke="#A03B3B" stroke-width="1.6" fill="none"/><path d="M12 24C12.5 22 14 20.5 16 19.5C18 20.5 19.5 22 20 24" fill="#A03B3B"/></svg>`;
-const ICON_BOOK = `<svg width="24" height="24" viewBox="0 0 32 32" style="vertical-align:-6px;margin-right:2px;"><path d="M4 7C4 6 5 5.5 6 5.5C10 5.5 13 6.5 15 8.5V26C13 24 10 23 6 23C5 23 4 22.5 4 21.5V7Z" fill="#DBEBE9" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><path d="M28 7C28 6 27 5.5 26 5.5C22 5.5 19 6.5 17 8.5V26C19 24 22 23 26 23C27 23 28 22.5 28 21.5V7Z" fill="#E1E0EE" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+const ICON_NOTE = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:2px;"><path d="M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M13.378 15.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`;
+const ICON_FOLDER = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:2px;"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M8 13h8"/></svg>`;
+const ICON_CAMERA = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:2px;"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>`;
+const ICON_HOURGLASS = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:2px;"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>`;
+const ICON_BOOK = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-6px;margin-right:2px;"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>`;
 const ICON_SWITCH = `<svg width="17" height="17" viewBox="0 0 32 32" style="vertical-align:-3px;margin-right:2px;"><path d="M6 12C7 8 11 5 16 5C20 5 23.5 7 25.5 10.5" style="stroke:var(--icon-line, var(--icon-accent))" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M25 6V11H20" style="stroke:var(--icon-line, var(--icon-accent))" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 20C25 24 21 27 16 27C12 27 8.5 25 6.5 21.5" stroke="#B5761A" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M7 26V21H12" stroke="#B5761A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const ICON_PIN = `<svg width="16" height="16" viewBox="0 0 32 32" style="vertical-align:-3px;margin-right:2px;"><path d="M16 3C10.5 3 6 7.5 6 13C6 20 16 29 16 29C16 29 26 20 26 13C26 7.5 21.5 3 16 3Z" fill="#A03B3B" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="13" r="4.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="1.8"/></svg>`;
+const ICON_PIN = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>`;
 const ICON_DOT_RED = `<svg width="14" height="14" viewBox="0 0 32 32" style="vertical-align:-2px;margin-right:2px;"><circle cx="16" cy="16" r="11" fill="#A03B3B" stroke="#1F1F1F" stroke-width="2.2"/></svg>`;
 const ICON_DOT_BLUE = `<svg width="14" height="14" viewBox="0 0 32 32" style="vertical-align:-2px;margin-right:2px;"><circle cx="16" cy="16" r="11" fill="#4FA8E0" stroke="#1F1F1F" stroke-width="2.2"/></svg>`;
-const ICON_EYE_OPEN = `<svg width="20" height="20" viewBox="0 0 32 32" style="vertical-align:-5px;"><path d="M2 16C5 9 10 6 16 6C22 6 27 9 30 16C27 23 22 26 16 26C10 26 5 23 2 16Z" style="fill:var(--icon-soft)" stroke="#1F1F1F" stroke-width="2"/><circle cx="16" cy="16" r="5.5" style="fill:var(--icon-accent)" stroke="#1F1F1F" stroke-width="1.8"/></svg>`;
-const ICON_EYE_CLOSED = `<svg width="20" height="20" viewBox="0 0 32 32" style="vertical-align:-5px;"><path d="M2 16C5 9 10 6 16 6C22 6 27 9 30 16C27 23 22 26 16 26C10 26 5 23 2 16Z" fill="#F1DFDA" stroke="#1F1F1F" stroke-width="2" opacity="0.5"/><circle cx="16" cy="16" r="5.5" fill="#9BA5AE" stroke="#1F1F1F" stroke-width="1.8" opacity="0.6"/><line x1="4" y1="26" x2="28" y2="6" stroke="#1F1F1F" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+const ICON_EYE_OPEN = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:2px;"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+const ICON_EYE_CLOSED = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-5px;margin-right:2px;"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
 const ICON_MONEY = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:2px;"><circle cx="12" cy="12" r="9"/><path d="M9.5 15c0 1.1 1 2 2.5 2s2.5-.7 2.5-1.8c0-1.1-1-1.5-2.5-1.9-1.5-.4-2.5-.9-2.5-1.9C9.5 10.4 10.5 9.5 12 9.5s2.5.6 2.5 1.7M12 8v1M12 15v1"/></svg>`;
 const ICON_STAR = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:2px;"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3l-6.1 3.3 1.4-6.8-5.1-4.7 6.9-.8z"/></svg>`;
 const ICON_WARNING = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:2px;color:var(--brick);"><path d="M12 3L2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>`;
@@ -1880,6 +1928,28 @@ function saveDeviceName(){
   render();
   setStatus('已更新裝置名稱', true);
 }
+// 剩餘天數的顯示：整天、半天照舊（7.5天）；不是半天倍數的，拆成「天＋小時」（11天2小時），
+// 不再四捨五入成 11.3天，跟旁邊的小時數兜得起來。只用在畫面顯示，計算和存檔都不經過這裡
+function dayHourParts(n){
+  const h = getHoursPerDay();
+  const neg = n < 0; let a = Math.abs(n);
+  if(Math.abs(a*2 - Math.round(a*2)) < 1e-6) return { neg, half:true, val:a };
+  let d = Math.floor(a + 1e-9); let hr = Math.round((a - d) * h * 10) / 10;
+  if(hr >= h){ d += 1; hr = 0; }
+  if(hr === 0) return { neg, half:true, val:d }; // 浮點誤差（例如 7.9999999）四捨五入後剛好是整天
+  return { neg, half:false, d, hr };
+}
+function hasHourPart(n){ return !dayHourParts(n).half; }
+function fmtDays(n){
+  const p = dayHourParts(n); const sign = p.neg ? '-' : '';
+  if(p.half) return `${sign}${fmt(p.val)}天`;
+  return `${sign}${p.d ? p.d+'天' : ''}${fmt(p.hr)}小時`;
+}
+function fmtDaysHtml(n){
+  const p = dayHourParts(n); const sign = p.neg ? '-' : '';
+  if(p.half) return `${sign}${fmt(p.val)}<span class="u">天</span>`;
+  return `${sign}${p.d ? p.d+'<span class="u">天</span>' : ''}${fmt(p.hr)}<span class="u">小時</span>`;
+}
 function fmt(n){ return (Math.round(n*10)/10).toString(); }
 function compHourOptions(maxHours, selectedVal){
   selectedVal = selectedVal || '';
@@ -2432,7 +2502,7 @@ function expiryDecisionModal(){
             const diffDays = Math.round((new Date(TODAY) - new Date(b.expiry))/86400000);
             return `<div class="expiry-decision-item">
               <div class="expiry-decision-title">${toROC(b.date)} 獲得的 ${escapeHtml(label)}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
-              <div class="expiry-decision-sub">剩 ${fmt(b.remainDays)} 天，${toROC(b.expiry)} 到期（已過期 ${diffDays} 天）</div>
+              <div class="expiry-decision-sub">剩 ${fmtDays(b.remainDays)}，${toROC(b.expiry)} 到期（已過期 ${diffDays} 天）</div>
               <div class="expiry-decision-actions">
                 <button type="button" class="btn-primary" onclick="decideExpiredBatch('${b.category}','${b.id}','used')">已使用</button>
                 <button type="button" class="ghost" onclick="decideExpiredBatch('${b.category}','${b.id}','kept')">保留</button>
@@ -2807,12 +2877,12 @@ function stampCard(t){
     if(paid>0) chips.push(`<span class="mini-chip" style="background:var(--jade-soft);color:var(--jade);">${ICON_MONEY}有薪 ${fmt(paid)}天</span>`);
     if(unpaid>0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">無薪 ${fmt(unpaid)}天</span>`);
   }
-  if(t.key==='annual' && minDaysBorder) chips.push(`<span class="mini-chip" style="background:${minDaysBorder.includes('brick')?'var(--brick-soft);color:var(--brick);':'var(--amber-soft, #FBEFDC);color:var(--amber);'}">還沒用滿最低 ${fmt(getEffectiveAnnualMin(CUR_YEAR))} 天</span>`);
+  if(t.key==='annual' && minDaysBorder) chips.push(`<span class="mini-chip" style="background:${minDaysBorder.includes('brick')?'var(--brick-soft);color:var(--brick);':'var(--amber-soft, #FBEFDC);color:var(--hour-text);'}">還沒用滿最低 ${fmt(getEffectiveAnnualMin(CUR_YEAR))} 天</span>`);
   return `
-    <div class="stamp-card tint-${t.c} ${level}" style="${minDaysBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetailFromHome('${t.key}')">
+    <div class="stamp-card tint-${t.c} ${level}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetailFromHome('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
-      <div class="num c-${t.c}">${fmt(remain)}天 <span class="hour-inline">${fmt(remain*getHoursPerDay())}小時</span><small>共 ${fmt(getQuota(t.key,CUR_YEAR))} 天</small></div>
+      <div class="num c-${t.c}">${fmtDaysHtml(remain)}${hasHourPart(remain) ? '' : ` <span class="hour-inline">${fmt(remain*getHoursPerDay())}小時</span>`}<small>共 ${fmt(getQuota(t.key,CUR_YEAR))} 天</small></div>
       ${chips.length? `<div class="mini-chips">${chips.join('')}</div>` : ''}
     </div>`;
 }
@@ -2833,20 +2903,25 @@ function compStampCard(category){
   const info = COMP_CATEGORIES[category];
   const compBal = compBalanceUpTo(CUR_YEAR, category);
   const reminders = compExpiryReminders().filter(r=>r.category===category);
-  let urgentBorder = '';
+  // 快到期不再用整圈紅／琥珀外框（紅色是補休自己的顏色，會跟警告搞混），改在卡片裡放一個寫明日期的小標籤
+  let urgentBorder = '', expiryChip = '';
   if(reminders.length){
     // 改用月份差計算（不是天數），跟特休最低使用天數那邊的判斷方式一致：1個月內算紅色、3個月內算琥珀色
     const expiryDate = new Date(reminders[0].expiry+'T00:00:00');
     const todayDate = new Date(TODAY+'T00:00:00');
     const monthsUntil = (expiryDate.getFullYear()-todayDate.getFullYear())*12 + (expiryDate.getMonth()-todayDate.getMonth());
-    if(monthsUntil<=1) urgentBorder = 'border:2px solid var(--brick);';
-    else if(monthsUntil<=3) urgentBorder = 'border:2px solid var(--amber);';
+    const diff = Math.round((expiryDate - todayDate)/86400000);
+    if(monthsUntil<=3){
+      const urgent = monthsUntil<=1;
+      expiryChip = `<span class="mini-chip expiry-chip${urgent?' is-urgent':''}">${ICON_HOURGLASS}${diff<=0?'今天到期':diff+' 天後到期'}</span>`;
+    }
   }
   return `
     <div class="stamp-card tint-${info.c} ${compBal<0?'warn':''}" style="${urgentBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${info.c}) 45%, transparent);" onclick="viewLeaveDetailFromHome('${category}')">
       <div class="seal c-${info.c}">${info.label.slice(0,1)}</div>
       <div class="label">${info.label}結餘</div>
-      <div class="num c-${info.c}">${fmt(compBal)}天 <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span><small>至 ${CUR_YEAR} 年底・${category==='exchange' ? '當年度用完' : `期限${info.defaultYears}年`}</small></div>
+      <div class="num c-${info.c}">${fmtDaysHtml(compBal)}${hasHourPart(compBal) ? '' : ` <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span>`}<small>至 ${CUR_YEAR} 年底・${category==='exchange' ? '當年度用完' : `期限${info.defaultYears}年`}</small></div>
+      ${expiryChip ? `<div class="mini-chips">${expiryChip}</div>` : ''}
     </div>`;
 }
 
@@ -2891,7 +2966,7 @@ function dashboardPanel(){
       return `
       <div class="home-detail-row">
         <span class="home-detail-date">${toROC(b.date)}${expiredTag}</span>
-        <span class="home-detail-amt">剩 ${fmt(b.remainDays)} 天</span>
+        <span class="home-detail-amt">剩 ${fmtDays(b.remainDays)}</span>
         ${expiryText || b.note ? `<span class="home-detail-note">${expiryText}${expiryText && b.note ? '　' : ''}${b.note ? `<span class="home-detail-note-tag">${escapeHtml(b.note)}</span>` : ''}</span>` : ''}
       </div>`;
     };
@@ -2919,17 +2994,17 @@ function dashboardPanel(){
   return `
     <div class="hero-card">
       <div class="hero-label" style="cursor:pointer;" onclick="openHomeDetailModal('remain')">特休＋補休＋換休　目前剩餘合計 <span style="opacity:.7;">›</span></div>
-      <div class="hero-num" style="white-space:nowrap;cursor:pointer;" onclick="openHomeDetailModal('remain')">${fmt(totalRemain)}天<span style="font-size:20px;font-weight:600;opacity:.85;margin-left:6px;">（${fmt(totalRemain*getHoursPerDay())}小時）</span></div>
+      <div class="hero-num" style="cursor:pointer;" onclick="openHomeDetailModal('remain')"><span style="white-space:nowrap;">${fmtDaysHtml(totalRemain)}</span><span class="hero-num-hours">（${fmt(totalRemain*getHoursPerDay())}小時）</span></div>
       <div class="hero-sub">僅計算特休、補休、換休，不含病假／事假等其他假別</div>
       <hr class="hero-divider">
       <div class="hero-stats">
         <div class="hero-stat" style="cursor:pointer;" onclick="openHomeDetailModal('month')">
           <div class="hero-stat-label">本月已請假 <span style="opacity:.7;">›</span></div>
-          <div class="hero-stat-num">${fmt(monthTotal)} 天</div>
+          <div class="hero-stat-num">${fmtDaysHtml(monthTotal)}</div>
         </div>
         <div class="hero-stat" style="cursor:pointer;" onclick="openHomeDetailModal('year')">
           <div class="hero-stat-label">今年已請假 <span style="opacity:.7;">›</span></div>
-          <div class="hero-stat-num">${fmt(yearTotal)} 天</div>
+          <div class="hero-stat-num">${fmtDaysHtml(yearTotal)}</div>
         </div>
       </div>
     </div>
@@ -3195,8 +3270,8 @@ function keywordPanel(){
           <div class="field" style="max-width:150px;">
             <label>沒寫「用／獲得」的補休／換休，預設當作</label>
             <select id="kwDefaultCompType" onchange="kwDefaultType=this.value" style="min-height:34px;padding:6px 8px;font-size:14px;">
-              <option value="earn" ${kwDefaultType!=='use'?'selected':''}>獲得</option>
-              <option value="use" ${kwDefaultType==='use'?'selected':''}>使用</option>
+              <option value="use" ${kwDefaultType!=='earn'?'selected':''}>使用</option>
+              <option value="earn" ${kwDefaultType==='earn'?'selected':''}>獲得</option>
             </select>
           </div>
         </div>
@@ -3216,10 +3291,10 @@ function keywordPanel(){
         </div>
         <div class="kw-example" style="border-left-color:var(--brick);">
           <div class="kw-example-code">
-            <code class="kw-code" style="background:var(--brick-soft);color:var(--brick);">補休4H (性別平等)</code>
-            <code class="kw-code" style="background:var(--teal-soft);color:var(--teal);">換休4H (假日出勤)</code>
+            <code class="kw-code" style="background:var(--brick-soft);color:var(--brick);">補休4H (看醫生)</code>
+            <code class="kw-code" style="background:var(--teal-soft);color:var(--teal);">得換休4H (假日出勤)</code>
           </div>
-          <div class="kw-example-desc">→ 加「用／使用／獲得」可明確指定是獲得還是使用</div>
+          <div class="kw-example-desc">→ 沒寫的話當作「使用」；要記獲得就在前面加「得」或「獲得」</div>
         </div>
         <div class="kw-example" style="border-left-color:var(--jade);">
           <div class="kw-example-code">
@@ -3277,46 +3352,43 @@ async function acknowledgeExpiry(category, id){
 let reminderExpanded = false; // 首頁「即將到期」超過3筆時，是否展開看全部（不存檔，重開App恢復收合）
 function toggleReminderExpanded(){ reminderExpanded = !reminderExpanded; render(); }
 function openExpiryDecisionFromBanner(){ expiryDecisionModalOpen = true; render(); }
+function reminderCatLabel(r){ return (r.category==='custom' && r.customLabel) ? r.customLabel : COMP_CATEGORIES[r.category||'comp'].label; }
+// 首頁提醒：放在大卡下面的一張小卡，每種提醒只佔一行（標題＋一行小字），不搶剩餘天數的版面。
+// (1) 新年度特休天數還沒設定 → 點了開設定視窗
+// (2) 已過期、還沒決定「已使用／保留」的補休／換休 → 紅色一行，點了開決定視窗
+// (3) 即將到期（90天內）跟選了「保留」的過期批次 → 收成一行摘要（最近哪天到期），點「看明細」才逐筆列出，每筆可「不再顯示」
+// (4) 10月起特休還沒休滿最低天數 → 一行，可「先隱藏」
 function reminderBanner(){
-  // 首頁頂端的補休／換休提醒，分兩種：
-  // (1) 已過期、還沒決定「已使用／保留」的：收成一行，點下去打開決定視窗一次處理（同一件事不要在首頁跟視窗各列一次）
-  // (2) 即將到期（90天內）的、跟選了「保留」的過期批次：逐筆列，但最多先顯示3筆，其餘收起來
   const undecidedCount = getExpiringUndecidedBatches().length;
   const list = compExpiryReminders().filter(r=> r.diffDays>=0 || r.expiryDecision==='kept');
-  const compHtml = (undecidedCount || list.length) ? (()=>{
-    const hasUrgent = undecidedCount>0 || list.some(r=>r.diffDays<=7);
-    const MAX_SHOWN = 3;
-    const shown = reminderExpanded ? list : list.slice(0, MAX_SHOWN);
-    const hiddenCount = list.length - shown.length;
-    const items = shown.map(r=>{
+  const rows = [];
+  if(needsAnnualQuotaReminder()) rows.push(`<button type="button" class="notice-row" onclick="openAnnualQuotaModal()"><span class="notice-ico">${ICON_STAR}</span><span class="notice-main"><b>${CUR_YEAR} 年特休天數還沒設定</b><small>目前先以 0 天計算</small></span><span class="notice-act">設定 ›</span></button>`);
+  if(undecidedCount) rows.push(`<button type="button" class="notice-row is-urgent" onclick="openExpiryDecisionFromBanner()"><span class="notice-ico">${ICON_WARNING}</span><span class="notice-main"><b>${undecidedCount} 筆已過期，還沒決定怎麼處理</b><small>點右邊選「已使用」或「保留」</small></span><span class="notice-act">處理 ›</span></button>`);
+  if(list.length){
+    const upcoming = list.filter(r=>r.diffDays>=0).sort((a,b)=>a.diffDays-b.diffDays);
+    const soon = upcoming[0];
+    const urgent = soon && soon.diffDays<=7;
+    const sub = soon ? `最近 ${toROC(soon.expiry).replace(/^\d+\//,'')} 到期・${soon.diffDays===0?'今天':'還有 '+soon.diffDays+' 天'}` : `${list.length} 筆過期保留中`;
+    const detail = reminderExpanded ? `<div class="notice-detail">${list.map(r=>{
       const statusTxt = r.diffDays < 0 ? `已過期${Math.abs(r.diffDays)}天・保留中` : (r.diffDays===0? '今天到期' : `還有${r.diffDays}天`);
-      const catLabel = COMP_CATEGORIES[r.category||'comp'].label;
-      const lineClass = r.diffDays<=7 ? 'urgent-line' : '';
-      return `<div class="reminder-line"><span class="${lineClass}">${toROC(r.date)} 的${catLabel} ${fmt(r.remainDays)} 天，${toROC(r.expiry)} 到期（${statusTxt}）</span><button type="button" class="ack-btn" onclick="acknowledgeExpiry('${r.category}','${r.id}')">✕ 不再顯示</button></div>`;
-    }).join('');
-    const undecidedLine = undecidedCount ? `<button type="button" class="reminder-summary-link" onclick="openExpiryDecisionFromBanner()"><span>${undecidedCount} 筆已過期，還沒決定怎麼處理</span><span class="reminder-summary-arrow">處理 ›</span></button>` : '';
-    const moreLine = list.length > MAX_SHOWN ? `<button type="button" class="reminder-more" onclick="toggleReminderExpanded()">${reminderExpanded ? '收起' : `還有 ${hiddenCount} 筆即將到期 ▾`}</button>` : '';
-    return `<div class="reminder-bar${hasUrgent?' reminder-urgent':''}"><strong>${ICON_WARNING} 補休／換休到期提醒</strong>${undecidedLine}${items}${moreLine}</div>`;
-  })() : '';
-
+      const catLabel = reminderCatLabel(r);
+      return `<div class="notice-line"><span>${catLabel} ${fmtDays(r.remainDays)}<small>${toROC(r.expiry)} 到期・${statusTxt}</small></span><button type="button" class="notice-ack" onclick="acknowledgeExpiry('${r.category}','${r.id}')">不再顯示</button></div>`;
+    }).join('')}</div>` : '';
+    rows.push(`<button type="button" class="notice-row${urgent?' is-urgent':''}" onclick="toggleReminderExpanded()" aria-expanded="${reminderExpanded}"><span class="notice-ico">${ICON_WARNING}</span><span class="notice-main"><b>${[...new Set(list.slice().sort((a,b)=>['comp','exchange','custom'].indexOf(a.category||'comp')-['comp','exchange','custom'].indexOf(b.category||'comp')).map(reminderCatLabel))].join('、')} ${upcoming.length ? upcoming.length+' 筆即將到期' : '到期提醒'}</b><small>${sub}</small></span><span class="notice-act">${reminderExpanded?'收起 ⌃':'看明細 ⌄'}</span></button>${detail}`);
+  }
   const month = NOW.getMonth()+1;
   const annualUsed = usedOf('annual', CUR_YEAR);
   const annualMin = getEffectiveAnnualMin(CUR_YEAR);
-  const annualMinCapped = annualMin < getAnnualMinDays(); // 今年特休總天數比門檻少，以總天數為準
   const shortfall = annualMin - annualUsed;
+  const annualMinCapped = annualMin < getAnnualMinDays(); // 今年特休總天數比門檻少，以總天數為準
   const daysLeftInYear = Math.round((new Date(CUR_YEAR,11,31) - new Date(TODAY+'T00:00:00')) / 86400000);
-  const annualHtml = (month>=10 && shortfall>0 && !isAnnualMinSnoozed()) ? (()=>{
-    const urgent = daysLeftInYear <= 30;
-    return `<div class="reminder-bar${urgent?' reminder-urgent':''}"><strong>${ICON_STAR}特休還要再休 ${fmt(shortfall)} 天</strong><div class="reminder-line"><span>${annualMinCapped ? `已休 ${fmt(annualUsed)} 天・今年 ${fmt(annualMin)} 天需全休完` : `已休 ${fmt(annualUsed)} 天・最低要休 ${fmt(annualMin)} 天`}</span><button type="button" class="ack-btn" onclick="snoozeAnnualMin()">先隱藏</button></div></div>`;
-  })() : '';
-
-  // 新的一年還沒設定特休天數：每年只有特休會依年資變動，其他假別的預設值通常不用改，
-  // 所以只提醒特休，點下去直接開特休的小視窗，不用跑去設定頁翻找
-  const annualQuotaHtml = needsAnnualQuotaReminder() ? `<div class="reminder-bar"><strong>${ICON_STAR}${CUR_YEAR} 年特休天數還沒設定</strong>新的一年特休天數要重新填，目前先以 0 天計算。<div style="margin-top:8px;"><button type="button" class="btn-primary" style="font-size:14px;padding:8px 14px;" onclick="openAnnualQuotaModal()">設定特休天數</button></div></div>` : '';
-
-  return annualQuotaHtml + compHtml + annualHtml;
+  if(month>=10 && shortfall>0 && !isAnnualMinSnoozed()){
+    const urgentAnnual = daysLeftInYear <= 30;
+    rows.push(`<div class="notice-row is-static${urgentAnnual?' is-urgent':''}"><span class="notice-ico">${ICON_STAR}</span><span class="notice-main"><b>特休還要再休 ${fmtDays(shortfall)}</b><small>${annualMinCapped ? `已休 ${fmtDays(annualUsed)}・今年 ${fmt(annualMin)} 天需全休完` : `已休 ${fmtDays(annualUsed)}・最低要休 ${fmt(annualMin)} 天`}</small></span><button type="button" class="notice-ack" onclick="snoozeAnnualMin()">先隱藏</button></div>`);
+  }
+  if(!rows.length) return '';
+  return `<div class="notice-card">${rows.join('')}</div>`;
 }
-
 // 特休最低天數提醒「先隱藏」：10、11月按 → 隱藏到12/1（最後一個月再提醒）；12月按 → 只隱藏7天。
 // 只存在這台裝置，不進雲端同步、不進備份；跨年自動失效（記錄裡含年份）。首頁特休卡片的外框／標籤不受影響，照常顯示
 const ANNUAL_MIN_SNOOZE_KEY = 'annualMinSnoozeUntil';
@@ -3983,7 +4055,7 @@ function pageAddRecord(){
             </div>
           </div>
           <div class="form-row">
-            <button type="submit" class="btn-${info.c}">登記</button>
+            <button type="submit" class="btn-primary form-submit" data-label="${key==='custom'?'':info.label}">${submitLabelText(addRecordCompDefaultType==='use'?'使用':'獲得', 1, compDefaultUnit, key==='custom'?'':info.label)}</button>
           </div>
           <div id="compBottomSpacer" style="height:0;"></div>
         </form>
@@ -4029,7 +4101,7 @@ function pageAddRecord(){
           <div class="convert-hint u-day" id="${t.key}ConvertHint">使用 <b>${fmt(getHoursPerDay())} 小時</b></div>
         </div>
         <div class="field note"><label>備註</label><input type="text" id="${t.key}Note" placeholder="原因或備註"></div>
-        <button type="submit" class="btn-${t.c}">登記使用</button>
+        <button type="submit" class="btn-primary form-submit" data-label="${t.label}" data-verb="使用">${submitLabelText('使用', 1, 'day', t.label, multiDateMode?multiDateList.length:0)}</button>
       </form>
     </section>`;
 }
@@ -4280,7 +4352,7 @@ function renderAvailBatchList(category){
       ${b.id===lastEditedId ? `<span class="edit-confirm-badge">✓ 已編輯</span>` : ''}
       <button type="button" class="avail-batch-edit-btn" onclick="openQuickEditModal('${category}','${b.id}')" title="編輯">✎</button>
       <div class="avail-batch-title"><span class="avail-batch-date">${toROC(b.date)}</span>${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}${b.photoUrl?` <span class="photo-badge" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')">${ICON_CAMERA}附件</span>`:''}</div>
-      <div class="avail-batch-remain">剩 ${fmt(b.remainDays)} 天<span class="avail-batch-hours-strong">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span></div>
+      <div class="avail-batch-remain">剩 ${fmtDays(b.remainDays)}${hasHourPart(b.remainDays) ? '' : `<span class="avail-batch-hours-strong">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span>`}</div>
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">${ICON_HOURGLASS}到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
     </div>`;
   }).join('')}</div>`;
@@ -4313,7 +4385,7 @@ function renderAvailBatchList(category){
         <div class="stack-preview-layer ${i===0?'stack-preview-layer-front':''}" style="height:${i===0?frontH:cardH}px;transform:translateY(${i*peek}px) scale(${1-i*0.02});z-index:${n-i};background:${layerBg(i)};">
           <span class="avail-batch-date">${toROC(b.date)}</span>
           ${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}
-          <span class="stack-preview-remain">${overviewUnit==='day' ? `剩 ${fmt(b.remainDays)} 天` : `剩 ${fmt(b.remainDays*getHoursPerDay())} 小時`}</span>
+          <span class="stack-preview-remain">${overviewUnit==='day' ? `剩 ${fmtDays(b.remainDays)}` : `剩 ${fmt(b.remainDays*getHoursPerDay())} 小時`}</span>
         </div>`).join('')}
       ${emptyLayerHtml}
       ${moreHintHtml}
@@ -4392,7 +4464,7 @@ function customSectionHtml(){
       <div class="avail-batch-list">${activeLabels.map(x=>`
         <div class="avail-batch-item">
           <div class="avail-batch-title"><span class="avail-batch-note-tag" style="background:var(--amber-soft, #FBEFDC);color:var(--amber);">${escapeHtml(x.label)}</span></div>
-          <div class="avail-batch-remain">剩 ${fmt(x.remainDays)} 天<span class="avail-batch-hours-strong">（${fmt(x.remainDays*getHoursPerDay())} 小時）</span></div>
+          <div class="avail-batch-remain">剩 ${fmtDays(x.remainDays)}${hasHourPart(x.remainDays) ? '' : `<span class="avail-batch-hours-strong">（${fmt(x.remainDays*getHoursPerDay())} 小時）</span>`}</div>
           ${x.nearestExpiry ? `<div class="avail-batch-expiry" style="color:var(--amber);">${ICON_HOURGLASS}到期 ${toROC(x.nearestExpiry)}</div>` : ''}
         </div>`).join('')}</div>
     </div>` : `<div class="hint" style="margin-bottom:16px;">目前沒有還能使用的其他假別紀錄。</div>`;
@@ -4436,7 +4508,7 @@ function customSectionHtml(){
         </div>
         <div class="row" style="gap:8px;">
           <button type="button" class="ghost" style="flex:1;" onclick="toggleCustomAdd()">取消</button>
-          <button type="submit" class="btn-amber" style="flex:1;">儲存</button>
+          <button type="submit" class="btn-primary" style="flex:1;">儲存</button>
         </div>
       </form>
     </div>` : `<button type="button" class="btn-amber btn-with-badge" style="width:100%;margin-bottom:16px;" onclick="toggleCustomAdd()"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--amber);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增其他假別</button>`;
@@ -4586,9 +4658,9 @@ function pageHome(justEntered){
     </div>`;
   }
   return `
-    ${reminderBanner()}
-
     ${dashboardPanel()}
+
+    ${reminderBanner()}
 
     <div style="margin-bottom:16px;">
       <button type="button" class="btn-primary${justEntered?' shimmer-once':''}" style="width:100%;font-size:16px;padding:14px 16px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> 登記休假／補休紀錄</button>
@@ -4635,13 +4707,6 @@ function pageQuickInput(){
 
 function pageViz(){
   return `
-    <div class="toolbar">
-      <div class="toolbar-row view-toggles">
-        <button type="button" class="sortbtn" onclick="toggleCalendar()">${calendarMode?'隱藏行事曆':'📅 行事曆檢視'}</button>
-        <button type="button" class="sortbtn" onclick="toggleChart()">${chartMode?'隱藏統計圖':'📊 年度統計圖'}</button>
-        <button type="button" class="sortbtn" onclick="toggleUtilization()">${utilizationMode?'隱藏使用率':'📈 使用率'}</button>
-      </div>
-    </div>
     ${calendarPanel()}
     ${statsChart()}
     ${statsUtilization()}
@@ -4825,6 +4890,17 @@ function pageData(){
           }).join('')}
         </div>
         ` : ''}
+      </div>
+      <div class="backup">
+        <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('vizView')">
+          <span>${ICON_EYE_OPEN}行事曆頁顯示項目</span>
+          <span>${settingsExpandedKey==='vizView'?'▲':'▼'}</span>
+        </button>
+        ${settingsExpandedKey==='vizView' ? `
+        <p>選擇「行事曆」分頁要顯示哪些區塊。</p>
+        <div class="row" style="gap:8px;">
+          ${[['行事曆',calendarMode,'toggleCalendar'],['統計圖',chartMode,'toggleChart'],['使用率',utilizationMode,'toggleUtilization']].map(([lb,on,fn])=>`<button type="button" class="leave-tab" aria-pressed="${on}" style="${on?'background:var(--primary-strong);color:#fff;border-color:var(--primary-strong);':'background:var(--card);color:var(--ink-soft);border-color:var(--line);'}" onclick="${fn}()">${on?'✓ ':''}${lb}</button>`).join('')}
+        </div>` : ''}
       </div>
     </div>
     <div class="settings-group-title">假別規則</div>
@@ -5155,11 +5231,11 @@ function pageData(){
 }
 
 function bottomNav(){
-  const svgHome = `<svg viewBox="0 0 32 32" width="40" height="40"><path d="M4 15L16 5L28 15V27C28 27.55 27.55 28 27 28H19V20H13V28H5C4.45 28 4 27.55 4 27V15Z" fill="#F6C453" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/><rect x="13" y="20" width="6" height="8" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
-  const svgCal = `<svg viewBox="0 0 32 32" width="40" height="40"><rect x="4" y="6" width="24" height="22" rx="3" fill="#7EC8F2" stroke="#1F1F1F" stroke-width="2.2"/><rect x="4" y="6" width="24" height="7" rx="3" fill="#4FA8E0" stroke="#1F1F1F" stroke-width="2.2"/><rect x="10" y="2" width="3" height="7" rx="1.2" fill="#5C5C5C" stroke="#1F1F1F" stroke-width="1.8"/><rect x="19" y="2" width="3" height="7" rx="1.2" fill="#5C5C5C" stroke="#1F1F1F" stroke-width="1.8"/><rect x="9" y="17" width="4.5" height="4" rx="1" fill="#E76A5E"/><rect x="18.5" y="17" width="4.5" height="4" rx="1" fill="#F6C453"/></svg>`;
-  const svgKeyboard = `<svg viewBox="0 0 32 32" width="40" height="40"><rect x="3" y="9" width="26" height="16" rx="3" fill="#B7A9D4" stroke="#1F1F1F" stroke-width="2.2"/><rect x="7" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="12" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="17" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="22" y="13" width="3" height="3" rx="0.8" fill="#fff"/><rect x="9" y="18" width="14" height="3" rx="1" fill="#fff"/></svg>`;
-  const svgClipboard = `<svg viewBox="0 0 32 32" width="40" height="40"><rect x="7" y="4" width="18" height="25" rx="2.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/><rect x="12" y="2" width="8" height="5" rx="1.5" fill="#E76A5E" stroke="#1F1F1F" stroke-width="2"/><path d="M11 15L14 18L21 11" stroke="#2A9D8F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><line x1="11" y1="22" x2="21" y2="22" stroke="#1F1F1F" stroke-width="2" stroke-linecap="round"/></svg>`;
-  const svgGear = `<svg viewBox="0 0 32 32" width="40" height="40"><path d="M18.5 4L19.5 7.2L22.8 6.3L22.3 9.7L25.7 10.2L23.8 13L26.6 15L23.8 17L25.7 19.8L22.3 20.3L22.8 23.7L19.5 22.8L18.5 26L16 23.8L13.5 26L12.5 22.8L9.2 23.7L9.7 20.3L6.3 19.8L8.2 17L5.4 15L8.2 13L6.3 10.2L9.7 9.7L9.2 6.3L12.5 7.2L13.5 4L16 6.2Z" fill="#9BA5AE" stroke="#1F1F1F" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="15" r="4.5" fill="#F5F1E6" stroke="#1F1F1F" stroke-width="2.2"/></svg>`;
+  const svgHome = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`;
+  const svgCal = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>`;
+  const svgKeyboard = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M7 16h10"/></svg>`;
+  const svgClipboard = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>`;
+  const svgGear = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`;
   const items = [
     {key:'home', icon:svgHome, label:'首頁'},
     {key:'viz', icon:svgCal, label:'行事曆'},
@@ -5420,6 +5496,18 @@ async function updateQuota(key){
 
 // 共用函式：更新單位下拉選單的顏色（天=綠色系、小時=琥珀色系），並顯示即時換算結果，
 // 讓使用者能一眼確認目前選的單位，換算數字也能幫忙抓到「單位選錯」這種容易被忽略的錯誤
+// 送出按鈕的文字：直接說出這次要存什麼，例如「登記使用 1 天特休」「登記獲得 6 小時補休」
+function submitLabelText(verb, amount, unit, label, multiCount){
+  const qty = `${fmt(amount)} ${unit==='hour'?'小時':'天'}`;
+  if(multiCount) return `登記${verb} ${multiCount} 天${label}（每天 ${qty}）`;
+  return `登記${verb} ${qty}${label}`;
+}
+function updateSubmitLabel(amountEl, unit, verb){
+  const form = amountEl && typeof amountEl.closest==='function' ? amountEl.closest('form') : null; if(!form) return;
+  const btn = form.querySelector('.form-submit'); if(!btn) return;
+  const multi = (typeof multiDateMode!=='undefined' && multiDateMode && btn.dataset.verb) ? multiDateList.length : 0;
+  btn.textContent = submitLabelText(verb || btn.dataset.verb || '使用', parseFloat(amountEl.value)||0, unit, btn.dataset.label||'', multi);
+}
 function updateUnitColor(amountId, unitId, hintId, verbOrSelectId){
   const amountEl = document.getElementById(amountId);
   const unitEl = document.getElementById(unitId);
@@ -5443,6 +5531,7 @@ function updateUnitColor(amountId, unitId, hintId, verbOrSelectId){
   hintEl.innerHTML = verb ? `${verb} <b>${fmt(converted)} ${convertedLabel}</b>` : `使用 <b>${fmt(converted)} ${convertedLabel}</b>`;
   hintEl.classList.toggle('u-day', unit==='day');
   hintEl.classList.toggle('u-hour', unit==='hour');
+  updateSubmitLabel(amountEl, unit, verb);
 }
 
 function onUnitChange(key){
@@ -5678,7 +5767,7 @@ function closeKwUnmatchedModal(){ kwUnmatchedModalOpen = false; render(); }
 // 快速輸入頁：打的字跟「預設當作」的選擇記在變數裡，畫面重畫（解析、移除某筆、展開範例）時不會不見；
 // 真的登記完成、或按「清空重填」才清掉
 let kwDraftText = '';
-let kwDefaultType = 'earn';
+let kwDefaultType = 'use'; // 沒寫用／獲得的補休、換休預設當「使用」：打「補休半天 看醫生」通常是要請假，不是加班
 let kwHelpOpen = false; // 寫法範例預設收起來，讓輸入框在最上面
 function toggleKwHelp(){
   const ta = document.getElementById('kwInputText'); if(ta) kwDraftText = ta.value;
