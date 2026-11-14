@@ -249,6 +249,8 @@
   .expiry-chip{display:inline-flex;align-items:center;gap:3px;background:var(--amber-soft, #FBEFDC);color:var(--hour-text);}
   .expiry-chip svg{width:13px;height:13px;margin:0;vertical-align:0;}
   .expiry-chip.is-urgent{background:var(--urgent-bg);color:var(--urgent-ink);}
+  .kw-item-warn{display:flex;align-items:center;gap:4px;margin-top:6px;font-size:12.5px;font-weight:700;color:var(--hour-text);}
+  .kw-item-warn svg{width:14px;height:14px;margin:0;}
   .mini-chip{font-size:12px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;}
   .hour-inline{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:var(--hour-text);vertical-align:middle;}
   .tint-jade{background:color-mix(in srgb, var(--jade-soft) 45%, var(--card));}
@@ -400,6 +402,15 @@
   button{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border:none;border-radius:14px;cursor:pointer;color:#fff;transition:transform .1s ease, opacity .15s ease;}
   button:active{transform:scale(.96);}
   .btn-primary{background:var(--primary-strong);}
+  html.modal-open, html.modal-open body{overflow:hidden;}
+  /* 小按鈕畫起來維持原大小，但手指可以點的範圍往外放大（接近 44px），不改外觀 */
+  .notice-ack, .divider-year-btn, .info-icon-btn, .quickdays button, .kw-help-toggle, .home-order-visibility-btn{position:relative;}
+  .notice-ack::after, .divider-year-btn::after, .info-icon-btn::after, .kw-help-toggle::after, .home-order-visibility-btn::after{content:'';position:absolute;inset:-8px -6px;}
+  .quickdays button::after{content:'';position:absolute;inset:-6px -2px;}
+  div.block > h2 > .dot:empty{display:none;}
+  [role="button"]:focus-visible, button:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+  ::selection{background:color-mix(in srgb, var(--primary) 28%, transparent);}
+  input, textarea{caret-color:var(--primary);}
   .form-submit{width:100%;margin-top:6px;padding:14px 16px;font-size:16px;}
   form.entry > .form-submit{flex:1 1 100%;}
   .palette-title{font-size:13px;font-weight:600;color:var(--ink-soft);margin:14px 0 8px;}
@@ -450,7 +461,7 @@
   .avail-batch-edit-btn{position:absolute;top:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);font-size:14px;cursor:pointer;}
   .avail-batch-title{margin-bottom:3px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding-right:38px;}
   .avail-batch-date{font-weight:700;font-size:14.5px;color:var(--ink);}
-  .avail-batch-note-tag{display:inline-block;background:var(--plum-soft);color:var(--plum);font-weight:700;padding:2px 9px;border-radius:8px;font-size:13.5px;}
+  .avail-batch-note-tag, .home-detail-note-tag{display:inline-block;background:color-mix(in srgb, var(--ink) 7%, transparent);color:var(--ink);font-weight:700;padding:2px 9px;border-radius:8px;font-size:13.5px;max-width:100%;overflow:hidden;display:-webkit-inline-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;word-break:break-word;}
   .avail-batch-list-label{font-size:16.5px;font-weight:800;color:var(--jade);margin:0 0 10px;letter-spacing:.2px;}
   .avail-batch-stack-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;padding:0;margin:0 0 10px;min-height:0;text-align:left;}
   .avail-batch-stack-toggle .avail-batch-list-label{min-width:0;white-space:normal;font-size:14.5px;line-height:1.3;}
@@ -504,6 +515,7 @@
   .overview-stat:last-child{border-right:none;}
   .overview-stat-label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;}
   .overview-stat-value{font-size:22px;font-weight:800;color:var(--ink);line-height:1.3;}
+  .overview-stat-value .u{font-size:13px;font-weight:600;color:var(--ink-soft);margin:0 2px 0 1px;}
   .overview-stat-unit{font-size:13px;font-weight:600;margin-left:2px;color:var(--ink-soft);}
   .overview-carryover-note{display:flex;align-items:center;gap:6px;background:var(--card);color:var(--amber-ink);border-radius:10px;padding:8px 12px;margin-top:14px;font-size:13px;font-weight:700;}
   .overview-panel-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;}
@@ -522,6 +534,11 @@
   .expiry-decision-actions button{flex:1;}
   .modal-box h3{margin:0 0 16px;font-family:'Noto Sans TC',sans-serif;font-weight:800;font-size:18px;color:var(--ink);}
   .modal-header-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;}
+  .modal-box > .modal-header-row{position:sticky;top:-22px;z-index:2;background:var(--modal);padding:6px 0;margin-top:-6px;}
+  .modal-close-x{width:34px;height:34px;min-height:0;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--paper-soft);color:var(--ink-soft);border:1px solid var(--line);box-shadow:none;}
+  .modal-close-x svg{margin:0;width:16px;height:16px;}
+  .modal-close-x::after{content:'';position:absolute;inset:-6px;}
+  .modal-close-x{position:relative;}
   .modal-header-link{flex-shrink:0;font-size:14px;font-weight:700;color:var(--primary);background:var(--card);border:1px solid var(--primary);border-radius:14px;padding:5px 12px;cursor:pointer;white-space:nowrap;}
   .home-detail-group{margin-bottom:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
   .home-detail-group:last-child{margin-bottom:0;}
@@ -532,7 +549,6 @@
   .home-detail-tag{font-size:13px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--tint);flex-shrink:0;max-width:100%;overflow-wrap:anywhere;}
   .home-detail-amt{font-weight:600;color:var(--ink);flex-shrink:0;}
   .home-detail-note{color:var(--ink-soft);font-size:13.5px;width:100%;}
-  .home-detail-note-tag{display:inline-block;background:color-mix(in srgb, var(--amber) 14%, transparent);color:var(--note-ink);font-weight:700;padding:2px 9px;border-radius:8px;font-size:13.5px;}
   .overview-panel .avail-batch-item{background:var(--card);}
   .mental-model-hint{background:var(--blue-soft);color:var(--blue);font-size:13px;line-height:1.6;padding:10px 12px;border-radius:10px;margin-bottom:12px;}
   .hint{font-size:15.5px;color:var(--ink-soft);line-height:1.6;}
@@ -724,6 +740,16 @@
   .cal-cell.today .cal-daynum, .cal-cell.selected.today .cal-daynum{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 2px var(--primary);}
   .cal-cell.selected.today .cal-daynum{background:var(--card);} /* 選到今天時格子變藍，圓圈裡補上卡片底色，數字才不會淡掉 */
   .chart-total{font-size:11px;}
+  /* ===== 最窄的手機（320～350 寬）：導覽、行事曆、統計圖、設定列、新增表單擠不下時的調整 ===== */
+  @media (max-width:350px){
+    .nav-item{font-size:12.5px;padding:6px 1px;white-space:nowrap;letter-spacing:-.02em;}
+    .cal-cell{min-width:0;min-height:0;}
+    .chart-wrap{gap:2px;padding-left:0;padding-right:0;}
+    .chart-col{min-width:0;padding:4px 0;}
+    .chart-label{font-size:10.5px;letter-spacing:-.04em;}
+    .quota-accordion-head > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .quota-accordion-head > span:last-child{white-space:nowrap;flex-shrink:0;margin-left:8px;}
+  }
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
@@ -758,7 +784,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.11.12-08';
+const APP_VERSION = 'v2026.11.13-02';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -1341,7 +1367,7 @@ const LEAVE_TYPES = [
 // 但排序清單裡還是要能看到、能排它的位置，這樣以後使用者一旦新增了其他假別紀錄，卡片才會直接照使用者原本排好的位置出現，
 // 不會因為「當初排序時它是空的」就被排到最後面
 const HOME_CARD_KEYS = ['annual','comp','exchange','sick','personal','familyCare','menstrual','mentalCare','custom'];
-const HOME_CARD_LABELS = { annual:'特休', comp:'補休', exchange:'換休', custom:'其他假別', sick:'病假', personal:'事假', familyCare:'家庭照顧', menstrual:'生理假', mentalCare:'身心照顧' };
+const HOME_CARD_LABELS = { annual:'特休', comp:'補休', exchange:'換休', custom:'其他假別', sick:'病假', personal:'事假', familyCare:'家庭照顧假', menstrual:'生理假', mentalCare:'身心照顧假' };
 function renderHomeCard(key){
   if(key==='comp') return compStampCard('comp');
   if(key==='exchange') return compStampCard('exchange');
@@ -1668,6 +1694,7 @@ async function ensureHolidayYear(year){
     if(activePage==='viz') render(); // 資料回來時如果還在視覺化分頁，重新畫一次讓假日標記出現
   }catch(e){
     holidayCache[year] = false; // 標記失敗，避免同一年一直重複嘗試
+    if(activePage==='viz') render(); // 沒網路時也要重畫，不然行事曆會一直顯示「讀取中…」
   }
 }
 // 手動重新整理：清掉本機快取（只清這一年的假日資料，不動任何其他資料）跟記憶體裡的快取，強制重新抓一次最新的，
@@ -1941,12 +1968,12 @@ function dayHourParts(n){
 }
 function hasHourPart(n){ return !dayHourParts(n).half; }
 function fmtDays(n){
-  const p = dayHourParts(n); const sign = p.neg ? '-' : '';
+  const p = dayHourParts(n); const sign = p.neg ? '−' : '';
   if(p.half) return `${sign}${fmt(p.val)}天`;
   return `${sign}${p.d ? p.d+'天' : ''}${fmt(p.hr)}小時`;
 }
 function fmtDaysHtml(n){
-  const p = dayHourParts(n); const sign = p.neg ? '-' : '';
+  const p = dayHourParts(n); const sign = p.neg ? '−' : '';
   if(p.half) return `${sign}${fmt(p.val)}<span class="u">天</span>`;
   return `${sign}${p.d ? p.d+'<span class="u">天</span>' : ''}${fmt(p.hr)}<span class="u">小時</span>`;
 }
@@ -2235,6 +2262,15 @@ function toDays(r){
   if(r.unit==='day') return Number(r.amount);
   return Number(r.days)||0;
 }
+const ICON_PENCIL = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;flex-shrink:0;"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>`;
+const ICON_X_SM = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;flex-shrink:0;"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+const ICON_KBD = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;flex-shrink:0;"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M7 16h10"/></svg>`;
+const ICON_ZAP = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:3px;flex-shrink:0;"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>`;
+const ICON_WIFI_OFF = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:3px;flex-shrink:0;"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></svg>`;
+const ICON_TRASH = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:3px;flex-shrink:0;"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`;
+const ICON_USER_CIRCLE = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:3px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>`;
+const ICON_KEY = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:3px;flex-shrink:0;"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>`;
+const ICON_CORNER = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;flex-shrink:0;"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>`;
 function displayAmount(r){
   return `${fmt(toDays(r)*getHoursPerDay())}小時`;
 }
@@ -2393,7 +2429,7 @@ function checkCompLedgerConsistency(){
         console.warn(`[一致性檢查] ${label}結餘不一致：FIFO加總=${fifoTotal}，簡單加總=${simpleTotal}，保留批次差異=${core.unfulfilledByKept}`);
         logAppError(
           `${label}結餘計算不一致`,
-          `FIFO加總＝${fmt(fifoTotal)} 天，簡單加總＝${fmt(simpleTotal)} 天，差異＝${fmt(diff)} 天（已排除保留批次造成的合理差異）。最可能是使用量超過獲得量（超扣）造成的，可以去「假別紀錄」檢查${label}紀錄有沒有登記錯誤。`
+          `FIFO加總＝${fmt(fifoTotal)}天，簡單加總＝${fmt(simpleTotal)}天，差異＝${fmt(diff)}天（已排除保留批次造成的合理差異）。最可能是使用量超過獲得量（超扣）造成的，可以去「假別紀錄」檢查${label}紀錄有沒有登記錯誤。`
         );
       }
     });
@@ -2407,7 +2443,7 @@ function checkCompLedgerConsistency(){
         console.warn(`[一致性檢查] 其他假別「${label}」結餘不一致：FIFO加總=${fifoTotal}，簡單加總=${simpleTotal}，保留批次差異=${core.unfulfilledByKept}`);
         logAppError(
           `其他假別「${label}」結餘計算不一致`,
-          `FIFO加總＝${fmt(fifoTotal)} 天，簡單加總＝${fmt(simpleTotal)} 天，差異＝${fmt(diff)} 天（已排除保留批次造成的合理差異）。最可能是使用量超過獲得量（超扣）造成的，可以去「假別紀錄」檢查「${label}」紀錄有沒有登記錯誤。`
+          `FIFO加總＝${fmt(fifoTotal)}天，簡單加總＝${fmt(simpleTotal)}天，差異＝${fmt(diff)}天（已排除保留批次造成的合理差異）。最可能是使用量超過獲得量（超扣）造成的，可以去「假別紀錄」檢查「${label}」紀錄有沒有登記錯誤。`
         );
       }
     });
@@ -2502,7 +2538,7 @@ function expiryDecisionModal(){
             const diffDays = Math.round((new Date(TODAY) - new Date(b.expiry))/86400000);
             return `<div class="expiry-decision-item">
               <div class="expiry-decision-title">${toROC(b.date)} 獲得的 ${escapeHtml(label)}${b.note?`（${escapeHtml(b.note)}）`:''}</div>
-              <div class="expiry-decision-sub">剩 ${fmtDays(b.remainDays)}，${toROC(b.expiry)} 到期（已過期 ${diffDays} 天）</div>
+              <div class="expiry-decision-sub">剩餘 ${fmtDays(b.remainDays)}，${toROC(b.expiry)} 到期（已過期 ${diffDays} 天）</div>
               <div class="expiry-decision-actions">
                 <button type="button" class="btn-primary" onclick="decideExpiredBatch('${b.category}','${b.id}','used')">已使用</button>
                 <button type="button" class="ghost" onclick="decideExpiredBatch('${b.category}','${b.id}','kept')">保留</button>
@@ -2577,15 +2613,15 @@ function computeUsePreviewHtml(category, amount, unit, pins, excludeId, useDate)
   }
   // 還有剩、但因為已過期而沒被自動扣到的量（提醒使用者：需要的話可以手動勾選）
   const expiredLeft = batches.filter(b=>isExpiredFor(b) && b.expiryDecision!=='kept' && b.remainDays>0.0001).reduce((s,b)=>s+b.remainDays,0);
-  const expiredHint = (toDeduct>0.0001 && expiredLeft>0.0001) ? `<p class="hint" style="color:var(--ink-soft);margin:6px 0 0;">已過期的 ${fmt(expiredLeft)} 天不會自動扣抵；如果確定要用，請勾選「手動指定」選它。</p>` : '';
+  const expiredHint = (toDeduct>0.0001 && expiredLeft>0.0001) ? `<p class="hint" style="color:var(--ink-soft);margin:6px 0 0;">已過期的 ${fmt(expiredLeft)}天不會自動扣抵；如果確定要用，請勾選「手動指定」選它。</p>` : '';
   let html = '<div class="use-preview-box">';
   if(consumed.length===0){
-    html += `<p class="hint" style="color:var(--brick);margin:0;">${ICON_WARNING} 目前沒有可自動扣的${info.label}結餘，這筆送出後結餘會變負數。</p>`;
+    html += `<p class="hint" style="color:var(--brick);margin:0;">${ICON_WARNING} 目前沒有可自動扣的${info.label}剩餘，這筆送出後剩餘會變負數。</p>`;
   } else {
     html += `<p class="hint" style="margin:0 0 6px;font-weight:700;color:var(--ink);">這筆會${pins.length?'先扣你指定的那幾筆，不夠再':'自動'}扣最早獲得的那幾筆：</p>`;
-    html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?ICON_STAR:''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''}　－${fmt(c.take)} 天，扣完後這筆還剩 ${fmt(c.remainAfter)} 天</div>`).join('');
+    html += consumed.map(c=>`<div class="use-preview-line">${c.pinned?ICON_STAR:''}${toROC(c.date)}${c.note?`（${escapeHtml(c.note)}）`:''}　－${fmtDays(c.take)}，扣完後這筆還剩餘 ${fmtDays(c.remainAfter)}</div>`).join('');
     if(toDeduct>0.0001){
-      html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">${ICON_WARNING} 現有結餘不夠扣，還缺 ${fmt(toDeduct)} 天，這筆送出後結餘會變負數。</p>`;
+      html += `<p class="hint" style="color:var(--brick);margin:6px 0 0;">${ICON_WARNING} 現有剩餘不夠扣，還缺 ${fmt(toDeduct)}天，這筆送出後剩餘會變負數。</p>`;
     }
   }
   html += expiredHint;
@@ -2681,8 +2717,8 @@ function updateSelectSummaryBar(barId, manualOn, pins, amount, unit){
   bar.classList.toggle('ssb-ok', isExact);
   bar.classList.toggle('ssb-over', isOver);
   // 選超過需求時明講「多選了X小時」，不要只是輕描淡寫顯示兩個數字讓使用者自己心算差多少
-  const needLabel = isOver ? `多選了 ${fmt(selectedHours-neededHours)} 小時，記得取消勾選` : `需要 ${fmt(neededHours)} 小時`;
-  bar.innerHTML = `<span>已選 ${fmt(selectedHours)} 小時</span><span class="ssb-need">${needLabel}</span>`;
+  const needLabel = isOver ? `多選了 ${fmt(selectedHours-neededHours)}小時，記得取消勾選` : `需要 ${fmt(neededHours)}小時`;
+  bar.innerHTML = `<span>已選 ${fmt(selectedHours)}小時</span><span class="ssb-need">${needLabel}</span>`;
 }
 // 底部浮動的「已選超過需求」警告跟「已選/需要」小結列都是position:fixed，浮在畫面最上層，
 // 原本表單沒有預留空間給它們，導致捲到底時，照片上傳欄位、「登記」按鈕會被這兩條蓋住、點不到、看不到。
@@ -2823,12 +2859,12 @@ function pageYearRecord(){
         ${rows.length ? `<button type="button" class="sortbtn" onclick="toggleYearRecordSort()">日期 ${yearRecordSortAsc? '▲ 舊到新':'▼ 新到舊'}</button>` : ''}
       </div>
       <div class="year-switch" style="justify-content:center;margin-bottom:6px;">
-        <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
+        <button type="button" class="sortbtn" onclick="changeYear(-1)" aria-label="上一年">‹</button>
         <div class="year-label">${year}年</div>
-        <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
+        <button type="button" class="sortbtn" onclick="changeYear(1)" aria-label="下一年">›</button>
       </div>
       ${year!==CUR_YEAR ? `<div style="text-align:center;margin-bottom:6px;"><button type="button" class="back-to-today-btn" onclick="setYear(${CUR_YEAR})">回今年</button></div>` : ''}
-      <p class="hint" style="text-align:center;margin:0 0 16px;">${year} 年全年共使用 ${fmt(totalHours)} 小時（含特休、病假、事假等所有假別，以及補休、換休的使用紀錄）</p>
+      <p class="hint" style="text-align:center;margin:0 0 16px;">${year} 年全年共使用 ${fmt(totalHours)}小時（含特休、病假、事假等所有假別，以及補休、換休的使用紀錄）</p>
       ${listHtml}
     </section>`;
 }
@@ -2868,7 +2904,7 @@ function stampCard(t){
   if(t.key==='sick'){
     const excess = menstrualExcess(CUR_YEAR);
     if(excess>0) chips.push(`<span class="mini-chip" style="background:var(--rose-soft);color:var(--rose);">生理假併入 ${fmt(excess)}天</span>`);
-    if(remain<0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">超額 ${fmt(-remain)}天，需擇一抵銷</span>`);
+    if(remain<0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">超額 ${fmtDays(-remain)}，需擇一抵銷</span>`);
   }
   if(t.key==='personal'){
     const fc = usedOf('familyCare', CUR_YEAR);
@@ -2877,12 +2913,12 @@ function stampCard(t){
     if(paid>0) chips.push(`<span class="mini-chip" style="background:var(--jade-soft);color:var(--jade);">${ICON_MONEY}有薪 ${fmt(paid)}天</span>`);
     if(unpaid>0) chips.push(`<span class="mini-chip" style="background:var(--brick-soft);color:var(--brick);">無薪 ${fmt(unpaid)}天</span>`);
   }
-  if(t.key==='annual' && minDaysBorder) chips.push(`<span class="mini-chip" style="background:${minDaysBorder.includes('brick')?'var(--brick-soft);color:var(--brick);':'var(--amber-soft, #FBEFDC);color:var(--hour-text);'}">還沒用滿最低 ${fmt(getEffectiveAnnualMin(CUR_YEAR))} 天</span>`);
+  if(t.key==='annual' && minDaysBorder) chips.push(`<span class="mini-chip" style="background:${minDaysBorder.includes('brick')?'var(--brick-soft);color:var(--brick);':'var(--amber-soft, #FBEFDC);color:var(--hour-text);'}">還沒用滿最低 ${fmt(getEffectiveAnnualMin(CUR_YEAR))}天</span>`);
   return `
     <div class="stamp-card tint-${t.c} ${level}" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${t.c}) 45%, transparent);" onclick="viewLeaveDetailFromHome('${t.key}')">
       <div class="seal c-${t.c}">${t.seal}</div>
       <div class="label">${t.label}剩餘</div>
-      <div class="num c-${t.c}">${fmtDaysHtml(remain)}${hasHourPart(remain) ? '' : ` <span class="hour-inline">${fmt(remain*getHoursPerDay())}小時</span>`}<small>共 ${fmt(getQuota(t.key,CUR_YEAR))} 天</small></div>
+      <div class="num c-${t.c}">${fmtDaysHtml(remain)}${hasHourPart(remain) ? '' : ` <span class="hour-inline">${fmt(remain*getHoursPerDay())}小時</span>`}<small>共 ${fmt(getQuota(t.key,CUR_YEAR))}天</small></div>
       ${chips.length? `<div class="mini-chips">${chips.join('')}</div>` : ''}
     </div>`;
 }
@@ -2894,7 +2930,7 @@ function customStampCard(){
     <div class="stamp-card tint-amber" style="box-shadow:0 10px 24px -10px color-mix(in srgb, var(--amber) 45%, transparent);" onclick="viewLeaveDetailFromHome('custom')">
       <div class="seal c-amber">他</div>
       <div class="label">其他假別</div>
-      ${activeLabels.map(x=>`<div class="num c-amber" style="font-size:16px;margin-top:2px;">${escapeHtml(x.label)}剩餘 ${fmt(x.remainDays)}天</div>`).join('')}
+      ${activeLabels.map(x=>`<div class="num c-amber" style="font-size:16px;margin-top:2px;white-space:normal;overflow-wrap:anywhere;">${escapeHtml(x.label)}剩餘 <span style="white-space:nowrap;">${fmtDays(x.remainDays)}</span></div>`).join('')}
     </div>`;
 }
 
@@ -2917,9 +2953,9 @@ function compStampCard(category){
     }
   }
   return `
-    <div class="stamp-card tint-${info.c} ${compBal<0?'warn':''}" style="${urgentBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${info.c}) 45%, transparent);" onclick="viewLeaveDetailFromHome('${category}')">
+    <div class="stamp-card tint-${info.c} ${compBal<0?'level-danger':''}" style="${urgentBorder}box-shadow:0 10px 24px -10px color-mix(in srgb, var(--${info.c}) 45%, transparent);" onclick="viewLeaveDetailFromHome('${category}')">
       <div class="seal c-${info.c}">${info.label.slice(0,1)}</div>
-      <div class="label">${info.label}結餘</div>
+      <div class="label">${info.label}剩餘</div>
       <div class="num c-${info.c}">${fmtDaysHtml(compBal)}${hasHourPart(compBal) ? '' : ` <span class="hour-inline">${fmt(compBal*getHoursPerDay())}小時</span>`}<small>至 ${CUR_YEAR} 年底・${category==='exchange' ? '當年度用完' : `期限${info.defaultYears}年`}</small></div>
       ${expiryChip ? `<div class="mini-chips">${expiryChip}</div>` : ''}
     </div>`;
@@ -2961,12 +2997,12 @@ function dashboardPanel(){
     const compBatches = compFifoRemaining('comp').filter(b=>b.remainDays>0.0001).sort((a,b)=>a.date.localeCompare(b.date));
     const exchangeBatches = compFifoRemaining('exchange').filter(b=>b.remainDays>0.0001).sort((a,b)=>a.date.localeCompare(b.date));
     const batchRowHtml = (b)=>{
-      const expiryText = b.expiry ? `效期至 ${toROC(b.expiry)}` : '';
+      const expiryText = b.expiry ? `${toROC(b.expiry)} 到期` : '';
       const expiredTag = (b.expiry && b.expiry < TODAY) ? `<span class="src-batch-expired">${b.expiryDecision==='kept' ? '已過期・保留' : '已過期・待決定'}</span>` : '';
       return `
       <div class="home-detail-row">
         <span class="home-detail-date">${toROC(b.date)}${expiredTag}</span>
-        <span class="home-detail-amt">剩 ${fmtDays(b.remainDays)}</span>
+        <span class="home-detail-amt">剩餘 ${fmtDays(b.remainDays)}</span>
         ${expiryText || b.note ? `<span class="home-detail-note">${expiryText}${expiryText && b.note ? '　' : ''}${b.note ? `<span class="home-detail-note-tag">${escapeHtml(b.note)}</span>` : ''}</span>` : ''}
       </div>`;
     };
@@ -2975,15 +3011,15 @@ function dashboardPanel(){
     return `
       <p class="hint" style="margin:0 0 10px;">只顯示還沒用完的；已過期的會另外標示。</p>
       <div class="home-detail-group">
-        <div class="home-detail-group-title c-jade">${ICON_STAR}特休　剩 ${fmt(annualRemain)} 天</div>
-        <p class="hint" style="margin:2px 0 0;">今年度額度共 ${fmt(annualQuota)} 天</p>
+        <div class="home-detail-group-title c-jade">${ICON_STAR}特休　剩餘 ${fmtDays(annualRemain)}</div>
+        <p class="hint" style="margin:2px 0 0;">今年度額度共 ${fmt(annualQuota)}天</p>
       </div>
       <div class="home-detail-group">
-        <div class="home-detail-group-title c-brick">${ICON_RECEIPT}補休　剩 ${fmt(compBatchesTotal)} 天</div>
+        <div class="home-detail-group-title c-brick">${ICON_RECEIPT}補休　剩餘 ${fmtDays(compBatchesTotal)}</div>
         ${compBatches.length ? compBatches.map(batchRowHtml).join('') : `<p class="hint" style="margin:2px 0 0;">目前沒有還有效的補休紀錄。</p>`}
       </div>
       <div class="home-detail-group">
-        <div class="home-detail-group-title c-teal">${ICON_EXCHANGE_CYCLE}換休　剩 ${fmt(exchangeBatchesTotal)} 天</div>
+        <div class="home-detail-group-title c-teal">${ICON_EXCHANGE_CYCLE}換休　剩餘 ${fmtDays(exchangeBatchesTotal)}</div>
         ${exchangeBatches.length ? exchangeBatches.map(batchRowHtml).join('') : `<p class="hint" style="margin:2px 0 0;">目前沒有還有效的換休紀錄。</p>`}
       </div>`;
   };
@@ -3013,7 +3049,10 @@ function dashboardPanel(){
       <div class="modal-box" style="max-width:380px;max-height:75vh;overflow-y:auto;" onclick="event.stopPropagation()">
         <div class="modal-header-row">
           <h3 style="margin:0;">${modalTitleMap[homeDetailModalOpen]}</h3>
+          <span style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           ${homeDetailModalOpen==='year' ? `<button type="button" class="modal-header-link" onclick="closeHomeDetailModal();switchPage('yearRecord');">詳細紀錄 ›</button>` : ''}
+          <button type="button" class="modal-close-x" onclick="closeHomeDetailModal()" aria-label="關閉">${ICON_X_SM}</button>
+          </span>
         </div>
         ${modalBodyMap[homeDetailModalOpen]}
         <div class="row" style="margin-top:16px;"><button type="button" class="ghost" style="width:100%;" onclick="closeHomeDetailModal()">關閉</button></div>
@@ -3084,7 +3123,14 @@ function parseAmountToken(numTok, unitTok){
   return {amount, unit};
 }
 
+// 數量沒被認出來、備註卻是「-2天」「+3小時」這種樣子：多半是打錯（負數或符號），不要默默當成 1 天
+function kwNoteLooksLikeBadAmount(note){ return /^[\-−－+＋]\s*\d/.test((note||'').trim()); }
 function kwBuildFromRest(rest, defaultCompType, leaveKeywordPattern){
+  const built = kwBuildFromRestInner(rest, defaultCompType, leaveKeywordPattern);
+  if(built && built.kind!=='quota' && kwNoteLooksLikeBadAmount(built.note)) return null;
+  return built;
+}
+function kwBuildFromRestInner(rest, defaultCompType, leaveKeywordPattern){
   let mm;
   // 加X補Y (備註) -> 補休獲得（固定2年）
   mm = rest.match(new RegExp(`^加\\s*${KW_NUM_OR_CN}\\s*補\\s*${KW_NUM_OR_CN}\\s*${KW_NOTE_TOKEN}$`));
@@ -3196,6 +3242,15 @@ function parseKeywordLines(text, defaultCompType){
 }
 
 
+// 預覽時提醒可能打錯的地方（不擋，確認權還在使用者）：年份離今年太遠、數量大得不尋常
+function kwItemWarning(it){
+  if(!it || it.kind==='quota') return '';
+  const y = it.date ? Number(it.date.slice(0,4)) : CUR_YEAR;
+  if(y > CUR_YEAR+1 || y < CUR_YEAR-1) return `日期是 ${y-1911} 年，確認沒打錯年份`;
+  const days = it.unit==='hour' ? it.amount/getHoursPerDay() : it.amount;
+  if(days > 30) return `數量 ${fmt(it.amount)} ${it.unit==='hour'?'小時':'天'} 偏多，確認沒打錯`;
+  return '';
+}
 function keywordPanel(){
   const previewHtml = kwPendingItems.length? `
     <div style="margin-top:12px;">
@@ -3205,7 +3260,7 @@ function keywordPanel(){
           let label, amountText;
           if(it.kind==='quota'){
             label = `${CUR_YEAR} 年${it.quotaLabel}總天數`;
-            amountText = `更新為 ${fmt(it.total)} 天`;
+            amountText = `更新為 ${fmt(it.total)}天`;
           } else if(it.kind==='comp'){
             const info = COMP_CATEGORIES[it.category||'comp'];
             label = `${info.label}（${it.compType==='use'?'使用':'獲得'}）`;
@@ -3224,17 +3279,18 @@ function keywordPanel(){
               <span class="days">${escapeHtml(amountText)}</span>
               ${it.note? `<span class="note">${escapeHtml(it.note)}</span>` : ''}
             </div>
+            ${kwItemWarning(it) ? `<div class="kw-item-warn">${ICON_WARNING}${kwItemWarning(it)}</div>` : ''}
             ${showSourceSelect ? `
             <div style="margin-top:8px;">
               <select onchange="kwPendingItems[${idx}].sourceEarnId=this.value" style="width:100%;padding:6px;font-size:12.5px;border:1px solid var(--line);border-radius:8px;">
                 <option value="">優先扣哪一批：不指定，自動先進先出</option>
-                ${sourceOptions.map(b=>`<option value="${b.id}">優先扣：${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩 ${fmt(b.remainDays)} 天</option>`).join('')}
+                ${sourceOptions.map(b=>`<option value="${b.id}">優先扣：${toROC(b.date)}${b.note?`（${escapeHtml(b.note)}）`:''} — 剩餘 ${fmtDays(b.remainDays)}</option>`).join('')}
               </select>
             </div>
             ` : ''}
             <div class="ledger-bottom">
               <div></div>
-              <div class="ledger-actions"><button class="del" title="移除" onclick="removeKwItem(${idx})">✕ 移除</button></div>
+              <div class="ledger-actions"><button class="del" title="移除" onclick="removeKwItem(${idx})">${ICON_X_SM}移除</button></div>
             </div>
           </li>`;
         }).join('')}
@@ -3384,7 +3440,7 @@ function reminderBanner(){
   const daysLeftInYear = Math.round((new Date(CUR_YEAR,11,31) - new Date(TODAY+'T00:00:00')) / 86400000);
   if(month>=10 && shortfall>0 && !isAnnualMinSnoozed()){
     const urgentAnnual = daysLeftInYear <= 30;
-    rows.push(`<div class="notice-row is-static${urgentAnnual?' is-urgent':''}"><span class="notice-ico">${ICON_STAR}</span><span class="notice-main"><b>特休還要再休 ${fmtDays(shortfall)}</b><small>${annualMinCapped ? `已休 ${fmtDays(annualUsed)}・今年 ${fmt(annualMin)} 天需全休完` : `已休 ${fmtDays(annualUsed)}・最低要休 ${fmt(annualMin)} 天`}</small></span><button type="button" class="notice-ack" onclick="snoozeAnnualMin()">先隱藏</button></div>`);
+    rows.push(`<div class="notice-row is-static${urgentAnnual?' is-urgent':''}"><span class="notice-ico">${ICON_STAR}</span><span class="notice-main"><b>特休還要再休 ${fmtDays(shortfall)}</b><small>${annualMinCapped ? `已休 ${fmtDays(annualUsed)}・今年 ${fmt(annualMin)}天需全休完` : `已休 ${fmtDays(annualUsed)}・最低要休 ${fmt(annualMin)}天`}</small></span><button type="button" class="notice-ack" onclick="snoozeAnnualMin()">先隱藏</button></div>`);
   }
   if(!rows.length) return '';
   return `<div class="notice-card">${rows.join('')}</div>`;
@@ -3422,7 +3478,7 @@ async function saveAnnualQuotaModal(){
     annualQuotaModalOpen = false;
     await saveState();
     render();
-    setStatus(`已設定 ${CUR_YEAR} 年特休 ${fmt(v)} 天`, true);
+    setStatus(`已設定 ${CUR_YEAR} 年特休 ${fmt(v)}天`, true);
   }catch(err){
     setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
   }
@@ -3438,7 +3494,7 @@ function annualQuotaModal(){
           <label>${CUR_YEAR} 年特休總天數</label>
           <input type="number" id="annualQuotaModalInput" value="${prevAnnual!==null ? prevAnnual : ''}" min="0" step="0.5" placeholder="例如：14">
         </div>
-        <p class="hint" style="margin:0 0 14px;">${prevAnnual!==null ? `去年（${CUR_YEAR-1}）是 ${fmt(prevAnnual)} 天，已先帶入，依今年年資調整後儲存。` : '依到職年資填入今年的特休天數。'}</p>
+        <p class="hint" style="margin:0 0 14px;">${prevAnnual!==null ? `去年（${CUR_YEAR-1}）是 ${fmt(prevAnnual)}天，已先帶入，依今年年資調整後儲存。` : '依到職年資填入今年的特休天數。'}</p>
         <div class="row">
           <button type="button" class="btn-primary" onclick="saveAnnualQuotaModal()">儲存</button>
           <button type="button" class="ghost" onclick="closeAnnualQuotaModal()">稍後</button>
@@ -3553,8 +3609,8 @@ function calendarPanel(){
     }
   });
   const monthUsageLabels = LEAVE_TYPES.concat([{key:'comp',label:'補休'},{key:'exchange',label:'換休'}]);
-  const customUsageParts = Object.keys(monthUsage).filter(k=>k.startsWith('custom:') && monthUsage[k]>0).map(k=>`${escapeHtml(k.slice(7))} ${fmt(monthUsage[k])}天`);
-  const monthSummaryParts = monthUsageLabels.filter(t=>monthUsage[t.key]>0).map(t=>`${t.label} ${fmt(monthUsage[t.key])}天`).concat(customUsageParts);
+  const customUsageParts = Object.keys(monthUsage).filter(k=>k.startsWith('custom:') && monthUsage[k]>0).map(k=>`${escapeHtml(k.slice(7))} ${fmtDays(monthUsage[k])}`);
+  const monthSummaryParts = monthUsageLabels.filter(t=>monthUsage[t.key]>0).map(t=>`${t.label} ${fmtDays(monthUsage[t.key])}`).concat(customUsageParts);
   // 本月國定假日／補班提醒：資料來源跟月曆紅字用的是同一份人事行政行事曆快取，不管日期是過去還是未來，只要在這個月份範圍內都算
   let holidayNote = '';
   if(holidays){
@@ -3602,9 +3658,9 @@ function calendarPanel(){
   return `
     <div class="block cal-block">
       <div class="cal-header">
-        <button type="button" class="ghost" onclick="changeCalMonth(-1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button type="button" class="ghost" onclick="changeCalMonth(-1)" aria-label="上個月"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
         <div class="cal-title" onclick="toggleCalPicker()" style="cursor:pointer;display:flex;align-items:center;gap:6px;">${y} 年 ${m} 月 <span class="cal-title-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s ease;${calPickerOpen?'transform:rotate(180deg);':''}"><path d="M6 9l6 6 6-6"/></svg></span></div>
-        <button type="button" class="ghost" onclick="changeCalMonth(1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button type="button" class="ghost" onclick="changeCalMonth(1)" aria-label="下個月"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
       ${calPickerOpen ? `<div class="cal-picker-row">
         <select onchange="jumpCalYear(this.value)">${Array.from({length:11},(_,i)=>CUR_YEAR-5+i).map(yy=>`<option value="${yy}" ${yy===y?'selected':''}>${yy} 年</option>`).join('')}</select>
@@ -3618,7 +3674,7 @@ function calendarPanel(){
       ${selectedInfo}
       ${holidayNote ? `<div class="cal-holiday-note-row">${holidayNote}</div>` : ''}
       <div class="cal-month-summary">${monthSummary}</div>
-      <p class="hint" style="margin-top:10px;">${ICON_DOT_RED}紅字日期為政府公告國定假日／補假，不影響假別計算。${holidays===null ? '國定假日資料讀取中…' : (holidayCache[y]===false ? '國定假日資料讀取失敗，可能是離線中，稍後重新整理再試。' : '')}<button type="button" class="cal-holiday-refresh-btn" onclick="refreshHolidayData(${y})">${ICON_REFRESH}重新整理國定假日資料</button></p>
+      <p class="hint" style="margin-top:10px;">${ICON_DOT_RED}紅字日期為政府公告國定假日／補假，不影響假別計算。${holidayCache[y]===false ? '國定假日資料讀取失敗，可能是離線中，稍後重新整理再試。' : (holidays===null ? '國定假日資料讀取中…' : '')}<button type="button" class="cal-holiday-refresh-btn" onclick="refreshHolidayData(${y})">${ICON_REFRESH}重新整理國定假日資料</button></p>
     </div>`;
 }
 
@@ -3721,11 +3777,11 @@ function statsYearCompare(){
   if(!rows.length) return '';
   const items = rows.map(r=>{
     const diff = r.cur - r.prev;
-    const diffTxt = Math.abs(diff)<0.001 ? '持平' : (diff>0 ? `多 ${fmt(Math.abs(diff))} 天` : `少 ${fmt(Math.abs(diff))} 天`);
+    const diffTxt = Math.abs(diff)<0.001 ? '持平' : (diff>0 ? `多 ${fmt(Math.abs(diff))}天` : `少 ${fmt(Math.abs(diff))}天`);
     const arrow = diff>0.001 ? '▲' : (diff<-0.001 ? '▼' : '－');
     return `<div class="cmp-row" onclick="viewLeaveDetail('${r.key}')">
       <span class="cmp-label">${r.label} ›</span>
-      <span class="cmp-nums">${py} 年 ${fmt(r.prev)} 天 → ${y} 年 ${fmt(r.cur)} 天</span>
+      <span class="cmp-nums">${py} 年 ${fmt(r.prev)}天 → ${y} 年 ${fmt(r.cur)}天</span>
       <span class="cmp-diff">${arrow} ${diffTxt}</span>
     </div>`;
   }).join('');
@@ -3753,7 +3809,7 @@ function statsUtilization(){
   const items = rows.map(r=>{
     const pct = Math.max(0, Math.min(100, Math.round(r.used/r.quota*100)));
     return `<div class="util-row" onclick="viewLeaveDetail('${r.key}')">
-      <div class="util-label">${r.label} ›<span class="util-nums">${fmt(r.used)} / ${fmt(r.quota)} 天（${pct}%）</span></div>
+      <div class="util-label">${r.label} ›<span class="util-nums">${fmtDays(r.used)} / ${fmtDays(r.quota)}（${pct}%）</span></div>
       <div class="util-track"><div class="util-fill c-${r.c}-bg" style="width:${pct}%"></div></div>
     </div>`;
   }).join('');
@@ -3761,13 +3817,13 @@ function statsUtilization(){
     if(r.earn>0){
       const pct = Math.max(0, Math.min(100, Math.round(r.use/r.earn*100)));
       return `<div class="util-row" onclick="viewLeaveDetail('${r.key}')">
-        <div class="util-label">${r.label} ›<span class="util-nums">${fmt(r.use)} / ${fmt(r.earn)} 天（${pct}%）</span></div>
+        <div class="util-label">${r.label} ›<span class="util-nums">${fmtDays(r.use)} / ${fmtDays(r.earn)}（${pct}%）</span></div>
         <div class="util-track"><div class="util-fill c-${r.c}-bg" style="width:${pct}%"></div></div>
       </div>`;
     }
     // 今年沒有新獲得（可能是純粹在用以前結餘），沒有分母可以算百分比，只列數字
     return `<div class="util-row" onclick="viewLeaveDetail('${r.key}')">
-      <div class="util-label">${r.label} ›<span class="util-nums">今年無新獲得・使用 ${fmt(r.use)} 天</span></div>
+      <div class="util-label">${r.label} ›<span class="util-nums">今年無新獲得・使用 ${fmtDays(r.use)}</span></div>
     </div>`;
   }).join('');
   return `
@@ -3785,7 +3841,7 @@ function buildLeaveLi(t, r, dMin, dMax){
     return `<li class="editrow" id="editrow-${t.key}-${r.id}">
       <div class="field field-date">
         <label>日期</label>
-        <div class="date-row"><input type="date" id="editDate-${t.key}-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}"><button type="button" class="date-toggle" onclick="toggleDateInputType('editDate-${t.key}-${r.id}')" title="切換手動輸入">⌨</button></div>
+        <div class="date-row"><input type="date" id="editDate-${t.key}-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}"><button type="button" class="date-toggle" onclick="toggleDateInputType('editDate-${t.key}-${r.id}')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div>
       </div>
       <div class="field field-days">
         <label>數量</label>
@@ -3817,8 +3873,8 @@ function buildLeaveLi(t, r, dMin, dMax){
     ${r.note? `<div class="ledger-note-row">${ICON_NOTE}${escapeHtml(r.note)}</div>` : ''}
     <div class="ledger-bottom">
       <div class="ledger-actions">
-        <button class="del" title="編輯" onclick="startEditRecord('${t.key}','${r.id}')">✎ 編輯</button>
-        <button class="del" title="刪除" onclick="removeRecord(event.currentTarget,'${t.key}','${r.id}')">✕ 刪除</button>
+        <button class="del" title="編輯" onclick="startEditRecord('${t.key}','${r.id}')">${ICON_PENCIL}編輯</button>
+        <button class="del" title="刪除" onclick="removeRecord(event.currentTarget,'${t.key}','${r.id}')">${ICON_X_SM}刪除</button>
       </div>
     </div>
   </li>`;
@@ -3851,7 +3907,7 @@ function leaveSection(t){
   const all = (state.records[t.key]||[]).filter(r=>r.date.startsWith(String(selectedYear)));
   let rows = all.filter(r=>matchesSearch(r.date, r.note, t.label));
   rows.sort((a,b)=> sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
-  const emptyMsg = all.length===0 ? `${selectedYear} 年尚無${t.label}紀錄，可以點上方「＋新增一筆」登記第一筆 👆` : '查無符合搜尋的紀錄';
+  const emptyMsg = all.length===0 ? `${selectedYear} 年尚無${t.label}紀錄，可以點上方「＋登記一筆」登記第一筆` : '查無符合搜尋的紀錄';
   const dMin = yearMin(selectedYear), dMax = yearMax(selectedYear), dDef = defaultDateFor(selectedYear);
   const forceExpand = (groupRows)=> (editing && editing.kind==='record' && editing.key===t.key && groupRows.some(r=>r.id===editing.id)) || (revealDate && groupRows.some(r=>r.date===revealDate));
   const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r),0)*getHoursPerDay())}小時`;
@@ -3865,10 +3921,10 @@ function leaveSection(t){
         <button type="button" class="overview-unit-toggle" onclick="toggleOverviewUnit()"><span class="overview-unit-arrow-icon">↓</span>${overviewUnit==='day' ? `顯示：天　${ICON_SWITCH}切換小時` : `顯示：小時　${ICON_SWITCH}切換天`}</button>
       </h2>
       ${infoHintExpanded[t.key] ? `
-      ${t.key==='sick' && menstrualExcess(selectedYear)>0 ? `<div class="reminder-bar"><strong>${ICON_WARNING} 生理假併入病假提醒</strong>${selectedYear} 年生理假已使用超過 ${MENSTRUAL_FREE_DAYS} 天，超過的 ${fmt(menstrualExcess(selectedYear))} 天已自動計入病假已使用天數。</div>` : ''}
-      ${t.key==='sick' && remainOf('sick',selectedYear)<0 ? `<div class="reminder-bar"><strong>${ICON_WARNING} 病假超額提醒</strong>${selectedYear} 年病假已超過總天數 ${fmt(-remainOf('sick',selectedYear))} 天，依規定可用事假或特別休假擇一抵銷，請自行決定後手動在事假或特休登記這幾天（本系統不會自動幫你決定要扣哪一邊）。</div>` : ''}
-      ${t.key==='personal' && usedOf('familyCare',selectedYear)>0 ? `<div class="reminder-bar"><strong>${ICON_WARNING} 併入事假提醒</strong>${selectedYear} 年家庭照顧假 ${fmt(usedOf('familyCare',selectedYear))} 天已全額自動計入事假已使用天數。</div>` : ''}
-      ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>${ICON_MONEY}有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))} 天，其中有薪 ${fmt(personalPaidUsed(selectedYear))} 天、無薪 ${fmt(personalUnpaidUsed(selectedYear))} 天（門檻：每年前 ${fmt(getPersonalPaidDays())} 天有薪，可在「設定」分頁調整）。</div>` : ''}
+      ${t.key==='sick' && menstrualExcess(selectedYear)>0 ? `<div class="reminder-bar"><strong>${ICON_WARNING} 生理假併入病假提醒</strong>${selectedYear} 年生理假已使用超過 ${MENSTRUAL_FREE_DAYS} 天，超過的 ${fmt(menstrualExcess(selectedYear))}天已自動計入病假已使用天數。</div>` : ''}
+      ${t.key==='sick' && remainOf('sick',selectedYear)<0 ? `<div class="reminder-bar"><strong>${ICON_WARNING} 病假超額提醒</strong>${selectedYear} 年病假已超過總天數 ${fmt(-remainOf('sick',selectedYear))}天，依規定可用事假或特別休假擇一抵銷，請自行決定後手動在事假或特休登記這幾天（本系統不會自動幫你決定要扣哪一邊）。</div>` : ''}
+      ${t.key==='personal' && usedOf('familyCare',selectedYear)>0 ? `<div class="reminder-bar"><strong>${ICON_WARNING} 併入事假提醒</strong>${selectedYear} 年家庭照顧假 ${fmt(usedOf('familyCare',selectedYear))}天已全額自動計入事假已使用天數。</div>` : ''}
+      ${t.key==='personal' && usedOf('personal',selectedYear)>0 ? `<div class="reminder-bar"><strong>${ICON_MONEY}有薪／無薪對帳</strong>${selectedYear} 年事假共已用 ${fmt(usedOf('personal',selectedYear))}天，其中有薪 ${fmt(personalPaidUsed(selectedYear))}天、無薪 ${fmt(personalUnpaidUsed(selectedYear))}天（門檻：每年前 ${fmt(getPersonalPaidDays())}天有薪，可在「設定」分頁調整）。</div>` : ''}
       ` : ''}
 
       <div class="overview-panel">
@@ -3876,26 +3932,26 @@ function leaveSection(t){
           <div class="overview-stat">
             <div class="overview-stat-label">總天數</div>
             ${overviewUnit==='day'
-              ? `<div class="overview-stat-value">${fmt(getQuota(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              ? `<div class="overview-stat-value">${fmtDaysHtml(getQuota(t.key,selectedYear))}</div>`
               : `<div class="overview-stat-value">${fmt(getQuota(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">已用</div>
             ${overviewUnit==='day'
-              ? `<div class="overview-stat-value">${fmt(usedOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              ? `<div class="overview-stat-value">${fmtDaysHtml(usedOf(t.key,selectedYear))}</div>`
               : `<div class="overview-stat-value">${fmt(usedOf(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">剩餘</div>
             ${overviewUnit==='day'
-              ? `<div class="overview-stat-value">${fmt(remainOf(t.key,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              ? `<div class="overview-stat-value">${fmtDaysHtml(remainOf(t.key,selectedYear))}</div>`
               : `<div class="overview-stat-value">${fmt(remainOf(t.key,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
         </div>
       </div>
 
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        <button type="button" class="btn-${t.c} btn-with-badge" onclick="openAddRecord('${t.key}')"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--${t.c});"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增一筆</button>
+        <button type="button" class="btn-${t.c} btn-with-badge" onclick="openAddRecord('${t.key}')"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--${t.c});"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 登記一筆</button>
         <button type="button" class="btn-outline-${t.c} btn-with-badge" onclick="openQuotaEditModal('${t.key}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> 編輯總天數</button>
       </div>
       ${quotaEditModalOpen===t.key ? `
@@ -3964,9 +4020,9 @@ function pageAddRecord(){
   const yearSwitcher = isCompLike ? '' : `
     <div class="toolbar-row" style="margin-bottom:14px;">
       <div class="year-switch">
-        <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
+        <button type="button" class="sortbtn" onclick="changeYear(-1)" aria-label="上一年">‹</button>
         <div class="year-label">${selectedYear}年</div>
-        <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
+        <button type="button" class="sortbtn" onclick="changeYear(1)" aria-label="下一年">›</button>
       </div>
       <div class="hint" style="margin:0;">要登記其他年度的紀錄，先在這裡切換年度</div>
     </div>`;
@@ -3978,8 +4034,8 @@ function pageAddRecord(){
     const compHourQuickBtns = [1,2,4,8];
     return backBtn + typeSelector + `
       <section class="block">
-        <h2><span class="dot dot-${info.c}"></span>新增${info.label}</h2>
-        <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${key==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>
+        <h2><span class="dot dot-${info.c}"></span>登記${info.label}</h2>
+        <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()}小時（可在「設定」分頁調整）。${key==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>
         <form class="entry" onsubmit="addComp(event, '${key}')">
           <div class="form-row">
             <div class="field" style="flex:0 0 160px;"><label>類型</label>
@@ -3990,7 +4046,7 @@ function pageAddRecord(){
             </div>
           </div>
           <div class="form-row">
-            <div class="field field-date" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange('${key}');updateUsePreview('${key}');" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange('${key}');updateUsePreview('${key}');">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange('${key}');updateUsePreview('${key}');">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入">⌨</button></div></div>
+            <div class="field field-date" style="flex:1;min-width:170px;"><label>日期</label><div class="date-row"><input type="date" id="compDate" value="${dDef}" min="${dMin}" max="${dMax}" onchange="onCompDateChange('${key}');updateUsePreview('${key}');" required><button type="button" class="date-toggle" onclick="setDateQuick('compDate',0);onCompDateChange('${key}');updateUsePreview('${key}');">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('compDate',-1);onCompDateChange('${key}');updateUsePreview('${key}');">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('compDate')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div></div>
           </div>
           <div class="form-row">
             <div class="field field-days">
@@ -4042,7 +4098,7 @@ function pageAddRecord(){
           <div class="form-row" id="compExpiryWrap">
             <div class="field" style="flex:1;min-width:210px;">
               <label>${ICON_HOURGLASS}到期日（${key==='exchange' ? '自動預設當年底' : `自動預設 ${info.defaultYears} 年後`}，可手動修改）</label>
-              <div class="date-row"><input type="date" id="compExpiry" value="${compDefaultExpiry(key, dDef)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入">⌨</button></div>
+              <div class="date-row"><input type="date" id="compExpiry" value="${compDefaultExpiry(key, dDef)}" oninput="expiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('compExpiry')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div>
             </div>
           </div>
           <div class="form-row">
@@ -4067,7 +4123,7 @@ function pageAddRecord(){
     <section class="block">
       <h2><span class="dot dot-${t.c}"></span>使用${t.label}</h2>
       <form class="entry" onsubmit="addRecord('${t.key}', event)">
-        <div class="field field-date"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" ${multiDateMode?'':'required'}><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入">⌨</button></div>
+        <div class="field field-date"><label>使用日期</label><div class="date-row"><input type="date" id="${t.key}Date" value="${dDef}" min="${dMin}" max="${dMax}" ${multiDateMode?'':'required'}><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',0)">今天</button><button type="button" class="date-toggle" onclick="setDateQuick('${t.key}Date',-1)">昨天</button><button type="button" class="date-toggle" onclick="toggleDateInputType('${t.key}Date')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div>
           <label class="multi-date-toggle"><input type="checkbox" ${multiDateMode?'checked':''} onchange="toggleMultiDateMode('${t.key}Date')"> 一次登記多天（可分別指定不連續的日期）</label>
           ${multiDateMode ? `
           <div style="margin-top:8px;">
@@ -4098,7 +4154,7 @@ function pageAddRecord(){
               <button type="button" onclick="setDays('${t.key}Amount',8);updateUnitColor('${t.key}Amount','${t.key}Unit','${t.key}ConvertHint');">8</button>
             </div>
           </div>
-          <div class="convert-hint u-day" id="${t.key}ConvertHint">使用 <b>${fmt(getHoursPerDay())} 小時</b></div>
+          <div class="convert-hint u-day" id="${t.key}ConvertHint">使用 <b>${fmt(getHoursPerDay())}小時</b></div>
         </div>
         <div class="field note"><label>備註</label><input type="text" id="${t.key}Note" placeholder="原因或備註"></div>
         <button type="submit" class="btn-primary form-submit" data-label="${t.label}" data-verb="使用">${submitLabelText('使用', 1, 'day', t.label, multiDateMode?multiDateList.length:0)}</button>
@@ -4131,8 +4187,8 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
     const initialIsOver = initialSelectedHours > initialNeededHours + 0.001;
     const initialIsExact = !initialIsOver && initialSelectedHours >= initialNeededHours - 0.001;
     const showInitialBar = r.type==='use' && hasManual;
-    const initialNeedLabel = initialIsOver ? `多選了 ${fmt(initialSelectedHours-initialNeededHours)} 小時，記得取消勾選` : `需要 ${fmt(initialNeededHours)} 小時`;
-    const initialBarHtml = showInitialBar ? `<span>已選 ${fmt(initialSelectedHours)} 小時</span><span class="ssb-need">${initialNeedLabel}</span>` : '';
+    const initialNeedLabel = initialIsOver ? `多選了 ${fmt(initialSelectedHours-initialNeededHours)}小時，記得取消勾選` : `需要 ${fmt(initialNeededHours)}小時`;
+    const initialBarHtml = showInitialBar ? `<span>已選 ${fmt(initialSelectedHours)}小時</span><span class="ssb-need">${initialNeedLabel}</span>` : '';
     return `<li class="editrow" id="editrow-${category}-${r.id}">
       <div class="field">
         <label>類型</label>
@@ -4143,7 +4199,7 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
       </div>
       <div class="field field-date">
         <label>日期</label>
-        <div class="date-row"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}" onchange="onEditCompDateChange('${r.id}','${category}');updateEditUsePreview('${r.id}','${category}')"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入">⌨</button></div>
+        <div class="date-row"><input type="date" id="editCompDate-${r.id}" value="${r.date}" min="${dMin}" max="${dMax}" onchange="onEditCompDateChange('${r.id}','${category}');updateEditUsePreview('${r.id}','${category}')"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompDate-${r.id}')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div>
       </div>
       <div class="field field-days">
         <label>數量</label>
@@ -4173,7 +4229,7 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
       <div id="editCompExpiryWrap-${r.id}" style="${r.type==='earn'?'':'display:none;'}width:100%;">
         <div class="field">
           <label>${ICON_HOURGLASS}到期日</label>
-          <div class="date-row"><input type="date" id="editCompExpiry-${r.id}" value="${r.expiry||compDefaultExpiry(category, r.date)}" oninput="editExpiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompExpiry-${r.id}')" title="切換手動輸入">⌨</button></div>
+          <div class="date-row"><input type="date" id="editCompExpiry-${r.id}" value="${r.expiry||compDefaultExpiry(category, r.date)}" oninput="editExpiryTouched=true"><button type="button" class="date-toggle" onclick="toggleDateInputType('editCompExpiry-${r.id}')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div>
         </div>
       </div>
       <div id="editUsePreview-${r.id}">${initialPreview}</div>
@@ -4236,12 +4292,12 @@ function buildCompLi(r, dMin, dMax, category, forceEdit){
         const usedBy = compEarnUsedByBreakdown(category, r.id);
         if(!usedBy.length) return '';
         const parts = usedBy.map(u=> `${toROC(u.useDate)} 用了 ${fmt(u.take*getHoursPerDay())}小時`);
-        return `<div class="expiry alloc-list" style="color:var(--jade);">🔻 已被使用：${parts.map(p=>`<div class="alloc-line">${p}</div>`).join('')}</div>`;
+        return `<div class="expiry alloc-list" style="color:var(--jade);">${ICON_CORNER}已被使用：${parts.map(p=>`<div class="alloc-line">${p}</div>`).join('')}</div>`;
       })() : ''}
       ${r.photoUrl? `<img src="${escapeAttr(r.photoUrl)}" class="ledger-thumb" onclick="window.open('${escapeAttr(r.photoUrl)}','_blank')" alt="附件照片">` : ''}
       <div class="ledger-actions">
-        <button class="del" title="編輯" onclick="startEditComp('${r.id}')">✎ 編輯</button>
-        <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
+        <button class="del" title="編輯" onclick="startEditComp('${r.id}')">${ICON_PENCIL}編輯</button>
+        <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">${ICON_X_SM}刪除</button>
       </div>
     </div>
   </li>`;
@@ -4350,9 +4406,9 @@ function renderAvailBatchList(category){
     const expiryTxt = b.diffDays===null ? '' : (b.diffDays<0? `已過期${Math.abs(b.diffDays)}天` : (b.diffDays===0?'今天到期':`${b.diffDays}天後到期`));
     return `<div class="avail-batch-item">
       ${b.id===lastEditedId ? `<span class="edit-confirm-badge">✓ 已編輯</span>` : ''}
-      <button type="button" class="avail-batch-edit-btn" onclick="openQuickEditModal('${category}','${b.id}')" title="編輯">✎</button>
+      <button type="button" class="avail-batch-edit-btn" onclick="openQuickEditModal('${category}','${b.id}')" title="編輯" aria-label="編輯">${ICON_PENCIL}</button>
       <div class="avail-batch-title"><span class="avail-batch-date">${toROC(b.date)}</span>${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}${b.photoUrl?` <span class="photo-badge" onclick="window.open('${escapeAttr(b.photoUrl)}','_blank')">${ICON_CAMERA}附件</span>`:''}</div>
-      <div class="avail-batch-remain">剩 ${fmtDays(b.remainDays)}${hasHourPart(b.remainDays) ? '' : `<span class="avail-batch-hours-strong">（${fmt(b.remainDays*getHoursPerDay())} 小時）</span>`}</div>
+      <div class="avail-batch-remain">剩餘 ${fmtDays(b.remainDays)}${hasHourPart(b.remainDays) ? '' : `<span class="avail-batch-hours-strong">（${fmt(b.remainDays*getHoursPerDay())}小時）</span>`}</div>
       ${b.expiry? `<div class="avail-batch-expiry" style="color:${urgent?'var(--brick)':'var(--amber)'};">${ICON_HOURGLASS}到期 ${toROC(b.expiry)}（${expiryTxt}）</div>` : ''}
     </div>`;
   }).join('')}</div>`;
@@ -4385,7 +4441,7 @@ function renderAvailBatchList(category){
         <div class="stack-preview-layer ${i===0?'stack-preview-layer-front':''}" style="height:${i===0?frontH:cardH}px;transform:translateY(${i*peek}px) scale(${1-i*0.02});z-index:${n-i};background:${layerBg(i)};">
           <span class="avail-batch-date">${toROC(b.date)}</span>
           ${b.note?`<span class="avail-batch-note-tag">${escapeHtml(b.note)}</span>`:''}
-          <span class="stack-preview-remain">${overviewUnit==='day' ? `剩 ${fmtDays(b.remainDays)}` : `剩 ${fmt(b.remainDays*getHoursPerDay())} 小時`}</span>
+          <span class="stack-preview-remain">${overviewUnit==='day' ? `剩餘 ${fmtDays(b.remainDays)}` : `剩 ${fmt(b.remainDays*getHoursPerDay())}小時`}</span>
         </div>`).join('')}
       ${emptyLayerHtml}
       ${moreHintHtml}
@@ -4431,7 +4487,7 @@ async function addCustomRecord(e){
     if(type==='use'){
       const balAsOfDate = compBalanceAsOf('custom', date, null, useLabel);
       if(balAsOfDate - daysEquiv < 0){
-        if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，「${useLabel}」只累積了 ${fmt(balAsOfDate)} 天，登記後會變負數，仍要登記嗎？`)) return;
+        if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，「${useLabel}」只累積了 ${fmtDays(balAsOfDate)}，登記後會變負數，仍要登記嗎？`)) return;
       }
     }
     const id = uid();
@@ -4447,7 +4503,7 @@ async function addCustomRecord(e){
     customAddOpen = false;
     await saveState();
     render();
-    setStatus(`已新增${type==='earn'?'獲得':'使用'}「${useLabel}」${fmt(amount)}${unit==='hour'?'小時':'天'}`, true);
+    setStatus(`已登記${type==='earn'?'獲得':'使用'}「${useLabel}」${fmt(amount)}${unit==='hour'?'小時':'天'}`, true);
   }catch(err){
     setStatus('新增失敗：' + (err && err.message ? err.message : String(err)), false);
   } finally {
@@ -4464,7 +4520,7 @@ function customSectionHtml(){
       <div class="avail-batch-list">${activeLabels.map(x=>`
         <div class="avail-batch-item">
           <div class="avail-batch-title"><span class="avail-batch-note-tag" style="background:var(--amber-soft, #FBEFDC);color:var(--amber);">${escapeHtml(x.label)}</span></div>
-          <div class="avail-batch-remain">剩 ${fmtDays(x.remainDays)}${hasHourPart(x.remainDays) ? '' : `<span class="avail-batch-hours-strong">（${fmt(x.remainDays*getHoursPerDay())} 小時）</span>`}</div>
+          <div class="avail-batch-remain">剩餘 ${fmtDays(x.remainDays)}${hasHourPart(x.remainDays) ? '' : `<span class="avail-batch-hours-strong">（${fmt(x.remainDays*getHoursPerDay())}小時）</span>`}</div>
           ${x.nearestExpiry ? `<div class="avail-batch-expiry" style="color:var(--amber);">${ICON_HOURGLASS}到期 ${toROC(x.nearestExpiry)}</div>` : ''}
         </div>`).join('')}</div>
     </div>` : `<div class="hint" style="margin-bottom:16px;">目前沒有還能使用的其他假別紀錄。</div>`;
@@ -4483,11 +4539,11 @@ function customSectionHtml(){
           </div>` : `
           <div class="field" style="margin-bottom:12px;">
             <label>選擇假別</label>
-            <select id="customUseLabelSelect">${activeLabels.map(x=>`<option value="${escapeAttr(x.label)}">${escapeHtml(x.label)}（剩${fmt(x.remainDays)}天）</option>`).join('')}</select>
+            <select id="customUseLabelSelect">${activeLabels.map(x=>`<option value="${escapeAttr(x.label)}">${escapeHtml(x.label)}（剩${fmtDays(x.remainDays)}）</option>`).join('')}</select>
           </div>`}
         <div class="field field-date" style="margin-bottom:12px;">
           <label>日期</label>
-          <div class="date-row"><input type="date" id="customDate" value="${defaultDateFor(year)}"><button type="button" class="date-toggle" onclick="toggleDateInputType('customDate')" title="切換手動輸入">⌨</button></div>
+          <div class="date-row"><input type="date" id="customDate" value="${defaultDateFor(year)}"><button type="button" class="date-toggle" onclick="toggleDateInputType('customDate')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div>
         </div>
         <div class="field field-days" style="margin-bottom:12px;">
           <label>數量</label>
@@ -4495,12 +4551,12 @@ function customSectionHtml(){
             <input type="number" id="customAmount" value="1" min="0.5" step="0.5" oninput="updateUnitColor('customAmount','customUnit','customConvertHint','${customAddType==='use'?'使用':'獲得'}');">
             <select id="customUnit" class="unit-select u-day" onchange="updateUnitColor('customAmount','customUnit','customConvertHint','${customAddType==='use'?'使用':'獲得'}');"><option value="day">天</option><option value="hour">小時</option></select>
           </div>
-          <div class="convert-hint u-day" id="customConvertHint">${customAddType==='use'?'使用':'獲得'} <b>${fmt(getHoursPerDay())} 小時</b></div>
+          <div class="convert-hint u-day" id="customConvertHint">${customAddType==='use'?'使用':'獲得'} <b>${fmt(getHoursPerDay())}小時</b></div>
         </div>
         ${customAddType==='earn' ? `
           <div class="field" style="margin-bottom:12px;">
-            <label>🗓️ 到期日（可自行設定，沒有固定規則）</label>
-            <div class="date-row"><input type="date" id="customExpiry" value="${addYears(defaultDateFor(year),2)}"><button type="button" class="date-toggle" onclick="toggleDateInputType('customExpiry')" title="切換手動輸入">⌨</button></div>
+            <label>${ICON_HOURGLASS}到期日（可自行設定，沒有固定規則）</label>
+            <div class="date-row"><input type="date" id="customExpiry" value="${addYears(defaultDateFor(year),2)}"><button type="button" class="date-toggle" onclick="toggleDateInputType('customExpiry')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div>
           </div>` : ''}
         <div class="field" style="margin-bottom:14px;">
           <label>備註</label>
@@ -4514,7 +4570,7 @@ function customSectionHtml(){
     </div>` : `<button type="button" class="btn-amber btn-with-badge" style="width:100%;margin-bottom:16px;" onclick="toggleCustomAdd()"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--amber);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增其他假別</button>`;
 
   const historyRows = state.compRecords.filter(r=>(r.category||'comp')==='custom' && r.date.startsWith(String(year)));
-  const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r)*getHoursPerDay(),0))}小時`;
+  const totalFn = (groupRows)=> `${groupRows.length} 筆・共 ${fmt(groupRows.reduce((s,r)=>s+toDays(r),0)*getHoursPerDay())}小時`;
   const liBuilder = (r)=> `
     <li class="ledger">
       <div class="ledger-top">
@@ -4525,7 +4581,7 @@ function customSectionHtml(){
       ${r.note? `<div class="ledger-note-row">${ICON_NOTE}${escapeHtml(r.note)}</div>` : ''}
       <div class="ledger-bottom">
         <div class="ledger-actions">
-          <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">✕ 刪除</button>
+          <button class="del" title="刪除" onclick="removeComp(event.currentTarget,'${r.id}')">${ICON_X_SM}刪除</button>
         </div>
       </div>
     </li>`;
@@ -4538,9 +4594,9 @@ function customSectionHtml(){
       ${unusedListHtml}
       ${addForm}
       <div class="year-switch" style="justify-content:center;margin-bottom:10px;">
-        <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
+        <button type="button" class="sortbtn" onclick="changeYear(-1)" aria-label="上一年">‹</button>
         <div class="year-label">${year}年</div>
-        <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
+        <button type="button" class="sortbtn" onclick="changeYear(1)" aria-label="下一年">›</button>
       </div>
       <h3 class="section-title">歷史紀錄</h3>
       ${historyHtml}
@@ -4553,7 +4609,7 @@ function compSectionHtml(category){
   const allComp = state.compRecords.filter(r=>r.date.startsWith(String(selectedYear)) && (r.category||'comp')===category);
   let compRows = allComp.filter(r=>matchesSearch(r.date, r.note, info.label, r.type==='earn'?'獲得':'使用'));
   compRows.sort((a,b)=> sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
-  const compEmptyMsg = allComp.length===0 ? `${selectedYear} 年尚無${info.label}紀錄，可以點上方「＋新增一筆」登記第一筆 👆` : '查無符合搜尋的紀錄';
+  const compEmptyMsg = allComp.length===0 ? `${selectedYear} 年尚無${info.label}紀錄，可以點上方「＋登記一筆」登記第一筆` : '查無符合搜尋的紀錄';
   const dMin = isoDate(CUR_YEAR-5,1,1), dMax = yearMax(CUR_YEAR+1), dDef = defaultDateFor(selectedYear);
   const forceExpand = (groupRows)=> (editing && editing.kind==='comp' && groupRows.some(r=>r.id===editing.id)) || (revealDate && groupRows.some(r=>r.date===revealDate));
   const totalFn = (groupRows)=>{
@@ -4564,7 +4620,7 @@ function compSectionHtml(category){
   const subTotalFn = (groupRows)=>{
     const earn = groupRows.filter(r=>r.type==='earn').reduce((s,r)=>s+toDays(r),0);
     const use = groupRows.filter(r=>r.type==='use').reduce((s,r)=>s+toDays(r),0);
-    if(earn>0 && use>0) return `獲得 ${fmt(earn*getHoursPerDay())} 小時・使用 ${fmt(use*getHoursPerDay())} 小時`;
+    if(earn>0 && use>0) return `獲得 ${fmt(earn*getHoursPerDay())}小時・使用 ${fmt(use*getHoursPerDay())}小時`;
     return '';
   };
   const listHtml = renderMonthGroups(category, compRows, compEmptyMsg, r=>buildCompLi(r,dMin,dMax,category), totalFn, forceExpand, subTotalFn);
@@ -4582,34 +4638,34 @@ function compSectionHtml(category){
         <span><span class="dot dot-${info.c}"></span>${info.label}<button type="button" class="info-icon-btn" onclick="toggleInfoHint('${category}')" title="說明">ⓘ</button></span>
         <button type="button" class="overview-unit-toggle" onclick="toggleOverviewUnit()"><span class="overview-unit-arrow-icon">↓</span>${overviewUnit==='day' ? `顯示：天　${ICON_SWITCH}切換小時` : `顯示：小時　${ICON_SWITCH}切換天`}</button>
       </h2>
-      ${infoHintExpanded[category] ? `<div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()} 小時（可在「設定」分頁調整）。${category==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>` : ''}
+      ${infoHintExpanded[category] ? `<div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()}小時（可在「設定」分頁調整）。${category==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>` : ''}
 
       <div class="overview-panel">
         <div class="overview-grid">
           <div class="overview-stat">
             <div class="overview-stat-label">${selectedYear} 年獲得</div>
             ${overviewUnit==='day'
-              ? `<div class="overview-stat-value">${fmt(compEarnTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              ? `<div class="overview-stat-value">${fmtDaysHtml(compEarnTotal(category,selectedYear))}</div>`
               : `<div class="overview-stat-value">${fmt(compEarnTotal(category,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
           <div class="overview-stat">
             <div class="overview-stat-label">${selectedYear} 年使用</div>
             ${overviewUnit==='day'
-              ? `<div class="overview-stat-value">${fmt(compUseTotal(category,selectedYear))}<span class="overview-stat-unit">天</span></div>`
+              ? `<div class="overview-stat-value">${fmtDaysHtml(compUseTotal(category,selectedYear))}</div>`
               : `<div class="overview-stat-value">${fmt(compUseTotal(category,selectedYear)*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
           <div class="overview-stat">
-            <div class="overview-stat-label">目前結餘</div>
+            <div class="overview-stat-label">目前剩餘</div>
             ${overviewUnit==='day'
-              ? `<div class="overview-stat-value">${fmt(curBalance)}<span class="overview-stat-unit">天</span></div>`
+              ? `<div class="overview-stat-value">${fmtDaysHtml(curBalance)}</div>`
               : `<div class="overview-stat-value">${fmt(curBalance*getHoursPerDay())}<span class="overview-stat-unit">小時</span></div>`}
           </div>
         </div>
-        ${carryOver>0.001 ? `<div class="overview-carryover-note">${ICON_REFRESH} 結餘中有 ${overviewUnit==='day' ? `${fmt(carryOver)} 天` : `${fmt(carryOver*getHoursPerDay())} 小時`}是以前年度結轉下來的，不是今年新獲得的</div>` : ''}
+        ${carryOver>0.001 ? `<div class="overview-carryover-note">${ICON_REFRESH} 剩餘中有 ${overviewUnit==='day' ? `${fmtDays(carryOver)}` : `${fmt(carryOver*getHoursPerDay())}小時`}是以前年度結轉下來的，不是今年新獲得的</div>` : ''}
         ${nearestExpiry ? (()=>{
           const isUrgent = nearestExpiry.diffDays<=90;
           const color = nearestExpiry.diffDays<=7 ? 'var(--brick)' : (isUrgent ? 'var(--amber)' : 'var(--ink)');
-          const countdown = nearestExpiry.diffDays<0?`已過期${Math.abs(nearestExpiry.diffDays)}天`:(nearestExpiry.diffDays===0?'今天到期':`${nearestExpiry.diffDays}天後到期`);
+          const countdown = nearestExpiry.diffDays<0?`已過期${Math.abs(nearestExpiry.diffDays)}天`:(nearestExpiry.diffDays===0?'今天到期':`還有 ${nearestExpiry.diffDays} 天`);
           return `<div class="overview-expiry">${ICON_HOURGLASS}最近到期：<strong style="color:${color};">${toROC(nearestExpiry.expiry)}</strong><span class="avail-batch-hours" style="margin-left:4px;">（${countdown}）</span></div>`;
         })() : ''}
         <div class="avail-batch-section">
@@ -4618,7 +4674,7 @@ function compSectionHtml(category){
       </div>
 
       <div style="display:flex;gap:8px;">
-        <button type="button" class="btn-${info.c} btn-with-badge" style="margin-bottom:4px;" onclick="openAddRecord('${category}')"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--${info.c});"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 新增一筆</button>
+        <button type="button" class="btn-${info.c} btn-with-badge" style="margin-bottom:4px;" onclick="openAddRecord('${category}')"><span class="btn-badge-circle btn-badge-circle-solid" style="color:var(--${info.c});"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span> 登記一筆</button>
         <button type="button" class="btn-outline-${info.c} btn-with-badge" style="margin-bottom:4px;" onclick="openAddRecordAsUse('${category}')"><span class="btn-badge-circle btn-badge-circle-outline"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span> 使用一筆</button>
       </div>
     </section>
@@ -4664,7 +4720,7 @@ function pageHome(justEntered){
 
     <div style="margin-bottom:16px;">
       <button type="button" class="btn-primary${justEntered?' shimmer-once':''}" style="width:100%;font-size:16px;padding:14px 16px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openAddRecordFromHome('${state.lastUsedType||'annual'}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> 登記休假／補休紀錄</button>
-      ${(state.lastUsedType && QUICK_LOG_ELIGIBLE_TYPES.includes(state.lastUsedType)) ? `<button type="button" style="width:100%;margin-top:8px;font-size:16px;padding:14px 16px;background:var(--primary-soft);color:var(--primary);border:1.5px solid var(--primary);" onclick="quickLogToday()">⚡ 快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
+      ${(state.lastUsedType && QUICK_LOG_ELIGIBLE_TYPES.includes(state.lastUsedType)) ? `<button type="button" style="width:100%;margin-top:8px;font-size:16px;padding:14px 16px;background:var(--primary-soft);color:var(--primary);border:1.5px solid var(--primary);" onclick="quickLogToday()">${ICON_ZAP}快速登記今天 1 天${(COMP_CATEGORIES[state.lastUsedType]||LEAVE_TYPES.find(t=>t.key===state.lastUsedType)||{}).label||''}</button>` : ''}
     </div>
 
     <div class="stamps">
@@ -4680,9 +4736,9 @@ function pageLeaves(){
     <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 12px 10px;">
       <div></div>
       <div class="year-switch">
-        <button type="button" class="sortbtn" onclick="changeYear(-1)">‹</button>
+        <button type="button" class="sortbtn" onclick="changeYear(-1)" aria-label="上一年">‹</button>
         <div class="year-label">${selectedYear}年</div>
-        <button type="button" class="sortbtn" onclick="changeYear(1)">›</button>
+        <button type="button" class="sortbtn" onclick="changeYear(1)" aria-label="下一年">›</button>
       </div>
       <div style="justify-self:start;margin-left:8px;">
         ${selectedYear!==CUR_YEAR ? `<button type="button" class="back-to-today-btn" style="padding:7px 12px;font-size:13px;min-height:0;" onclick="setYear(${CUR_YEAR})">回今年</button>` : ''}
@@ -4924,13 +4980,13 @@ function pageData(){
                     <input type="number" id="annualNextYearInput" min="0" step="0.5" value="${nextYearSet ? state.quotaByYear[nextYear].annual : ''}" placeholder="已經知道的話可以先填">
                   </div>
                   <button class="btn-${t.c}" onclick="updateNextYearAnnualQuota()">儲存明年</button>
-                  <div class="hint">${nextYearSet ? `已設定 ${fmt(state.quotaByYear[nextYear].annual)} 天，${nextYear} 年打開時不會再提醒。` : `還沒設定，${nextYear} 年第一次打開時首頁會提醒你填。`}</div>
+                  <div class="hint">${nextYearSet ? `已設定 ${fmt(state.quotaByYear[nextYear].annual)}天，${nextYear} 年打開時不會再提醒。` : `還沒設定，${nextYear} 年第一次打開時首頁會提醒你填。`}</div>
                 </div>` : '';
           return `
           <div class="quota-accordion-item">
             <button type="button" class="quota-accordion-head" onclick="toggleQuotaExpand('${t.key}')">
               <span>${t.label}</span>
-              <span>${fmt(getQuota(t.key,selectedYear))} 天　${isOpen?'▲':'▼'}</span>
+              <span>${fmt(getQuota(t.key,selectedYear))}天　${isOpen?'▲':'▼'}</span>
             </button>
             ${isOpen ? `
               <div class="quota-accordion-body">
@@ -4950,7 +5006,7 @@ function pageData(){
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('hours')">
           <span>${ICON_STOPWATCH}每日工時設定</span>
-          <span>${fmt(getHoursPerDay())} 小時／天　${settingsExpandedKey==='hours'?'▲':'▼'}</span>
+          <span>${fmt(getHoursPerDay())}小時／天　${settingsExpandedKey==='hours'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='hours' ? `
         <p>所有假別登記「小時」時，都是依這個比例換算成天數（例如補休 4 小時 = 0.5 天）。若貴單位不是 8 小時制，可在此調整。</p>
@@ -4966,7 +5022,7 @@ function pageData(){
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('paid')">
           <span>${ICON_MONEY_LG}事假有薪天數設定</span>
-          <span>${fmt(getPersonalPaidDays())} 天　${settingsExpandedKey==='paid'?'▲':'▼'}</span>
+          <span>${fmt(getPersonalPaidDays())}天　${settingsExpandedKey==='paid'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='paid' ? `
         <p>常見規定是事假每年前 7 天工資照給、超過的部分不給薪。這裡只是幫你算出「有薪／無薪」各用了幾天，方便對帳，不會影響事假的總天數或剩餘天數計算。</p>
@@ -4982,7 +5038,7 @@ function pageData(){
       <div class="backup">
         <button type="button" class="quota-accordion-head" onclick="toggleSettingsExpand('annualMin')">
           <span>${ICON_STAR_LG}特休最低使用天數</span>
-          <span>${fmt(getAnnualMinDays())} 天　${settingsExpandedKey==='annualMin'?'▲':'▼'}</span>
+          <span>${fmt(getAnnualMinDays())}天　${settingsExpandedKey==='annualMin'?'▲':'▼'}</span>
         </button>
         ${settingsExpandedKey==='annualMin' ? `
         <p>如果貴單位規定每年特休至少要休滿一定天數，可以在這裡設定門檻。每年 10 月起，如果當年度特休已使用天數還沒達到這個數字，首頁會出現提醒（越接近年底顏色越明顯），避免年底特休沒休完。如果當年度特休總天數比這個門檻少（例如今年只有 7 天），會以特休總天數為準。</p>
@@ -5007,7 +5063,7 @@ function pageData(){
         <div class="auth-option">
           <p style="margin:0 0 10px;">已登入：${escapeHtml(currentUser.email||currentUser.displayName||'')}（登入方式：${getSignInMethodLabel()}）。之後每次登記，資料會自動同步到雲端，換裝置用同一個帳號登入就能看到。</p>
           <div class="sync-status-box ${!isOnline ? 'sync-status-syncing' : `sync-status-${cloudSyncStatus}`}" style="margin:0;">
-            ${!isOnline ? `<span>📴 離線中，已在本機排隊，恢復網路後自動同步</span>` :
+            ${!isOnline ? `<span>${ICON_WIFI_OFF}離線中，已在本機排隊，恢復網路後自動同步</span>` :
               cloudSyncStatus==='syncing' ? `<span>${ICON_REFRESH} 同步中…</span>` : ''}
             ${isOnline && cloudSyncStatus==='synced' ? `<span>${ICON_CLOUD} 已同步${lastSyncTime? `　最後同步：${lastSyncTime.toLocaleTimeString('zh-TW',{hour12:false})}` : ''}</span>` : ''}
             ${isOnline && cloudSyncStatus==='error' ? `<span>${ICON_WARNING} 尚未同步成功，本機資料已安全保留，不會遺失</span><button type="button" class="ghost" style="margin-top:8px;" onclick="retrySyncNow()">立即重試</button>` : ''}
@@ -5022,13 +5078,13 @@ function pageData(){
                 <input type="text" id="deviceNameInput" value="${escapeAttr(getDeviceName())}" placeholder="例如：阿水的 iPhone" style="flex:1;">
                 <button type="button" class="ghost" onclick="saveDeviceName()">儲存</button>
               </div>
-            ` : `<span class="overview-edit-link" style="margin-left:6px;" onclick="toggleDeviceNameEdit()">✎ 改名</span>`}
+            ` : `<span class="overview-edit-link" style="margin-left:6px;" onclick="toggleDeviceNameEdit()">${ICON_PENCIL}改名</span>`}
             <p class="hint" style="margin-top:4px;margin-bottom:0;">如果你在多台裝置用同一個帳號，取個好記的名字，之後遇到雲端／本機資料衝突時比較好判斷是哪一台存的。</p>
           </div>
         </div>
         <div class="auth-option">
           <div style="font-size:13px;color:var(--ink-soft);display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <span>🗑️ 補休／換休過期後，自動清除附件照片<br><span class="hint" style="margin:0;">只清照片，紀錄本身不會被刪除，省雲端空間用</span></span>
+            <span>${ICON_TRASH}補休／換休過期後，自動清除附件照片<br><span class="hint" style="margin:0;">只清照片，紀錄本身不會被刪除，省雲端空間用</span></span>
             <label style="flex-shrink:0;"><input type="checkbox" ${state.autoDeleteExpiredPhotos?'checked':''} onchange="toggleAutoDeleteExpiredPhotos(this.checked)"></label>
           </div>
         </div>
@@ -5037,13 +5093,13 @@ function pageData(){
         <p class="hint" style="margin-bottom:12px;">登入後資料會自動備份到雲端、跨裝置同步，三選一即可：</p>
 
         <div class="auth-option">
-          <div class="auth-option-title">🔵 Google 帳號</div>
+          <div class="auth-option-title">${ICON_USER_CIRCLE}Google 帳號</div>
           <p class="hint">一鍵登入，最簡單，任何情境都適用。</p>
           <button class="btn-primary" style="width:100%;" onclick="signInWithGoogle()">使用 Google 帳號登入</button>
         </div>
 
         <div class="auth-option">
-          <div class="auth-option-title">🔑 Email＋密碼</div>
+          <div class="auth-option-title">${ICON_KEY}Email＋密碼</div>
           <p class="hint">自己設密碼登入，全程留在 App 內完成。從「加入主畫面」的圖示使用時，建議選這個。</p>
           <button class="ghost" style="width:100%;" onclick="toggleEmailAuthForm(${(emailAuthMode==='pw-login'||emailAuthMode==='pw-signup')? 'null':"'pw-login'"})">${(emailAuthMode==='pw-login'||emailAuthMode==='pw-signup')? '取消' : '用 Email＋密碼登入'}</button>
           ${(emailAuthMode==='pw-login'||emailAuthMode==='pw-signup') ? `
@@ -5153,11 +5209,11 @@ function pageData(){
         <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end;">
           <div class="field" style="flex:1 1 220px;max-width:340px;">
             <label>開始日期（留空＝不限）</label>
-            <div class="date-row"><input type="date" id="exportStartDate"><button type="button" class="date-toggle" onclick="toggleDateInputType('exportStartDate')" title="切換手動輸入">⌨</button></div>
+            <div class="date-row"><input type="date" id="exportStartDate"><button type="button" class="date-toggle" onclick="toggleDateInputType('exportStartDate')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div>
           </div>
           <div class="field" style="flex:1 1 220px;max-width:340px;">
             <label>結束日期（留空＝不限）</label>
-            <div class="date-row"><input type="date" id="exportEndDate"><button type="button" class="date-toggle" onclick="toggleDateInputType('exportEndDate')" title="切換手動輸入">⌨</button></div>
+            <div class="date-row"><input type="date" id="exportEndDate"><button type="button" class="date-toggle" onclick="toggleDateInputType('exportEndDate')" title="切換手動輸入" aria-label="切換手動輸入">${ICON_KBD}</button></div>
           </div>
           <button type="button" class="ghost" onclick="setExportAllTypes(true)">全選假別</button>
           <button type="button" class="ghost" onclick="setExportAllTypes(false)">全部取消</button>
@@ -5255,12 +5311,41 @@ function bottomNav(){
 }
 
 // 每次畫畫面時開一份新的扣抵計算快取，畫完就丟掉，確保下次操作一定用最新資料重算
+// 每次畫完補上：可點的 div 讓鍵盤和讀屏也能用；有視窗開著時鎖住後面頁面的捲動
+function enhanceAfterRender(){
+  try{
+    document.querySelectorAll('[onclick]:not(button):not(a):not(input):not(select):not(textarea):not(label):not(.modal-overlay):not(.modal-box):not([role])').forEach(el=>{
+      el.setAttribute('role','button');
+      if(!el.hasAttribute('tabindex')) el.setAttribute('tabindex','0');
+    });
+    document.documentElement.classList.toggle('modal-open', !!document.querySelector('.modal-overlay'));
+    // 欄位標籤跟輸入框接起來（讀屏會念出「日期」「數量」這些名稱），不影響畫面
+    document.querySelectorAll('.field').forEach(f=>{
+      const lab = f.querySelector(':scope > label'); const ctl = f.querySelector('input:not([type=checkbox]):not([type=radio]), select, textarea');
+      if(!lab || !ctl || lab.querySelector('input') || ctl.getAttribute('aria-label')) return;
+      if(ctl.id && !lab.htmlFor) lab.htmlFor = ctl.id;
+      else if(!ctl.id) ctl.setAttribute('aria-label', lab.textContent.trim().slice(0,30));
+    });
+    document.querySelectorAll('.nav-item').forEach(n=>{ if(n.classList.contains('active')) n.setAttribute('aria-current','page'); else n.removeAttribute('aria-current'); });
+  }catch(e){}
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    const overlays = document.querySelectorAll('.modal-overlay');
+    if(overlays.length){ overlays[overlays.length-1].click(); e.preventDefault(); }
+    return;
+  }
+  if((e.key==='Enter' || e.key===' ') && e.target && e.target.getAttribute && e.target.getAttribute('role')==='button' && e.target.tagName!=='BUTTON'){
+    e.preventDefault(); e.target.click();
+  }
+});
 function render(){
   const prevMemo = fifoMemo;
   fifoMemo = new Map();
   try{ _renderInner(); }
   finally{ fifoMemo = prevMemo; }
   syncLeaveTabsRow();
+  enhanceAfterRender();
   // 深色說明因為當時有視窗開著而延後的話，視窗一關就補顯示
   if(themeHintPending && !document.querySelector('.modal-overlay')) maybeShowThemeAutoHint();
 }
@@ -5432,7 +5517,7 @@ async function updateHoursPerDay(){
     state.hoursPerDay = v;
     await saveState();
     render();
-    setStatus(`已更新為 1 天 = ${fmt(v)} 小時`, true);
+    setStatus(`已更新為 1 天 = ${fmt(v)}小時`, true);
   }catch(err){
     setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
   }
@@ -5445,7 +5530,7 @@ async function updatePersonalPaidDays(){
     state.personalPaidDays = v;
     await saveState();
     render();
-    setStatus(`已更新為每年前 ${fmt(v)} 天有薪`, true);
+    setStatus(`已更新為每年前 ${fmt(v)}天有薪`, true);
   }catch(err){
     setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
   }
@@ -5458,7 +5543,7 @@ async function updateAnnualMinDays(){
     state.annualMinDays = v;
     await saveState();
     render();
-    setStatus(`已更新為每年至少休 ${fmt(v)} 天特休`, true);
+    setStatus(`已更新為每年至少休 ${fmt(v)}天特休`, true);
   }catch(err){
     setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
   }
@@ -5475,7 +5560,7 @@ async function updateNextYearAnnualQuota(){
     setQuota('annual', nextYear, v);
     await saveState();
     render();
-    setStatus(`已設定 ${nextYear} 年特休 ${fmt(v)} 天`, true);
+    setStatus(`已設定 ${nextYear} 年特休 ${fmt(v)}天`, true);
   }catch(err){
     setStatus('更新失敗：' + (err && err.message ? err.message : String(err)), false);
   }
@@ -5559,7 +5644,7 @@ async function quickLogToday(){
     lastAddedId = id;
     await saveState();
     setStatus(`已快速登記今天 1 天${label}`, true);
-    successConfirm = `已新增 1 天${label}`;
+    successConfirm = `已登記 1 天${label}`;
     render();
     setTimeout(()=>{ successConfirm = null; render(); }, 450);
   }catch(err){
@@ -5597,7 +5682,7 @@ async function addRecord(key, e){
       const currentRemain = remainOf(key, selectedYear);
       if(currentRemain - totalDaysEquiv < 0){
         const label = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || '';
-        if(!window.confirm(`這 ${multiDateList.length} 天加起來會超過可用的${label}天數（目前剩餘 ${fmt(currentRemain)} 天，這次共需要 ${fmt(totalDaysEquiv)} 天），仍要登記嗎？`)) return;
+        if(!window.confirm(`這 ${multiDateList.length} 天加起來會超過可用的${label}天數（目前剩餘 ${fmtDays(currentRemain)}，這次共需要 ${fmt(totalDaysEquiv)} 天），仍要登記嗎？`)) return;
       }
       if(!state.records[key]) state.records[key]=[];
       let lastId = null;
@@ -5614,7 +5699,7 @@ async function addRecord(key, e){
       await saveState();
       setStatus('已登記使用', true);
       const tLabel = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || '';
-      finishAddWithConfirm(`已新增 ${addedCount} 筆${tLabel}（每筆 ${displayAmount({unit,amount})}）`);
+      finishAddWithConfirm(`已登記 ${addedCount} 筆${tLabel}（每筆 ${displayAmount({unit,amount})}）`);
       return;
     }
 
@@ -5623,7 +5708,7 @@ async function addRecord(key, e){
     const currentRemain = remainOf(key, selectedYear);
     if(currentRemain - daysEquiv < 0){
       const label = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || '';
-      if(!window.confirm(`這筆會超過可用的${label}天數（目前剩餘 ${fmt(currentRemain)} 天 ≈ ${fmt(currentRemain*getHoursPerDay())} 小時），仍要登記嗎？`)) return;
+      if(!window.confirm(`這筆會超過可用的${label}天數（目前剩餘 ${fmtDays(currentRemain)} ≈ ${fmt(currentRemain*getHoursPerDay())} 小時），仍要登記嗎？`)) return;
     }
     const id = uid();
     if(!state.records[key]) state.records[key]=[];
@@ -5634,7 +5719,7 @@ async function addRecord(key, e){
     await saveState();
     setStatus('已登記使用', true);
     const tLabel = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || '';
-    finishAddWithConfirm(`已新增 ${displayAmount({unit,amount})}${tLabel}`);
+    finishAddWithConfirm(`已登記 ${displayAmount({unit,amount})}${tLabel}`);
   }catch(err){
     setStatus('儲存失敗：' + (err && err.message ? err.message : String(err)), false);
     console.error(err);
@@ -5793,7 +5878,7 @@ async function applyKwItems(){
   let msg = `確定要新增這 ${kwPendingItems.length} 筆嗎？`;
   if(quotaItems.length>0){
     msg += `\n其中包含 ${quotaItems.length} 筆會直接覆蓋「總天數」設定：\n` +
-      quotaItems.map(q=>`・${CUR_YEAR} 年${q.quotaLabel}總天數 → ${fmt(q.total)} 天`).join('\n');
+      quotaItems.map(q=>`・${CUR_YEAR} 年${q.quotaLabel}總天數 → ${fmt(q.total)}天`).join('\n');
   }
   if(!window.confirm(msg)) return;
   try{
@@ -5819,8 +5904,8 @@ async function applyKwItems(){
     kwPendingItems = [];
     kwUnmatchedLines = [];
     await saveState();
-    setStatus('已新增解析出的紀錄', true);
-    successConfirm = `已新增 ${recordCount} 筆紀錄`;
+    setStatus('已登記解析出的紀錄', true);
+    successConfirm = `已登記 ${recordCount} 筆紀錄`;
     render();
     setTimeout(()=>{ successConfirm = null; render(); }, 450);
   }catch(err){
@@ -6132,7 +6217,7 @@ async function addComp(e, category){
       }
       const balAsOfDate = compBalanceAsOf(category, date, null);
       if(balAsOfDate - daysEquiv < 0){
-        if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmt(balAsOfDate)} 天（可能是因為這筆使用的日期比對應的獲得日期早），登記後會變負數，仍要登記嗎？`)) return;
+        if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmtDays(balAsOfDate)}（可能是因為這筆使用的日期比對應的獲得日期早），登記後會變負數，仍要登記嗎？`)) return;
       } else {
         // 總數夠，但有一部分是已過期的批次（不會自動扣）：先講清楚，讓使用者決定要不要回去手動指定
         const chk = computeUsePreviewHtml(category, amount, unit, manualPins, null, date);
@@ -6171,7 +6256,7 @@ async function addComp(e, category){
     state.lastUsedType = category;
     await saveState();
     setStatus(`已登記${info.label}`, true);
-    finishAddWithConfirm(`已新增 ${displayAmount(record)}${info.label}`);
+    finishAddWithConfirm(`已登記 ${displayAmount(record)}${info.label}`);
   }catch(err){
     setStatus('儲存失敗：' + (err && err.message ? err.message : String(err)), false);
     console.error(err);
@@ -6203,7 +6288,7 @@ async function saveEditComp(id, btnEl){
       if(type==='use'){
         const balAsOfDate = compBalanceAsOf(category, date, id);
         if(balAsOfDate - daysEquiv < 0){
-          if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmt(balAsOfDate)} 天，儲存後會變負數，仍要儲存嗎？`)) return;
+          if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmtDays(balAsOfDate)}，儲存後會變負數，仍要儲存嗎？`)) return;
         } else {
           const editManualOn = document.getElementById(`editManualToggle-${id}`);
           const editPins = (editManualOn && editManualOn.checked) ? gatherCompSrcPins(`editCompSrcBatchList-${id}`) : [];
