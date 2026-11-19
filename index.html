@@ -230,7 +230,7 @@
   .ack-btn{flex-shrink:0;font-size:13px;font-weight:800;color:inherit;background:var(--card);border:1.5px solid currentColor;border-radius:14px;padding:6px 14px;min-height:34px;box-shadow:0 2px 6px rgba(0,0,0,.14);}
   .ack-btn:active{box-shadow:0 1px 2px rgba(0,0,0,.14);}
 
-  .stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;align-items:start;}
+  .stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;align-items:stretch;}
   .home-order-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
   .home-order-item{display:flex;flex-direction:column;gap:6px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:border-color .12s ease, background .12s ease;}
   .home-order-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
@@ -522,7 +522,7 @@
   .overview-stat:last-child{border-right:none;}
   .overview-stat-label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;}
   .overview-stat-value{font-size:22px;font-weight:800;color:var(--ink);line-height:1.3;}
-  .overview-stat-value .u{font-size:13px;font-weight:600;color:var(--ink-soft);margin:0 2px 0 1px;}
+  .overview-stat-value .u{font-size:13px;font-weight:600;color:var(--ink-soft);margin:0 2px 0 1px;white-space:nowrap;}
   .overview-stat-unit{font-size:13px;font-weight:600;margin-left:2px;color:var(--ink-soft);}
   .overview-carryover-note{display:flex;align-items:center;gap:6px;background:var(--card);color:var(--amber-ink);border-radius:10px;padding:8px 12px;margin-top:14px;font-size:13px;font-weight:700;}
   .overview-panel-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;}
@@ -567,6 +567,14 @@
   .year-record-month ul.ledger li:nth-child(even){border-style:solid;border-width:1px;}
   ul.ledger li:last-child{margin-bottom:0;}
   ul.ledger .ledger-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  /* 假別紀錄：編輯／刪除跟日期放同一行，備註放下一行，不用為了兩顆按鈕多佔一整行 */
+  ul.ledger li.rec-compact{display:flex;flex-wrap:wrap;align-items:center;column-gap:8px;}
+  li.rec-compact > .ledger-top{flex:1 1 0;min-width:0;}
+  li.rec-compact .ledger-top .days{white-space:nowrap;}
+  li.rec-compact > .ledger-bottom{margin-top:0;margin-left:auto;flex-wrap:nowrap;}
+  li.rec-compact > .ledger-note-row{order:3;flex-basis:100%;}
+  li.rec-compact .del.icon-only{width:40px;height:40px;min-height:40px;padding:0;justify-content:center;border-radius:50%;}
+  li.rec-compact .del.icon-only svg{width:16px;height:16px;}
   ul.ledger .ledger-bottom{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
   ul.ledger .d{font-family:'IBM Plex Mono',monospace;color:var(--ink);font-size:16px;font-weight:700;}
   ul.ledger .tag{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;padding:2px 6px;border-radius:3px;text-align:center;}
@@ -645,7 +653,7 @@
   .cal-dot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;}
   .cal-dot-wide{width:auto;min-width:18px;padding:0 2px;border-radius:5px;font-size:7.5px;letter-spacing:-.03em;flex-shrink:0;}
 
-  .chart-wrap{display:flex;gap:5px;align-items:flex-end;height:150px;padding:8px 2px 0;overflow-x:auto;}
+  .chart-wrap{display:flex;gap:5px;align-items:flex-start;padding:4px 2px 0;overflow-x:auto;}
   .chart-col{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;cursor:pointer;border-radius:8px;padding:4px 2px;transition:background .1s ease;}
   .chart-col:active{background:var(--paper-soft);}
   .chart-col-active{background:var(--blue-soft);}
@@ -653,7 +661,7 @@
   .chart-bar-track{width:100%;max-width:24px;height:130px;display:flex;flex-direction:column-reverse;background:var(--paper-deep);border-radius:2px 2px 0 0;overflow:hidden;}
   .chart-seg{width:100%;}
   .chart-label{font-size:11px;color:var(--ink-soft);margin-top:4px;white-space:nowrap;letter-spacing:-.02em;}
-  .chart-total{font-size:10.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .chart-total{font-size:10.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;height:16px;line-height:16px;margin-bottom:2px;white-space:nowrap;letter-spacing:-.03em;}
   .chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:11px;color:var(--ink-soft);}
   .cmp-list{display:flex;flex-direction:column;gap:10px;}
   .cmp-row{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:var(--paper-soft);border-radius:8px;cursor:pointer;}
@@ -670,7 +678,9 @@
 
   div.block > h2{font-family:'Noto Sans TC',sans-serif;font-weight:800;font-size:17px;margin:0 0 12px;display:flex;align-items:center;gap:8px;line-height:1.35;}
   .backup{background:color-mix(in srgb, var(--card) 85%, transparent);border:1px solid var(--line);border-radius:16px;padding:18px 16px 20px;}
-  .backup.danger-zone{border-color:var(--brick);background:color-mix(in srgb, var(--brick-soft) 50%, transparent);margin-bottom:20px;}
+  .backup.danger-zone{border:1px solid color-mix(in srgb, var(--brick) 35%, var(--line));background:color-mix(in srgb, var(--card) 85%, transparent);border-radius:16px;padding:4px 14px;margin-bottom:20px;}
+  .backup.danger-zone > .quota-accordion-head{padding:13px 2px;}
+  .backup.danger-zone:has(> .quota-accordion-head + *){padding-bottom:16px;}
   .backup.danger-zone h2{color:var(--brick);}
   .month-group{margin-bottom:10px;}
   .year-record-month{margin-bottom:18px;}
@@ -698,6 +708,12 @@
   .history-divider .divider-year-btn:last-of-type{margin:0 3px 0 4px;}
   .divider-year-btn{width:26px;height:26px;padding:0;min-width:0;min-height:0;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--primary);background:var(--card);border:1.5px solid var(--primary);border-radius:50%;cursor:pointer;line-height:1;}
   .history-divider .divider-year-num{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:17.5px;color:var(--ink);padding:0;text-align:center;}
+  .kw-bad-list{display:flex;flex-direction:column;gap:8px;}
+  .kw-bad{background:var(--brick-soft);border-radius:10px;padding:10px 12px;}
+  .kw-bad-line{color:var(--brick);font-size:14px;font-weight:700;line-height:1.6;overflow-wrap:anywhere;}
+  .kw-fix{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed color-mix(in srgb, var(--brick) 30%, transparent);font-size:13.5px;color:var(--ink);}
+  .kw-fix b{color:var(--ink);}
+  .kw-fix-btn{flex-shrink:0;font-size:13px;font-weight:800;color:var(--primary);background:var(--card);border:1.5px solid currentColor;border-radius:12px;padding:6px 12px;min-height:36px;}
   .kw-examples{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
   .kw-help-toggle{display:block;margin:18px 0 0;padding:6px 0;background:none;border:none;color:var(--primary);font-size:14px;font-weight:700;cursor:pointer;}
   .kw-help{margin-top:10px;padding-top:12px;border-top:1px solid var(--hairline);}
@@ -751,7 +767,7 @@
   @media (max-width:350px){
     .nav-item{font-size:12.5px;padding:6px 1px;white-space:nowrap;letter-spacing:-.02em;}
     .cal-cell{min-width:0;min-height:0;}
-    .chart-wrap{gap:2px;padding-left:0;padding-right:0;}
+    .chart-wrap{gap:2px;padding-left:0;padding-right:0;overflow-x:hidden;}
     .chart-col{min-width:0;padding:4px 0;}
     .chart-label{font-size:10.5px;letter-spacing:-.04em;}
     .quota-accordion-head > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -766,6 +782,37 @@
   /* 畫面大小調大時，底部導覽縮成一行放得下（「設定」不會被切掉） */
   html.ui-large .nav-item{min-width:0;white-space:nowrap;font-size:11.5px;letter-spacing:-.03em;padding-left:0;padding-right:0;}
   .modal-box[tabindex="-1"]:focus{outline:none;}
+  /* 畫面大小選「大」以上：字變大但螢幕沒變寬，以下讓文字整段換行、不要一個字一個字斷 */
+  html.ui-large .days-row{flex-wrap:wrap;}
+  html.ui-large .field label{white-space:normal;}
+  html.ui-large .form-row > .field{min-width:0 !important;}
+  html.ui-large .field label.multi-date-toggle{white-space:normal;overflow:visible;align-items:flex-start;line-height:1.5;}
+  html.ui-large .multi-date-toggle input{flex-shrink:0;margin-top:2px;}
+  html.ui-large .overview-grid{flex-direction:column;gap:0;}
+  html.ui-large .overview-stat{display:flex;justify-content:space-between;align-items:baseline;gap:12px;text-align:left;padding:8px 0;border-right:none;}
+  html.ui-large .overview-stat + .overview-stat{border-top:1px solid var(--hairline);}
+  html.ui-large .overview-stat:first-child{padding-top:0;}
+  html.ui-large .overview-stat:last-child{padding-bottom:0;}
+  html.ui-large .overview-stat-label{margin:0;font-size:13.5px;}
+  html.ui-large .overview-stat-value{white-space:nowrap;text-align:right;}
+  html.ui-large .overview-expiry strong, html.ui-large .overview-expiry .avail-batch-hours{white-space:nowrap;display:inline-block;}
+  html.ui-large .overview-panel{padding:14px 12px 16px;}
+  html.ui-large .avail-batch-section{padding:10px;}
+  html.ui-large .avail-batch-item{padding:10px;}
+  html.ui-large .avail-batch-stack-toggle{flex-wrap:wrap;}
+  html.ui-large .avail-batch-list-label{white-space:nowrap;}
+  html.ui-large .avail-batch-stack-right{margin-left:auto;}
+  html.ui-large .avail-batch-date{flex-basis:100%;}
+  html.ui-large .avail-batch-note-tag{max-width:100%;}
+  html.ui-large .avail-batch-remain{white-space:normal;overflow:visible;}
+  html.ui-large .month-header-main{flex-wrap:wrap;}
+  html.ui-large .month-meta{white-space:nowrap;flex-shrink:0;}
+  html.ui-large .quota-accordion-head{flex-wrap:wrap;gap:2px 8px;text-align:left;}
+  html.ui-large .quota-accordion-head > span:last-child{margin-left:auto;max-width:100%;text-align:right;}
+  html.ui-large .settings-grid > .backup{padding-left:10px;padding-right:10px;}
+  html.ui-large .quota-accordion-head > span:first-child{white-space:normal;min-width:0;flex:1 1 6em;text-wrap:balance;}
+  html.ui-large .avail-batch-hours-strong{white-space:nowrap;display:inline-block;}
+  html.ui-large .chart-wrap{overflow-x:auto;}
   html.ui-large .leave-section-title{flex-wrap:wrap;}
   html.ui-large .quickdays{flex-wrap:wrap;}
   html.ui-large .field.note{min-width:0;flex-basis:100%;}
@@ -783,6 +830,15 @@
 
   .sync-choice{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;text-align:left;padding:14px 16px;margin-bottom:10px;border-radius:14px;background:var(--card);border:1.5px solid var(--line);color:var(--ink);box-shadow:none;min-height:0;}
   .sync-choice:active{border-color:var(--primary);background:var(--primary-soft);}
+  .confirm-box{max-width:360px;}
+  .confirm-title{display:flex;align-items:center;gap:6px;color:var(--ink);}
+  .confirm-title svg{color:var(--brick);flex-shrink:0;}
+  .confirm-body{margin:0 0 16px;font-size:15px;line-height:1.7;color:var(--ink-soft);}
+  .confirm-body b{color:var(--ink);}
+  .confirm-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+  .confirm-actions button{flex:1 1 120px;min-height:46px;font-size:15px;}
+  /* 深色模式：「取消」這類外框按鈕原本的線色太接近視窗底色，看不出是按鈕 */
+  :root[data-theme="dark"] .confirm-actions .ghost{border:1.5px solid color-mix(in srgb, var(--ink) 42%, transparent);color:var(--ink);}
   .sync-choice-title{font-size:16px;font-weight:800;}
   .sync-choice-sub{font-size:12.5px;color:var(--ink-soft);font-weight:500;}
 </style>
@@ -819,7 +875,7 @@
 <div id="bottomNavHolder"></div>
 
 <script>
-const APP_VERSION = 'v2026.11.18-01';
+const APP_VERSION = 'v2026.11.19-03';
 
 // 共用的小型SVG圖示（取代原本的📝備註、🗂️資料夾emoji），跟讀取畫面/底部導覽列同一種粗黑框線＋色塊風格
 // 用在文字行內，所以尺寸比導覽列小一點，但比原本emoji明顯大，並用vertical-align對齊文字基準線
@@ -1211,6 +1267,39 @@ function countAllRecords(s){
 
 // 雲端和這支手機都有資料時，請使用者選一份：用兩個寫清楚的按鈕取代「確定／取消」（原本按「取消」反而會覆蓋雲端，容易按錯）
 // 回傳 true = 用雲端那份；false = 用這支手機那份。只負責「問」，後面怎麼套用、怎麼上傳完全照原本流程
+// 確認視窗（取代系統跳窗）：樣式跟同步選擇視窗一致。沒有畫面（測試環境）時退回 window.confirm，
+// fallback 依 confirm 的確定／取消對應到 buttons 裡 fallback:'ok' / fallback:'cancel' 的那個值
+function askChoice({ title, body, buttons }){
+  const canDom = typeof document!=='undefined' && document.body && typeof document.createElement==='function' && typeof document.body.appendChild==='function';
+  const okBtn = buttons.find(b=>b.fallback==='ok'), cancelBtn = buttons.find(b=>b.fallback==='cancel');
+  if(!canDom){
+    const plain = String(body).replace(/<[^>]+>/g,'');
+    return Promise.resolve(window.confirm(`${title}\n\n${plain}`) ? okBtn.value : (cancelBtn ? cancelBtn.value : null));
+  }
+  return new Promise(resolve=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-overlay confirm-overlay';
+    wrap.innerHTML = `
+      <div class="modal-box confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmBody" tabindex="-1">
+        <h3 id="confirmTitle" class="confirm-title">${ICON_WARNING}${escapeHtml(title)}</h3>
+        <p id="confirmBody" class="confirm-body">${body}</p>
+        <div class="confirm-actions">
+          ${buttons.map((b,i)=>`<button type="button" class="${b.primary?'btn-primary':'ghost'}" data-i="${i}">${escapeHtml(b.label)}</button>`).join('')}
+        </div>
+      </div>`;
+    const done = v=>{ wrap.remove(); document.documentElement.classList.remove('modal-open'); resolve(v); };
+    wrap.addEventListener('click', e=>{
+      const b = e.target.closest('button[data-i]');
+      if(b) return done(buttons[+b.dataset.i].value);
+      if(e.target===wrap) done(null); // 點外面或按 Esc：什麼都不做
+    });
+    document.body.appendChild(wrap);
+    document.documentElement.classList.add('modal-open');
+    try{ wrap.querySelector('.modal-box').focus({preventScroll:true}); }catch(e){}
+  });
+}
+const NEG_CONFIRM_BTNS = [{label:'取消', value:false, fallback:'cancel'}, {label:'仍要登記', value:true, primary:true, fallback:'ok'}];
+const NEG_SAVE_BTNS = [{label:'取消', value:false, fallback:'cancel'}, {label:'仍要儲存', value:true, primary:true, fallback:'ok'}];
 function askSyncSource(info){
   const canDom = typeof document!=='undefined' && document.body && typeof document.createElement==='function' && typeof document.body.appendChild==='function';
   if(!canDom){
@@ -3450,8 +3539,11 @@ function keywordPanel(){
       <div class="modal-box" style="max-width:380px;max-height:75vh;overflow-y:auto;" onclick="event.stopPropagation()">
         <h3>${ICON_WARNING} 有 ${kwUnmatchedLines.length} 行看不懂</h3>
         <p class="hint" style="margin:0 0 10px;">可能是格式不符，這幾行不會被登記，可以自行手動新增：</p>
-        <div style="background:var(--brick-soft);border-radius:10px;padding:10px 12px;color:var(--brick);font-size:14px;line-height:1.8;">
-          ${kwUnmatchedLines.map(l=>escapeHtml(l)).join('<br>')}
+        <div class="kw-bad-list">
+          ${kwUnmatchedLines.map((l,i)=>{ const fix = kwSuggestFix(l); return `<div class="kw-bad">
+            <div class="kw-bad-line">${escapeHtml(l)}</div>
+            ${fix ? `<div class="kw-fix"><span>是不是要寫「<b>${escapeHtml(fix)}</b>」？</span><button type="button" class="kw-fix-btn" onclick="applyKwSuggestion(${i})">改成這樣</button></div>` : ''}
+          </div>`; }).join('')}
         </div>
         <div class="row" style="margin-top:16px;"><button type="button" class="ghost" style="width:100%;" onclick="closeKwUnmatchedModal()">知道了</button></div>
       </div>
@@ -3785,9 +3877,9 @@ function statsChart(){
     }).join('');
     const isActiveMonth = calendarMode && calYear===y && (i+1)===calMonth;
     return `<div class="chart-col ${isActiveMonth?'chart-col-active':''}" onclick="jumpToCalMonth(${y},${i+1})">
+      <div class="chart-total">${total>0?fmt(total):''}</div>
       <div class="chart-bar-track">${segments}</div>
       <div class="chart-label">${i+1}月</div>
-      <div class="chart-total">${total>0?fmt(total):''}</div>
     </div>`;
   }).join('');
 
@@ -3811,9 +3903,9 @@ function statsChart(){
       return `<div class="chart-seg c-${c}-bg" style="height:${px}px" title="${label} ${fmt(v)}天"></div>`;
     }).join('');
     return `<div class="chart-col ${(calendarMode && calYear===y && (i+1)===calMonth)?'chart-col-active':''}" onclick="jumpToCalMonth(${y},${i+1})">
+      <div class="chart-total">${total>0?fmt(total):''}</div>
       <div class="chart-bar-track">${segments}</div>
       <div class="chart-label">${i+1}月</div>
-      <div class="chart-total">${total>0?fmt(total):''}</div>
     </div>`;
   }).join('');
   const earnSection = hasEarnData ? `
@@ -3946,7 +4038,7 @@ function buildLeaveLi(t, r, dMin, dMax){
       </div>
     </li>`;
   }
-  return `<li class="${r.id===lastAddedId?'stamp-in':''}" data-rec-date="${r.date}" style="position:relative;">
+  return `<li class="rec-compact ${r.id===lastAddedId?'stamp-in':''}" data-rec-date="${r.date}" style="position:relative;">
     ${r.id===lastEditedId ? `<span class="edit-confirm-badge">✓ 已編輯</span>` : ''}
     <div class="ledger-top">
       <span class="d">${toROC(r.date)}</span>
@@ -3956,8 +4048,8 @@ function buildLeaveLi(t, r, dMin, dMax){
     ${r.note? `<div class="ledger-note-row">${ICON_NOTE}${escapeHtml(r.note)}</div>` : ''}
     <div class="ledger-bottom">
       <div class="ledger-actions">
-        <button class="del" title="編輯" onclick="startEditRecord('${t.key}','${r.id}')">${ICON_PENCIL}編輯</button>
-        <button class="del" title="刪除" onclick="removeRecord(event.currentTarget,'${t.key}','${r.id}')">${ICON_X_SM}刪除</button>
+        <button class="del icon-only" title="編輯" aria-label="編輯" onclick="startEditRecord('${t.key}','${r.id}')">${ICON_PENCIL}<span class="sr-only">編輯</span></button>
+        <button class="del icon-only" title="刪除" aria-label="刪除" onclick="removeRecord(event.currentTarget,'${t.key}','${r.id}')">${ICON_X_SM}<span class="sr-only">刪除</span></button>
       </div>
     </div>
   </li>`;
@@ -4118,7 +4210,7 @@ function pageAddRecord(){
     return backBtn + typeSelector + `
       <section class="block">
         <h2><span class="dot dot-${info.c}"></span>登記${info.label}</h2>
-        <div class="hint" style="margin-bottom:10px;">可選擇用「天」或「小時」登記，換算比例為 1 天 = ${getHoursPerDay()}小時（可在「設定」分頁調整）。${key==='exchange' ? '換休期限為當年度12/31，跨年就會失效。' : `${info.label}期限固定為 ${info.defaultYears} 年。`}</div>
+        <div class="hint" style="margin-bottom:10px;">1 天 = ${getHoursPerDay()} 小時・${key==='exchange' ? '當年 12/31 前用完' : `${info.defaultYears} 年內用完`}</div>
         <form class="entry" onsubmit="addComp(event, '${key}')">
           <div class="form-row">
             <div class="field" style="flex:0 0 160px;"><label>類型</label>
@@ -4576,7 +4668,7 @@ async function addCustomRecord(e){
     if(type==='use'){
       const balAsOfDate = compBalanceAsOf('custom', date, null, useLabel);
       if(balAsOfDate - daysEquiv < 0){
-        if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，「${useLabel}」只累積了 ${fmtDays(balAsOfDate)}，登記後會變負數，仍要登記嗎？`)) return;
+        if(!(await askChoice({ title:'這天還不夠扣', body:`依日期順序計算，到 <b>${toROC(date)}</b> 為止，「${escapeHtml(useLabel)}」只累積了 <b>${fmtDays(balAsOfDate)}</b>，登記後會變負數。`, buttons:NEG_CONFIRM_BTNS }))) return;
       }
     }
     const id = uid();
@@ -5833,7 +5925,7 @@ async function addRecord(key, e){
       const currentRemain = remainOf(key, selectedYear);
       if(currentRemain - totalDaysEquiv < 0){
         const label = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || '';
-        if(!window.confirm(`這 ${multiDateList.length} 天加起來會超過可用的${label}天數（目前剩餘 ${fmtDays(currentRemain)}，這次共需要 ${fmt(totalDaysEquiv)} 天），仍要登記嗎？`)) return;
+        if(!(await askChoice({ title:'超過可用天數', body:`${label}剩 <b>${fmtDays(currentRemain)}</b>，這 ${multiDateList.length} 天共需要 <b>${fmtDays(totalDaysEquiv)}</b>，登記後會變負數。`, buttons:NEG_CONFIRM_BTNS }))) return;
       }
       if(!state.records[key]) state.records[key]=[];
       let lastId = null;
@@ -5859,10 +5951,13 @@ async function addRecord(key, e){
     const currentRemain = remainOf(key, selectedYear);
     if(currentRemain - daysEquiv < 0){
       const label = (LEAVE_TYPES.find(t=>t.key===key)||{}).label || '';
-      const msg = (key==='annual' && !(getQuota('annual', selectedYear) > 0))
-        ? `還沒設定 ${selectedYear} 年特休天數，登記後剩餘會顯示負數。\n\n要先去設定嗎？按「取消」先去設定，按「確定」照樣登記。`
-        : `${label}剩 ${fmtDays(currentRemain)}，這筆要 ${fmtDays(daysEquiv)}，登記後會變負數。仍要登記嗎？`;
-      if(!window.confirm(msg)){ if(key==='annual' && !(getQuota('annual', selectedYear) > 0)) openAnnualQuotaModal(); return; }
+      const noQuota = key==='annual' && !(getQuota('annual', selectedYear) > 0);
+      const ans = noQuota
+        ? await askChoice({ title:`還沒設定 ${selectedYear} 年特休天數`, body:'先設定才算得出剩餘；不設定也能登記，只是剩餘會顯示負數。',
+            buttons:[{label:'照樣登記', value:'go', fallback:'ok'}, {label:'先去設定', value:'setup', primary:true, fallback:'cancel'}] })
+        : (await askChoice({ title:'登記後會變負數', body:`${label}剩 <b>${fmtDays(currentRemain)}</b>，這筆要 <b>${fmtDays(daysEquiv)}</b>。`, buttons:NEG_CONFIRM_BTNS }) ? 'go' : null);
+      if(ans==='setup'){ openAnnualQuotaModal(); return; }
+      if(ans!=='go') return;
     }
     const id = uid();
     if(!state.records[key]) state.records[key]=[];
@@ -6001,6 +6096,34 @@ function kwParseInput(){
   kwUnmatchedLines = unmatched;
   kwUnmatchedModalOpen = unmatched.length > 0; // 有看不懂的行，直接跳出來講，不用等使用者滑到最下面才發現
   render();
+}
+// 看不懂的行：試幾種常見打錯（少打「時」、注音選錯字），改完能辨識才提示「是不是要寫…」
+const KW_FIXES = [
+  [/([\d一二三四五六七八九十兩.])\s?小(?!時)/g, '$1小時'],
+  [/([\d.])\s?(?<!小)時/g, '$1小時'],
+  [/([\d.])\s?日(?!期)/g, '$1天'],
+  [/特修/g, '特休'], [/補修/g, '補休'], [/換修/g, '換休'], [/[病并]價/g, '病假'], [/事價/g, '事假'],
+];
+function kwSuggestFix(line){
+  let cur = line;
+  for(const [re, to] of KW_FIXES){
+    const next = cur.replace(re, to);
+    if(next===cur) continue;
+    cur = next;
+    const r = parseKeywordLines(cur, kwDefaultType);
+    if(r.items.length===1 && r.unmatched.length===0) return cur;
+  }
+  return null;
+}
+function applyKwSuggestion(idx){
+  const from = kwUnmatchedLines[idx]; const to = kwSuggestFix(from);
+  if(!to) return;
+  const ta = document.getElementById('kwInputText');
+  const text = ta ? ta.value : kwDraftText;
+  const lines = text.split('\n'); const k = lines.findIndex(l=>l.trim()===from.trim());
+  if(k<0) return;
+  lines[k] = to; kwDraftText = lines.join('\n'); if(ta) ta.value = kwDraftText;
+  kwParseInput();
 }
 function closeKwUnmatchedModal(){ kwUnmatchedModalOpen = false; render(); }
 // 快速輸入頁：打的字跟「預設當作」的選擇記在變數裡，畫面重畫（解析、移除某筆、展開範例）時不會不見；
@@ -6371,12 +6494,12 @@ async function addComp(e, category){
       }
       const balAsOfDate = compBalanceAsOf(category, date, null);
       if(balAsOfDate - daysEquiv < 0){
-        if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmtDays(balAsOfDate)}（可能是因為這筆使用的日期比對應的獲得日期早），登記後會變負數，仍要登記嗎？`)) return;
+        if(!(await askChoice({ title:'這天還不夠扣', body:`依日期順序計算，到 <b>${toROC(date)}</b> 為止，${info.label}只累積了 <b>${fmtDays(balAsOfDate)}</b>，登記後會變負數。可能是使用日期比獲得日期早。`, buttons:NEG_CONFIRM_BTNS }))) return;
       } else {
         // 總數夠，但有一部分是已過期的批次（不會自動扣）：先講清楚，讓使用者決定要不要回去手動指定
         const chk = computeUsePreviewHtml(category, amount, unit, manualPins, null, date);
         if(chk.shortfall>0.0001 && chk.expiredLeft>0.0001){
-          if(!window.confirm(`⚠️ 有效的${info.label}不夠扣，還缺 ${fmt(chk.shortfall)} 天。\n已過期的 ${fmt(chk.expiredLeft)} 天不會自動扣抵，如果要用請按「取消」，回去勾選「手動指定」選它。\n\n仍要直接登記嗎？`)) return;
+          if(!(await askChoice({ title:`有效的${info.label}不夠扣`, body:`還缺 <b>${fmtDays(chk.shortfall)}</b>。已過期的 ${fmtDays(chk.expiredLeft)} 不會自動扣，要用的話請按「取消」，回去勾選「手動指定」選它。`, buttons:NEG_CONFIRM_BTNS }))) return;
         }
       }
     }
@@ -6442,13 +6565,13 @@ async function saveEditComp(id, btnEl){
       if(type==='use'){
         const balAsOfDate = compBalanceAsOf(category, date, id);
         if(balAsOfDate - daysEquiv < 0){
-          if(!window.confirm(`⚠️ 依日期順序計算，到 ${toROC(date)} 這天為止，${info.label}只累積了 ${fmtDays(balAsOfDate)}，儲存後會變負數，仍要儲存嗎？`)) return;
+          if(!(await askChoice({ title:'這天還不夠扣', body:`依日期順序計算，到 <b>${toROC(date)}</b> 為止，${info.label}只累積了 <b>${fmtDays(balAsOfDate)}</b>，儲存後會變負數。`, buttons:NEG_SAVE_BTNS }))) return;
         } else {
           const editManualOn = document.getElementById(`editManualToggle-${id}`);
           const editPins = (editManualOn && editManualOn.checked) ? gatherCompSrcPins(`editCompSrcBatchList-${id}`) : [];
           const chk = computeUsePreviewHtml(category, amount, unit, editPins, id, date);
           if(chk.shortfall>0.0001 && chk.expiredLeft>0.0001){
-            if(!window.confirm(`⚠️ 有效的${info.label}不夠扣，還缺 ${fmt(chk.shortfall)} 天。\n已過期的 ${fmt(chk.expiredLeft)} 天不會自動扣抵，如果要用請按「取消」，回去勾選「手動指定」選它。\n\n仍要直接儲存嗎？`)) return;
+            if(!(await askChoice({ title:`有效的${info.label}不夠扣`, body:`還缺 <b>${fmtDays(chk.shortfall)}</b>。已過期的 ${fmtDays(chk.expiredLeft)} 不會自動扣，要用的話請按「取消」，回去勾選「手動指定」選它。`, buttons:NEG_SAVE_BTNS }))) return;
           }
         }
       }
